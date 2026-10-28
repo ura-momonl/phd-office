@@ -1,0 +1,14 @@
+{
+  "fom": {
+    "label": "UW-Madison Facility Online Manager（WCAM）",
+    "origin": "https://wcam-fom.doit.wisc.edu",
+    "start": "/fom/",
+    "login": {
+      "user": "#username",
+      "pass": "#password",
+      "submit": "input[type=submit]",
+      "success_url": "/userhome",
+      "error": "#invalidUsernamePassword"
+    }
+  }
+}

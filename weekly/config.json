@@ -1,0 +1,8 @@
+{
+  "timezone":"America/Chicago",
+  "weekday":1,
+  "hour":9,
+  "minute":0,
+  "meeting_day":"Monday",
+  "automatic":true
+}

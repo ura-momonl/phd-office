@@ -1,0 +1,68 @@
+{
+  "enabled": true,
+  "default_provider": "codex",
+  "claude_model": "sonnet",
+  "claude_reasoning_effort": "high",
+  "codex_model": "gpt-6.1-sol",
+  "deepseek_model": "deepseek-flash",
+  "deepseek_reasoning_effort": "high",
+  "max_active_agents": 8,
+  "subagent_max_concurrency": 10,
+  "queued_cards_per_turn": 10,
+  "codex_resume_sessions": [
+    "*"
+  ],
+  "claude_resume_sessions": [
+    "*"
+  ],
+  "reasoning_effort": "high",
+  "automatic_mail_judgment": true,
+  "automatic_cards": false,
+  "automatic_codex_reset_credit": true,
+  "mail_batch_wait_minutes": 15,
+  "mail_batch_min_messages": 4,
+  "mail_screen_model": "gpt-6-luna",
+  "mail_screen_effort": "high",
+  "mail_judgment_model": "gpt-6.1-sol",
+  "mail_judgment_effort": "high",
+  "automation_daily_calls": 100,
+  "title_provider": "codex",
+  "title_model": "gpt-6-luna",
+  "title_effort": "medium",
+  "title_again_at": 10,
+  "memory_extract": {
+    "claude": {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "high"
+    },
+    "codex": {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "high"
+    },
+    "deepseek": {
+      "provider": "codex",
+      "model": "gpt-6-luna",
+      "effort": "high"
+    }
+  },
+  "memory_v2": {
+    "enabled": true,
+    "owners": [
+      "codex",
+      "claude",
+      "deepseek"
+    ],
+    "auto": {
+      "enabled": true,
+      "idle_minutes": 30,
+      "ingest_hours": 24,
+      "consolidate_hours": 168
+    },
+    "dim": 1024,
+    "idle_seconds": 600,
+    "timeout_ms": 90000,
+    "context": {}
+  }
+}

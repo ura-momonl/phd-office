@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "defaults": [
+    {
+      "kind": "mail",
+      "actor": "claude",
+      "model": "sonnet",
+      "effort": "high",
+      "scope": "重要邮件归类、跟进建议、本地回复草稿",
+      "mode": "按新增内容小批处理",
+      "second_opinion": false
+    },
+    {
+      "kind": "procurement",
+      "actor": "codex",
+      "scope": "规格整理、供应商检索、报价比较与跟进草稿",
+      "mode": "需求或报价有变化时",
+      "second_opinion": false
+    },
+    {
+      "kind": "literature",
+      "actor": "deepseek",
+      "model": "deepseek-flash",
+      "effort": "high",
+      "scope": "检索式、候选文献筛选、带页码的项目笔记",
+      "mode": "一个明确研究问题一批",
+      "second_opinion": false
+    },
+    {
+      "kind": "data",
+      "actor": "codex",
+      "scope": "执行分析脚本、数据检查、图与来源记录",
+      "mode": "一个数据批次",
+      "second_opinion": false
+    },
+    {
+      "kind": "cad",
+      "actor": "codex",
+      "scope": "调用已有 AutoCAD/Fusion 工具，核对尺寸并保存交付",
+      "mode": "一个明确图纸任务",
+      "second_opinion": false
+    },
+    {
+      "kind": "presentation",
+      "actor": "codex",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "scope": "用已确认结果安排报告叙事、图页与讲稿",
+      "mode": "一次汇报",
+      "second_opinion": false
+    },
+    {
+      "kind": "experiment",
+      "actor": "user",
+      "scope": "实物实验、仪器操作、样品与实际完成记录；AI 辅助准备",
+      "mode": "按真实实验安排",
+      "second_opinion": false
+    },
+    {
+      "kind": "decision",
+      "actor": "user",
+      "scope": "科学目标、重要选择、实际下单/付款/提交",
+      "mode": "出现具体待决定事项时",
+      "second_opinion": false
+    },
+    {
+      "kind": "framework",
+      "actor": "codex",
+      "scope": "连接器、脚本、维护和必要验证",
+      "mode": "出现功能需求或实际故障时",
+      "second_opinion": false
+    }
+  ],
+  "background_ai": false
+}

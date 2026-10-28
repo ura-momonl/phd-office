@@ -1,0 +1,11 @@
+{
+  "manifest_version": 2,
+  "name": "Office Zotero Fetch",
+  "version": "0.2.1",
+  "description": "Native DOI PDF acquisition and a separate read-only Nature-family abstract operation.",
+  "applications": { "zotero": {
+    "id": "office-fetch@local.invalid",
+    "update_url": "https://example.invalid/office-zotero-fetch/updates.json",
+    "strict_min_version": "10.0", "strict_max_version": "10.*"
+  } }
+}

@@ -1,0 +1,59 @@
+/* Theme interface — the one place colours (and the UI font) are defined.
+   Components use the legacy names (--bg, --panel, --green, --amber …) or the --c-* tokens directly;
+   a palette is just a block that overrides --c-* tokens, selected by <html data-palette="…">.
+   The default block below reproduces the original look exactly. How to hook in a block that still
+   has hard-coded colours, and how to add a palette or font: see THEME.md. */
+:root{
+  /* page & surfaces */
+  --c-bg:#f3f5f1;--c-surface:#fff;--c-surface-2:#f3f7f3;--c-border:#dce4de;
+  /* text */
+  --c-text:#1c372d;--c-text-2:#5c7a64;--c-muted:#667a6e;
+  /* accent */
+  --c-accent:#117866;--c-accent-strong:#116b58;--c-accent-soft:#e4f1e8;--c-accent-line:#7bb290;
+  /* status */
+  --c-danger:#b45c53;--c-danger-soft:#fae8e4;--c-warn:#aa7726;--c-warn-soft:#fff0cf;
+  --c-violet:#6652a5;--c-violet-soft:#f0ecfb;--c-teal-soft:#e0f1ec;--c-blue:#527a9c;--c-blue-soft:#eaf2f8;
+  /* left sidebar (dark strip in the original palette) */
+  --c-sidebar-top:#1b2320;--c-sidebar-bottom:#131917;--c-sidebar-raised:#242b28;--c-sidebar-hover-base:#202623;--c-sidebar-selected:#2b322f;--c-sidebar-border:#39433e;--c-sidebar-edge:#2d483b;
+  --c-sidebar-text:#e9f2ec;--c-sidebar-nav:#b4cbc0;--c-sidebar-session:#b7cfc2;--c-sidebar-muted:#92afa0;--c-sidebar-label:#80a491;
+  --c-sidebar-accent:#80cdb5;--c-sidebar-accent-strong:#d0eee0;--c-sidebar-active-text:#eef6f1;--c-sidebar-mark:#403247;--c-sidebar-mark-text:#eda4cf;
+  /* per-page accent in the sidebar nav */
+  --c-nav-chat:#7fd1b9;--c-nav-inbox:#f0c36d;--c-nav-projects:#b8a8f2;--c-nav-weekly:#84bdea;--c-nav-more:#e895ad;
+  --c-accent-hover:#0c6555;
+}
+/* legacy names used across style.css / workspace.css / prompts-view.css */
+:root{
+  --bg:var(--c-bg);--sidebar:var(--c-sidebar-top);--panel:var(--c-surface);--border:var(--c-border);--text:var(--c-text);--muted:var(--c-muted);
+  --green:var(--c-accent);--accent:var(--c-accent-strong);--red:var(--c-danger);--red-bg:var(--c-danger-soft);
+  --amber:var(--c-warn);--amber-bg:var(--c-warn-soft);--violet:var(--c-violet);--violet-bg:var(--c-violet-soft);
+  --teal-bg:var(--c-teal-soft);--blue:var(--c-blue);--blue-bg:var(--c-blue-soft);
+}
+
+/* fonts: <html data-font="…"> sets the UI font; no attribute = the original font */
+:root{
+  --font-consolas:Consolas,"Cascadia Mono","Microsoft YaHei UI","Microsoft YaHei",monospace;
+  --font-cascadia:"Cascadia Mono","Cascadia Code",Consolas,"Microsoft YaHei UI",monospace;
+  --font-courier:"Courier New",Courier,"NSimSun","Microsoft YaHei UI",monospace;
+  --font-simsun:Consolas,"NSimSun","SimSun",monospace;
+  --font-lucida:"Lucida Console","Microsoft YaHei UI",monospace;
+}
+html[data-font="consolas"]{--ui-font:var(--font-consolas)}
+html[data-font="cascadia"]{--ui-font:var(--font-cascadia)}
+html[data-font="courier"]{--ui-font:var(--font-courier)}
+html[data-font="simsun"]{--ui-font:var(--font-simsun)}
+html[data-font="lucida"]{--ui-font:var(--font-lucida)}
+html[data-font]{font-family:var(--ui-font)}
+html[data-font] :is(button,input,textarea,select){font-family:inherit}
+
+/* settings → 外观 picker */
+.theme-picker{display:grid;gap:14px;margin:10px 0 28px}
+.theme-row{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;align-items:start}
+.theme-label{font-size:12px;color:var(--muted);padding-top:11px}
+.theme-opts{display:flex;flex-wrap:wrap;gap:10px}
+.theme-opt{display:flex;align-items:center;gap:9px;text-align:left;padding:9px 13px;border:1px solid var(--border);border-radius:8px;background:var(--panel);cursor:pointer;font-size:12px;color:var(--text)}
+.theme-opt small{color:var(--muted);font-size:10px}
+.theme-opt:hover{border-color:var(--green)}
+.theme-opt.on{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+.theme-swatch{display:inline-flex;gap:0;border:1px solid var(--c-border);border-radius:4px;overflow:hidden}
+.theme-swatch i{width:10px;height:18px}
+.font-sample{font-size:13px;white-space:nowrap}

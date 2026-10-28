@@ -1,0 +1,1 @@
+- {{id}}：目录摘要 node automation/run.mjs projects outline {{id}}；关键词检索 projects search "{{id}}#关键词"；按节点读原文 projects read-nodes {{id}}#节点ID,节点ID；执行事项 projects context {{id}}。

@@ -1,0 +1,377 @@
+{
+  "_": "提示词面登记表：agent 会读到、或程序拼进提示词的文案出处。只登记事实（路径、类型、谁载入），不写规则正文。新增或迁移文案时在这里补一行；prompt dupes/where 据此扫描。loaded_by 里 unverified 表示尚未实测。",
+  "surfaces": [
+    {
+      "id": "system-prompt",
+      "kind": "standing",
+      "path": "prompts/office-system.md",
+      "note": "三位助手共用办公室正文：agent/native.mjs 读为 SYSTEM_PROMPT，chat.py 生成当轮 personaPrefix；参与 Claude/Codex 续接签名",
+      "loaded_by": [
+        "claude-work",
+        "claude-ask",
+        "codex-work",
+        "codex-ask",
+        "deepseek-work",
+        "deepseek-ask"
+      ]
+    },
+    {
+      "id": "user-deepseek-agents-md",
+      "kind": "standing",
+      "path": "~/.dsh/AGENTS.md",
+      "external": true,
+      "note": "DeepSeek 用户级全局指令与人设；正式 work 聊天使用原生 ~/.dsh home 加载。ask 关闭指令发现，独立委派仍用隔离 home。",
+      "loaded_by": [
+        "deepseek-work"
+      ],
+      "not_loaded_by": [
+        "deepseek-ask",
+        "deepseek-delegate-work"
+      ]
+    },
+    {
+      "id": "agents-md",
+      "kind": "standing",
+      "path": "AGENTS.md",
+      "note": "项目指令；CLAUDE.md 用 @AGENTS.md 引入",
+      "loaded_by": [
+        "claude-work",
+        "codex-work",
+        "codex-ask",
+        "deepseek-work"
+      ],
+      "not_loaded_by": [
+        "claude-ask(--safe-mode)",
+        "deepseek-ask"
+      ]
+    },
+    {
+      "id": "claude-md",
+      "kind": "standing",
+      "path": "CLAUDE.md",
+      "note": "仅 @AGENTS.md 引入",
+      "loaded_by": [
+        "claude-work"
+      ]
+    },
+    {
+      "id": "user-claude-md",
+      "kind": "standing",
+      "path": "~/.claude/CLAUDE.md",
+      "external": true,
+      "note": "用户级指令，项目外，不由本项目修改",
+      "loaded_by": [
+        "claude-work"
+      ]
+    },
+    {
+      "id": "turn-assembly",
+      "kind": "turn",
+      "path": "agent/run.mjs",
+      "note": "promptFor：决定哪些段出现、按什么顺序；固定句子在 prompts/fragments/turn/，经 prompts/templates.mjs 的 turn 取用；记忆块、邮件简报、附件与文件状态提示的出处分别见对应登记项",
+      "purposes": [
+        "chat",
+        "auto",
+        "card"
+      ]
+    },
+    {
+      "id": "codex-overload-resume",
+      "kind": "turn",
+      "path": "agent/codex.mjs",
+      "note": "仅 chat/work 的 serverOverloaded：原 thread 延迟开启新的续做 turn，不重放原任务；提示在 fragments/turn/overload-resume.md",
+      "purposes": [
+        "chat"
+      ]
+    },
+    {
+      "id": "memory-context",
+      "kind": "turn",
+      "path": "memory2/context.mjs",
+      "note": "每个 work 轮的画像、置顶和话题记忆，来自 memory2 Markdown。",
+      "purposes": [
+        "chat",
+        "auto"
+      ]
+    },
+    {
+      "id": "task-templates",
+      "kind": "fragment",
+      "path": "prompts/templates.mjs",
+      "note": "任务提示词（计划/探索/已授权步骤）、探索续跑、卡片、标题、文案在 prompts/fragments/，由 templates.mjs 填值；prompts/golden.json 记录渲染结果",
+      "purposes": [
+        "auto",
+        "card",
+        "title"
+      ]
+    },
+    {
+      "id": "mail-brief",
+      "kind": "file",
+      "path": "mail-flow/MAIL-BRIEF.md",
+      "purposes": [
+        "chat",
+        "auto"
+      ]
+    },
+    {
+      "id": "mail-guide",
+      "kind": "module-doc",
+      "path": "mail-flow/INTERACTIVE-GUIDE.md",
+      "note": "按需读取"
+    },
+    {
+      "id": "mail-review",
+      "kind": "file",
+      "path": "mail-flow/REVIEW-PROMPT.md",
+      "purposes": [
+        "mail"
+      ]
+    },
+    {
+      "id": "mail-screen",
+      "kind": "file",
+      "path": "mail-flow/SCREEN-PROMPT.md",
+      "purposes": [
+        "mail"
+      ]
+    },
+    {
+      "id": "mail-caller",
+      "kind": "turn",
+      "path": "agent/mail.mjs",
+      "purposes": [
+        "mail"
+      ],
+      "note": "判断说明仍在 mail-flow/REVIEW-PROMPT.md、SCREEN-PROMPT.md；外壳（编号说明、判断包标题）在 prompts/fragments/mail/，经 mailJudgePrompt 取用"
+    },
+    {
+      "id": "companion-notes",
+      "kind": "turn",
+      "path": "dashboard/companion-notes.mjs",
+      "purposes": [
+        "companion-note"
+      ],
+      "note": "留言提示词在 prompts/fragments/companion/（经 companionText 取用）；dashboard/companion-notes.mjs 决定哪些段出现"
+    },
+    {
+      "id": "attachments",
+      "kind": "turn",
+      "path": "agent/files.mjs",
+      "purposes": [
+        "chat",
+        "auto"
+      ],
+      "note": "附图/附件说明的文案在 prompts/fragments/notice/（经 noticeText 取用）；agent/files.mjs、agent/images.mjs 只组装条目"
+    },
+    {
+      "id": "file-state",
+      "kind": "turn",
+      "path": "automation/file-state.mjs",
+      "purposes": [
+        "chat",
+        "auto"
+      ],
+      "note": "文件状态与运行代码提示的文案在 prompts/fragments/notice/（经 noticeText 取用）；automation/file-state.mjs 只决定何时出现"
+    },
+    {
+      "id": "literature-goal",
+      "kind": "fragment",
+      "path": "prompts/fragments/literature/backfill-goal.md",
+      "purposes": [
+        "auto"
+      ],
+      "note": "文献回填任务的目标文案（经 literatureGoal.backfill 取用，literature/curate.mjs 生成入队请求）；收录口径不写在片段里，由 literature/curate.mjs 从 literature/sources.json 的 lines.library 传入，流程与门槛参考在 literature-backfill skill。尚无触发：只有 `literature curate-task` 打印请求，不入队"
+    },
+    {
+      "id": "framework-digest-header",
+      "kind": "fragment",
+      "path": "prompts/fragments/framework/digest-header.md",
+      "purposes": [
+        "chat",
+        "auto"
+      ],
+      "note": "每轮注入的“项目框架索引”开头说明（projects/framework.mjs frameworkDigest 渲染；索引正文是程序按 FRAMEWORK.md 生成的数据）"
+    },
+    {
+      "id": "task-progress-goal",
+      "kind": "fragment",
+      "path": "prompts/fragments/task/progress-goal.md",
+      "purposes": [
+        "auto"
+      ],
+      "note": "项目出现新进展时自动创建的“项目推进”任务的目标文案（work/run.mjs 入队时渲染）"
+    },
+    {
+      "id": "literature-daily-goal",
+      "kind": "fragment",
+      "path": "prompts/fragments/literature/daily-goal.md",
+      "purposes": [
+        "auto"
+      ],
+      "note": "每日文献推荐任务的目标文案（经 literatureGoal.daily 取用，literature/daily.mjs 在每日任务入队时生成；每日任务当前关闭）；推荐口径由 daily.mjs 从 sources.json 的 lines.reading/picks 传入"
+    },
+    {
+      "id": "framework-rules",
+      "kind": "module-doc",
+      "path": "projects/FRAMEWORK-RULES.md",
+      "note": "按需读取"
+    },
+    {
+      "id": "collaboration",
+      "kind": "module-doc",
+      "path": "automation/AI-COLLABORATION.md",
+      "note": "交接文档，按需读取"
+    },
+    {
+      "id": "claude-review",
+      "kind": "module-doc",
+      "path": "automation/CLAUDE-REVIEW.md",
+      "note": "AGENTS.md 列为交接文档，体量大（约 50KB），按需取段读取"
+    },
+    {
+      "id": "outlook-tool-catalog",
+      "kind": "module-doc",
+      "path": "mail-flow/actions.mjs",
+      "note": "`mail outlook-tools [工具名]` 输出的工具名、参数与 description（如 reply_native 的“无自动重试”）写在代码里，会到达模型；大小是整个 actions.mjs"
+    },
+    {
+      "id": "weekly-readme",
+      "kind": "module-doc",
+      "path": "weekly/README.md"
+    },
+    {
+      "id": "module-help",
+      "kind": "module-doc",
+      "path": "automation/config.json",
+      "note": "`help <模块>` 输出 modules.*.usage，`help handoff|card|review` 输出 help.*；这些文字带着交接 JSON、work list、projects 入口等实际规则。大小是整个 config.json，其中多数是非提示词配置"
+    },
+    {
+      "id": "framework-tools",
+      "kind": "module-doc",
+      "path": "projects/FRAMEWORK-TOOLS.md",
+      "note": "AGENTS.md 要求维护项目框架时读取，与 FRAMEWORK-RULES.md 配套；按需读取"
+    },
+    {
+      "id": "software-readme",
+      "kind": "module-doc",
+      "path": "software/README.md",
+      "note": "AGENTS.md 指向：软件资产目录与转交方法；按需读取"
+    },
+    {
+      "id": "computer-use-readme",
+      "kind": "module-doc",
+      "path": "software/computer-use/README.md",
+      "note": "AGENTS.md 指向：桌面 Computer Use 配置与操作说明；按需读取"
+    },
+    {
+      "id": "skill-edit-verify",
+      "kind": "skill",
+      "path": ".agents/skills/edit-and-verify-office-code/SKILL.md"
+    },
+    {
+      "id": "skill-literature",
+      "kind": "skill",
+      "path": ".agents/skills/literature-backfill/SKILL.md"
+    },
+    {
+      "id": "skill-weekly",
+      "kind": "skill",
+      "path": ".agents/skills/weekly-planning/SKILL.md"
+    }
+  ],
+  "template_exports": {
+    "_": "prompts/templates.mjs 里哪些导出用于哪些调用用途。仅在导入它的文件同时承担多个用途时需要登记（目前是 agent/run.mjs）；其余由导入它的文件所登记的面推出。界面据此显示片段会抵达哪些场景。",
+    "taskPrompt": [
+      "chat",
+      "auto"
+    ],
+    "explorationRoundPrompt": [
+      "auto"
+    ],
+    "cardPrompt": [
+      "card"
+    ],
+    "titlePrompt": [
+      "title"
+    ],
+    "turn": [
+      "chat",
+      "auto"
+    ],
+    "overloadResumePrompt": [
+      "chat"
+    ]
+  },
+  "purposes_note": "固定文案在 prompts/fragments；各调用点负责组装，邮件判断说明等独立文件留在原位。surfaces 登记入口和文件，fragments 命令列出片段及静态引用。",
+  "purposes": {
+    "deepseek-delegate": {
+      "mode": "work",
+      "standing_key": "deepseek-delegate-work",
+      "providers": [
+        "deepseek"
+      ],
+      "note": "显式按需 Harness 委派；只发送请求正文，SDK 自有系统提示词，不加载办公室常驻文案。来源见 software/deepseek-harness/delegate.py、delegate.patch.yml。"
+    },
+    "chat": {
+      "mode": "work",
+      "providers": [
+        "claude",
+        "codex",
+        "deepseek"
+      ],
+      "system_prompt_override": [
+        "deepseek"
+      ],
+      "note": "用户发起的对话轮；DeepSeek 的 chat.py 从 prompts/office-system.md 生成 SDK personaPrefix"
+    },
+    "auto": {
+      "mode": "work",
+      "providers": [
+        "claude",
+        "codex",
+        "deepseek"
+      ],
+      "system_prompt_override": [
+        "deepseek"
+      ],
+      "note": "任务自动执行的步骤（purposeOf 返回，不是字面量）；新增 provider 不会自行创建任务"
+    },
+    "card": {
+      "mode": "ask",
+      "providers": [
+        "claude",
+        "codex",
+        "deepseek"
+      ],
+      "system_prompt_override": [
+        "deepseek"
+      ],
+      "note": "收件箱卡片的判断与追问；DeepSeek 使用 ask.patch.yml 关闭工具"
+    },
+    "title": {
+      "mode": "ask",
+      "providers_from": "title_provider",
+      "note": "会话标题"
+    },
+    "mail": {
+      "mode": "ask",
+      "providers": [
+        "codex"
+      ],
+      "note": "后台邮件粗筛与复判（固定 codex）"
+    },
+    "companion-note": {
+      "mode": "ask",
+      "providers": [
+        "claude",
+        "codex"
+      ],
+      "system_prompt_override": [
+        "claude",
+        "codex"
+      ],
+      "note": "每日小留言；两家都用自己的 systemPrompt（fragments/companion/system.md）替换 SYSTEM_PROMPT"
+    }
+  }
+}

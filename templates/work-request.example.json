@@ -1,0 +1,11 @@
+{
+  "example_only":true,
+  "title":"替换成实际任务",
+  "kind":"data",
+  "actor":"codex",
+  "project_ids":["graphene-thz"],
+  "goal":"期望交付物、已知输入及具体问题",
+  "sources":[],
+  "dependencies":[],
+  "due_at":null
+}

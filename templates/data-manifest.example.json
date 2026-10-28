@@ -1,0 +1,14 @@
+{
+  "example_only":true,
+  "project_id":"graphene-thz",
+  "batch_id":"fill-later",
+  "sample_ids":[],
+  "experiment_record":null,
+  "raw_files":[],
+  "columns_and_units":{},
+  "analysis_script":null,
+  "parameters":{},
+  "outputs":[],
+  "observations":[],
+  "hypotheses":[]
+}

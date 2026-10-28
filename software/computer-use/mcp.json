@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "windows-mcp": {
+      "command": "D:/Main/assistant/.runtime/computer-use/venv/Scripts/windows-mcp.exe",
+      "args": ["serve", "--transport", "stdio", "--tools", "App,DisplayInventory,Snapshot,Screenshot,Click,Type,Scroll,Move,Shortcut,Wait,WaitFor"],
+      "env": {
+        "ANONYMIZED_TELEMETRY": "false",
+        "PYTHONIOENCODING": "utf-8",
+        "WINDOWS_MCP_SCREENSHOT_BACKEND": "pillow"
+      }
+    }
+  }
+}

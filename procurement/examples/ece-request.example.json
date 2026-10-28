@@ -1,0 +1,20 @@
+{
+  "request_id": "example-purchase",
+  "vendor": "Example Vendor",
+  "first_name": "Example",
+  "last_name": "Researcher",
+  "email": "researcher@example.org",
+  "phone": "(555) 123-4567",
+  "shipping": {"street": "Example University Street", "room": "Example Room", "city": "Madison", "state": "Wisconsin", "zip": "53706"},
+  "approver": "Example, PI",
+  "spend_category": "SC00083 Laboratory - Supplies",
+  "worktag": "REPLACE with the exact approved option shown on the ECE form",
+  "business_purpose": "Explain why these items are needed for the particular experiment and project.",
+  "note_to_approver": "A short, accurate request explaining the purchase and any difference from the quotation total.",
+  "approved_cost": 27.50,
+  "approved_cost_basis": "Example only: item subtotal plus shipping; exclusions must follow the user's actual decision.",
+  "quote_attachment": "D:/REPLACE/quote.pdf",
+  "links": {},
+  "shipping_rate": "Ground",
+  "additional_information": ""
+}

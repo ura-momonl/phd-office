@@ -1,0 +1,202 @@
+{
+  "_说明": "发现配置。程序做抓取、去重、排除明显不相关粗领域、按期刊层级排序、每来源保底、对展示条目补摘要；有没有意思、入哪一档由助手读摘要判断，不靠词表，也不读用户的项目。focus 留空是有意的：词表会让筛选往词上靠。no_fulltext_journals=学校未订阅的期刊（只能读摘要，选中后找预印本）。",
+  "journals": [
+    [
+      "Nature",
+      "0028-0836",
+      1
+    ],
+    [
+      "Science",
+      "0036-8075",
+      1
+    ],
+    [
+      "Nature Materials",
+      "1476-1122",
+      1
+    ],
+    [
+      "Nature Nanotechnology",
+      "1748-3387",
+      1
+    ],
+    [
+      "Nature Electronics",
+      "2520-1131",
+      1
+    ],
+    [
+      "Nature Physics",
+      "1745-2473",
+      1
+    ],
+    [
+      "PRL",
+      "0031-9007",
+      1
+    ],
+    [
+      "PRB",
+      "2469-9950",
+      2
+    ],
+    [
+      "Phys. Rev. Applied",
+      "2331-7019",
+      2
+    ],
+    [
+      "Nano Letters",
+      "1530-6984",
+      2
+    ],
+    [
+      "ACS Nano",
+      "1936-0851",
+      2
+    ],
+    [
+      "Advanced Materials",
+      "0935-9648",
+      2
+    ],
+    [
+      "Nature Photonics",
+      "1749-4885",
+      1
+    ],
+    [
+      "Physical Review X",
+      "2160-3308",
+      1
+    ],
+    [
+      "Reviews of Modern Physics",
+      "0034-6861",
+      1
+    ],
+    [
+      "Nature Reviews Physics",
+      "2522-5820",
+      1
+    ],
+    [
+      "Nature Reviews Materials",
+      "2058-8437",
+      1
+    ],
+    [
+      "Nature Machine Intelligence",
+      "2522-5839",
+      1
+    ],
+    [
+      "Science Advances",
+      "2375-2548",
+      2
+    ],
+    [
+      "Nature Communications",
+      "2041-1723",
+      2
+    ]
+  ],
+  "arxiv_categories": [
+    "cond-mat.mes-hall",
+    "cond-mat.mtrl-sci",
+    "cond-mat.str-el",
+    "cond-mat.supr-con",
+    "physics.app-ph",
+    "physics.optics",
+    "physics.ins-det",
+    "quant-ph"
+  ],
+  "lines": {
+    "library": "其他入库（比每日阅读收敛，日后查资料用，不要求让人眼前一亮）：只收期刊来源，arXiv 暂不收，不再逐篇查是否发表。收二维材料领域里普通、扎实的工作——用了某些方法、解释了某些现象；以及使用传统原理的新器件。理论文章和综述可以入库，但不作为推荐阅读。候选只是暂存，没被选中的不写进资料库；每天只收少量，值得就多收一点，不凑数，也不硬限。按内容判断，不读用户的项目，不按项目名或材料名匹配。先取公开免费全文，付费的单列交给用户；不新增后台下载。",
+    "reading": "每日推荐：约三篇，不够好就少给，可以零篇，不凑数，不是硬上限。比入库更发散，标准是一眼看去就觉得潜力很大。最好和二维材料稍微搭点边：二维材料中非典型却有巨大潜力的；二维材料与当前热门领域的交叉。例外：和二维材料关系不大，但你认为用户够得着、真该让她看看，须写明理由。不要“连连看”式的典型二维材料文章，那类只属于入库。材料生长与工艺本身不要；太远的生物、化学、考古不要，远近以用户从量子材料与器件的底子能否够得着来判断；量子计算相关可以。可以争取设备或学新方法，但要有依据说明怎么接得上，没依据就留白。",
+    "picks": "读摘要和证据后再选，仅题名不足以推荐；Nature 系常无公开摘要，只凭题名时要明说，不当作已读。每篇写：真问题是什么、凭什么值得看、对什么有启发、怎么够到（没依据就留白）。每日以原创研究为主，综述信息量太大，不作常规推荐，特别有价值并说明理由时才偶尔例外。理论文章用户不太喜欢，可入库，一般不进每日阅读。不用词表，不按项目名或材料名匹配。"
+  },
+  "focus": [],
+  "exclude": [
+    "nuclear",
+    "nuclei",
+    "quark",
+    "collider",
+    "neutrino",
+    "cosmology",
+    "black hole",
+    "black holes",
+    "dark matter",
+    "protein",
+    "proteins",
+    "gene",
+    "genes",
+    "genome",
+    "cancer",
+    "tumor",
+    "tumour",
+    "vaccine",
+    "mrna",
+    "enzyme",
+    "plant",
+    "plants",
+    "coral",
+    "corals",
+    "species",
+    "ecosystem",
+    "climate",
+    "patient",
+    "patients",
+    "clinical",
+    "immune",
+    "neuron",
+    "neurons",
+    "brain",
+    "catalysis",
+    "catalytic",
+    "battery",
+    "batteries",
+    "cathode",
+    "electrolyte",
+    "policy",
+    "treaty",
+    "author correction",
+    "publisher correction",
+    "retraction"
+  ],
+  "exclude_doi_patterns": [
+    "/d41586-"
+  ],
+  "tier_weight": {
+    "0": 0,
+    "1": 10,
+    "2": 5
+  },
+  "per_source_min": 8,
+  "window_days": 7,
+  "per_journal": 40,
+  "arxiv_max": 0,
+  "arxiv_slots": 0,
+  "list_size": 130,
+  "backfill": {
+    "_说明": "老文献回填：OpenAlex 主题分类（算法标签，不是词表）× 上面的期刊清单，按被引降序，程序粗筛后分页给题名。T10275=2D 材料，T10083=石墨烯。",
+    "topics": [
+      "T10275",
+      "T10083",
+      "T10657",
+      "T10382",
+      "T10037",
+      "T10049"
+    ],
+    "max_per_year": 1500
+  },
+  "daily_recommendations": {
+    "enabled": false,
+    "not_before_hour": 8,
+    "actor": "codex"
+  },
+  "no_fulltext_journals": [
+    "Nature Electronics"
+  ]
+}

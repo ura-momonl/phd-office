@@ -1,0 +1,29 @@
+# Ordinary office turns. Retain SDK file, shell and skill tools, and workspace policy.
+- id: session-log-deepseek
+  config:
+    enabled: false
+- id: plugin-package-inventory-deepseek
+  disabled: true
+- id: session-telemetry-otel
+  disabled: true
+# Mount the retry executor: the policy itself lives on the provider profile
+# (connection.py). Only a failed step is re-run, so a successful turn is unchanged.
+- id: llm-retry
+- id: approval
+  config:
+    policy: never
+- id: sandbox-policy
+  config:
+    mode: workspace-write
+    workspaceRoot: !!js process.cwd()
+- id: sdk-jsonrpc-server
+  config:
+    maxTokensAsSuccess: false
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-list-agents
+  disabled: true

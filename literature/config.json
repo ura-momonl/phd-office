@@ -1,0 +1,8 @@
+{
+  "library_home": "https://www.library.wisc.edu/",
+  "bookmarklet_help": "https://www.library.wisc.edu/help/off-campus-access/remote-access-bookmarklet/",
+  "proxy_login": "https://ezproxy.library.wisc.edu/login?qurl=",
+  "zotero_local": "http://127.0.0.1:23119/api/",
+  "automatic_download": false,
+  "zotero_native": true
+}

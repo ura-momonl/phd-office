@@ -1,0 +1,185 @@
+/* Prompt page. Uses the shared theme variables; the only colour of its own is a muted per-domain hue. */
+#page-prompts [hidden]{display:none!important}
+#page-prompts .page-heading{margin-bottom:8px}
+#page-prompts code{font-family:Consolas,"Cascadia Mono","Microsoft YaHei UI",monospace;font-size:.92em}
+.pv{display:grid;grid-template-columns:272px minmax(0,1fr) 288px;gap:12px;min-height:380px}
+@media(min-width:1101px){
+  .shell>main:has(>#page-prompts:not([hidden])){height:100dvh;min-height:0;display:flex;flex-direction:column}
+  .shell>main:has(>#page-prompts:not([hidden]))>.topbar,.shell>main:has(>#page-prompts:not([hidden]))>.error-banner{flex:none}
+  #page-prompts{flex:1;min-height:0;display:flex;flex-direction:column;width:100%;margin:0 auto;padding-bottom:16px}
+  #page-prompts>.page-heading{flex:none}
+  #page-prompts>.pv{flex:1;min-height:0}
+}
+.pv-left,.pv-main,.pv-right{background:var(--panel);border:1px solid var(--border);border-radius:8px;min-height:0;overflow:auto}
+.pv-left{display:flex;flex-direction:column;overflow:hidden}
+.pv-main{padding:16px 20px 20px}
+.pv-main.pv-run{display:flex;flex-direction:column;overflow:hidden}
+.pv-main.pv-run>*{flex-shrink:0}
+.pv-main.pv-run #pv-run-body,.pv-main.pv-run #pv-run-sources{flex:1;min-height:0;max-height:none;overflow:auto}
+.pv-right{background:transparent;border:0;overflow:auto}
+.pv-find{padding:10px;border-bottom:1px solid var(--border);display:grid;gap:8px}
+.pv-find input{margin:0}
+.pv-seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.pv-seg button{margin:0;border:0;border-radius:0;background:transparent;color:var(--muted);padding:5px 0;font-size:12.5px}
+.pv-seg button.active{background:var(--border);color:var(--text)}
+.pv-list{overflow:auto;padding:4px 0 12px;flex:1}
+.pv-hint{color:var(--muted);font-size:12.5px;margin:8px 12px}
+.pv-main .pv-hint{margin:10px 0}
+.pv-legend{display:flex;gap:6px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px;margin:8px 12px 2px}
+.pv-legend b{font-weight:500;border:1px solid var(--border);border-radius:4px;padding:0 4px}
+.pv-group h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:12px 0 2px;padding:0 12px;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.pv-group h3 small{font-weight:400;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-fold{cursor:pointer;user-select:none}
+.pv-item{display:grid;grid-template-columns:3px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;text-align:left;margin:0;padding:6px 12px 6px 9px;border:0;border-left:3px solid transparent;border-radius:0;background:transparent;color:var(--text);font-size:13px}
+.pv-item:hover{background:color-mix(in srgb,var(--border) 45%,transparent)}
+.pv-item.active{background:color-mix(in srgb,var(--accent) 14%,transparent);border-left-color:var(--accent)}
+.pv-item[data-scenario]{grid-template-columns:minmax(0,1fr) auto auto}
+.pv-item[data-run]{grid-template-columns:minmax(0,1fr);gap:2px}
+.pv-item[data-run] small:last-child{justify-self:start}
+.pv-item small{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.pv-item>small:only-child,.pv-item small:last-child{justify-self:end}
+.pv-item[data-frag] small:not(:last-child){grid-column:2/-1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-item .pv-id{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:Consolas,"Cascadia Mono",monospace;font-size:12.5px}
+.pv-item[data-scenario] .pv-id{font-family:inherit;font-size:13px}
+.pv-bar{display:block;width:3px;align-self:stretch;min-height:14px;border-radius:2px;background:hsl(var(--h,200) 38% 52%)}
+.pv-item .pv-bar{width:3px;grid-column:1}
+.pv-item[data-scenario] .pv-bar{display:none}
+.pv-dots{display:inline-flex;gap:3px}
+.pv-dot{display:inline-block;width:8px;height:8px;border-radius:2px;border:1.5px solid var(--muted);box-sizing:border-box}
+.pv-dot.yes{background:var(--green);border-color:var(--green)}
+.pv-dot.no{border-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.pv-dot.REPLACED{border-style:dashed;border-color:var(--accent)}
+.pv-dot.unverified{border-style:dotted;border-color:var(--accent)}
+.pv-note{font-style:normal;color:var(--muted);font-size:10.5px;border:1px solid var(--border);border-radius:4px;padding:0 4px}
+.pv-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+.pv-head h2{margin:2px 0 4px;font-size:18px;font-weight:600}
+.pv-head h2 small{font-size:12px;color:var(--muted);font-weight:400;margin-left:6px}
+.pv-head .eyebrow{margin:0}
+.pv-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pv-actions button{margin:0;padding:5px 12px;font-size:13px}
+.pv-actions .danger:hover{color:var(--red);border-color:var(--red)}
+.pv-msg{font-size:12.5px;color:var(--muted);margin-right:6px}
+.pv-msg.bad{color:var(--red)}
+.pv-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:12px}
+.pv-tabs button{margin:0 0 -1px;background:transparent;border:0;border-bottom:2px solid transparent;border-radius:0;padding:6px 14px;color:var(--muted);font-size:13px}
+.pv-tabs button.active{color:var(--text);border-bottom-color:var(--accent)}
+.pv-sources{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.pv-chip{margin:0;padding:2px 9px;border-radius:999px;font-size:12px;font-family:Consolas,"Cascadia Mono",monospace;border:1px solid hsl(var(--h,200) 38% 52%/.7);background:hsl(var(--h,200) 38% 52%/.12);color:var(--text);cursor:pointer}
+.pv-chip[disabled]{opacity:.7;cursor:default}
+.pv-chip small{color:var(--muted);margin-left:2px}
+.pv-chip:not([data-hl]){--h:200}
+.pv-expanded,.pv-diff{margin:0;padding:12px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);font:13px/1.65 Consolas,"Cascadia Mono","Microsoft YaHei UI",monospace;white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:calc(100vh - 400px)}
+.pv-expanded .seg.inc{background:hsl(var(--h) 38% 52%/.16);border-radius:2px;box-shadow:0 0 0 1px hsl(var(--h) 38% 52%/.16)}
+.pv-expanded.dim .seg{opacity:.35}
+.pv-expanded.dim .seg.hot{opacity:1;background:hsl(var(--h) 45% 52%/.3)}
+.slot{color:hsl(38 80% 62%);background:hsl(38 80% 50%/.14);border-radius:3px;padding:0 3px;font-size:.95em}
+.slot.bad{color:var(--red);background:color-mix(in srgb,var(--red) 16%,transparent)}
+.pv-diff{padding:6px 0}
+.pv-diff div{padding:0 14px 0 8px;display:flex;gap:8px}
+.pv-diff i{width:10px;flex:none;font-style:normal;color:var(--muted)}
+.pv-diff .add{background:color-mix(in srgb,var(--green) 16%,transparent)}
+.pv-diff .del{background:color-mix(in srgb,var(--red) 16%,transparent)}
+.pv-base select{width:auto;margin:0 0 0 6px;padding:3px 8px;font-size:12.5px}
+b.add{color:var(--green)}b.del{color:var(--red)}
+.pv-sec{margin:20px 0 8px;font-size:12px;letter-spacing:.04em;text-transform:none;color:var(--muted);font-weight:600}
+.pv-sec small{font-weight:400;margin-left:6px}
+.pv-main.pv-run .pv-head{margin-bottom:0}
+.pv-main.pv-run .pv-sec{margin-top:8px}
+.pv-stack{list-style:none;margin:0;padding:0;border:1px solid var(--border);border-radius:6px}
+.pv-stack li{display:flex;align-items:center;gap:10px;padding:7px 12px;border-top:1px solid var(--border);font-size:13px}
+.pv-stack li:first-child{border-top:0}
+.pv-stack li.no{color:var(--muted)}
+.pv-stack b{white-space:nowrap}.pv-stack code{color:var(--muted);font-size:11.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-stack small,.pv-stack .pv-state,.pv-stack .pv-kind{flex:none;white-space:nowrap}.pv-stack small{color:var(--muted);font-variant-numeric:tabular-nums}
+.pv-sp{flex:1}
+.pv-kind{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:0 5px;min-width:54px;text-align:center}
+.pv-state{font-size:12px}
+.pv-state.yes,.pv-state.ok{color:var(--green)}
+.pv-state.no{color:var(--muted)}
+.pv-state.bad{color:var(--red)}
+.pv-state.warn,.pv-state.REPLACED,.pv-state.unverified{color:var(--accent)}
+.pv-dom h4{margin:12px 0 4px;font-size:12px;color:var(--muted);font-weight:500}
+.pv-row{display:grid;grid-template-columns:3px minmax(160px,260px) minmax(60px,1fr) 56px;align-items:center;gap:10px;width:100%;margin:0;padding:4px 8px;text-align:left;border:0;border-radius:4px;background:transparent;color:var(--text);font-size:12.5px}
+.pv-row:hover{background:color-mix(in srgb,var(--border) 45%,transparent)}
+.pv-row .pv-id{font-family:Consolas,"Cascadia Mono",monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-row small{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.pv-meter{height:6px;background:color-mix(in srgb,var(--border) 60%,transparent);border-radius:3px;overflow:hidden}
+.pv-meter i{display:block;height:100%;background:hsl(var(--h) 38% 52%/.8);border-radius:3px}
+.pv-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:4px 14px 12px}
+.pv-card section{padding:10px 0;border-top:1px solid var(--border)}
+.pv-card section:first-child{border-top:0}
+.pv-card h3{margin:0 0 6px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+.pv-card h4{margin:8px 0 4px;font-size:11.5px;color:var(--muted);font-weight:500}
+.pv-card p{margin:4px 0;font-size:13px}
+.pv-link{display:grid;grid-template-columns:3px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;margin:0;padding:3px 0;text-align:left;border:0;background:transparent;color:var(--text);font:12.5px Consolas,"Cascadia Mono",monospace}
+.pv-link:hover{color:var(--accent)}
+.pv-link small{color:var(--muted);font-family:inherit}
+.pv-file{display:block;color:var(--muted);font-size:12px;padding:1px 0;overflow-wrap:anywhere}
+.pv-slot{font-family:Consolas,"Cascadia Mono",monospace;font-size:12px;color:hsl(38 80% 62%);background:hsl(38 80% 50%/.12);border-radius:3px;padding:0 4px}
+.pv-plain{margin:4px 0 8px;padding-left:16px;font-size:12px;color:var(--muted)}
+.pv-card button.secondary{margin:4px 0 0;padding:4px 12px;font-size:12.5px}
+.pv-dialog{border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);padding:20px;min-width:min(440px,90vw)}
+.pv-dialog::backdrop{background:rgba(0,0,0,.45)}
+.pv-dialog h2{margin:0 0 12px;font-size:16px}
+.pv-dialog input{font-family:Consolas,"Cascadia Mono",monospace}
+.pv-dialog .pv-actions{margin-top:12px}
+@media(max-width:1100px){.pv{grid-template-columns:240px minmax(0,1fr);height:auto}.pv-right{grid-column:1/-1}.pv-left,.pv-main{max-height:70vh}}
+@media(max-width:1100px){.pv-main.pv-run{height:70vh}}
+
+/* 拼装栈总图：三层自上而下 */
+.pv-flow{margin:4px 0 6px}
+.pv-flow-cap{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.pv-layer{border:1px solid var(--border);border-radius:8px;background:color-mix(in srgb,var(--border) 14%,transparent);padding:10px 12px 12px}
+.pv-layer>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
+.pv-layer>header b{font-size:13.5px}
+.pv-layer>header span{font-size:12px;color:var(--muted)}
+.pv-layer .pv-stack{background:var(--panel)}
+.pv-layer-req{border-style:dashed;padding-bottom:10px}
+.pv-layer-req>header{margin-bottom:0}
+.pv-arrow{text-align:center;color:var(--muted);line-height:1.5;font-size:15px;user-select:none}
+.pv-from{margin:8px 2px 0;font-size:12.5px;color:var(--muted)}
+.pv-from b{color:var(--text);font-weight:600}
+.pv-surface{display:flex;align-items:center;gap:10px;width:100%;margin:0;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.pv-surface:hover b{color:var(--accent)}
+.pv-stack li:has(>.pv-surface){padding:0}
+.pv-stack li:has(>.pv-surface) .pv-surface{padding:7px 12px}
+.pv-stack li:has(>.pv-surface):hover{background:color-mix(in srgb,var(--border) 45%,transparent)}
+
+/* Actual run provenance. Fragment hue is the same function as the directory list. */
+.pv-origin{margin:12px 0;border:1px solid hsl(var(--h) 38% 52%/.5);border-radius:8px;background:hsl(var(--h) 38% 52%/.07);overflow:hidden;scroll-margin-top:12px}
+.pv-origin.can-open{cursor:pointer}
+.pv-origin.can-open:hover{border-color:hsl(var(--h) 38% 52%/.85)}
+.pv-origin>header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid hsl(var(--h) 38% 52%/.2);background:hsl(var(--h) 38% 52%/.1)}
+.pv-origin-title{display:flex;align-items:center;gap:8px;min-width:0;flex:1;overflow-wrap:anywhere}
+button.pv-origin-title{border:0;background:transparent;color:inherit;font:inherit;margin:0;padding:0;text-align:left}
+.pv-origin>header small{font-size:11px;color:var(--muted)}
+.pv-origin-toggle{border:0;background:transparent;color:var(--text);font-size:11.5px;margin:0;padding:2px 4px}
+.pv-origin-content{padding:4px 12px 8px}
+.pv-run-text{font-size:13px;line-height:1.65;overflow-wrap:anywhere;color:var(--text)}
+.pv-run-plain{white-space:pre-wrap}
+.pv-run-text>:first-child{margin-top:8px}.pv-run-text>:last-child{margin-bottom:8px}
+.pv-run-text h1,.pv-run-text h2,.pv-run-text h3{font-size:15px;margin:10px 0 6px}
+.pv-run-text pre{white-space:pre-wrap;overflow-wrap:anywhere}.pv-run-text table{display:block;max-width:100%;overflow:auto}
+.pv-run-source{margin:10px 0}.pv-origin-meta{font-size:11.5px;color:var(--muted);margin:6px 0;overflow-wrap:anywhere}
+.pv-run-value{border-left:2px dashed var(--border);padding-left:10px;margin:10px 0}
+.pv-run-source>.pv-origin-meta{padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* 手机：三栏改单栏自上而下 */
+@media(max-width:760px){
+  #page-prompts.content-page{padding:16px 12px}
+  .pv{grid-template-columns:minmax(0,1fr);gap:10px;min-height:0}
+  .pv-left{max-height:46vh}
+  .pv-main{max-height:none;padding:14px}
+  .pv-main.pv-run{height:auto;max-height:80vh}
+  .pv-right{grid-column:auto;overflow:visible}
+  .pv-head{flex-direction:column;gap:8px}.pv-actions{justify-content:flex-start}
+  .pv-tabs{overflow-x:auto;scrollbar-width:none}.pv-tabs button{white-space:nowrap;padding:6px 12px}
+  .pv-row{grid-template-columns:3px minmax(0,1fr) 56px}.pv-row .pv-meter{display:none}
+  .pv-stack li{flex-wrap:wrap;row-gap:2px}.pv-stack code{flex:1 1 100%;order:5;white-space:normal;overflow-wrap:anywhere}
+  .pv-surface{flex-wrap:wrap;row-gap:2px}.pv-surface code{flex:1 1 100%;order:5;white-space:normal;overflow-wrap:anywhere}
+  .pv-expanded,.pv-diff{max-height:60vh}
+  .pv-flow-cap,.pv-hint{overflow-wrap:anywhere}
+}
+
+.pv-find-row{display:flex;gap:6px}.pv-find-row input{flex:1;min-width:0}.pv-find-row .secondary{padding:0 12px}
+.pv-find .pv-msg:empty{display:none}

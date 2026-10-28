@@ -1,0 +1,18 @@
+{
+  "user": {
+    "custom": "webp",
+    "v": 1792702127656
+  },
+  "codex": {
+    "custom": "webp",
+    "v": 1792701998490
+  },
+  "claude": {
+    "custom": "webp",
+    "v": 1792708839959
+  },
+  "deepseek": {
+    "custom": "webp",
+    "v": 1792702305994
+  }
+}

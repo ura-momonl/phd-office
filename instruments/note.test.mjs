@@ -1,0 +1,45 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {root} from '../automation/files.mjs';
+import {instrumentCatalog,saveInstrument} from './library.mjs';
+import {addInstrumentNote} from './run.mjs';
+if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Use scripts/run-tests.mjs');
+const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6lkAAAAASUVORK5CYII=';
+const card={name:'示例探针台（虚构）',model:'FICTIONAL-P',category:'示例电学',purpose:'虚构用途',connection:'虚构连接',cautions:'虚构提醒',code_paths:[],project_ids:[],photo:png};
+test('an agent can record a dated, sourced note on one instrument without touching the rest of the card',()=>{
+  const code='instruments/programs/note-fixture/driver.py';
+  fs.mkdirSync(path.dirname(path.join(root,code)),{recursive:true});fs.writeFileSync(path.join(root,code),'# Fictional driver; do not execute.\n');
+  const first=saveInstrument({...card,code_paths:[code],run_paths:[code],project_ids:['graphene-thz']});
+  const result=addInstrumentNote({instrument:'示例探针',text:'用户说明：可测约30 µm尺度结构的输运性质',source:'用户对话（虚构）'});
+  const saved=instrumentCatalog().items.find(i=>i.id===first.id);
+  assert.equal(result.id,first.id);
+  assert.match(saved.experience,/^- \d{4}-\d{2}-\d{2}（来源：用户对话（虚构））：用户说明：可测约30 µm尺度结构/);
+  assert.notEqual(saved.revision,first.revision);
+  for(const field of ['name','model','category','purpose','connection','cautions','photo','code_paths','run_paths','project_ids'])assert.deepEqual(saved[field],first[field],field+' unchanged');
+  addInstrumentNote({instrument:first.id,field:'cautions',text:'第二条',source:'虚构'});
+  assert.match(instrumentCatalog().items.find(i=>i.id===first.id).cautions,/虚构提醒\n- \d{4}-\d{2}-\d{2}（来源：虚构）：第二条$/);
+});
+test('notes need a source and a real, unambiguous instrument and field',()=>{
+  const base={instrument:'示例探针',text:'x',source:'s'};
+  assert.throws(()=>addInstrumentNote({...base,source:''}),/来源/);
+  assert.throws(()=>addInstrumentNote({...base,text:' '}),/内容/);
+  assert.throws(()=>addInstrumentNote({...base,field:'name'}),/field 只能是/);
+  assert.throws(()=>addInstrumentNote({...base,instrument:'不存在的仪器'}),/没有这台仪器/);
+  saveInstrument({...card,name:'示例探针台第二台（虚构）'});
+  assert.throws(()=>addInstrumentNote(base),/匹配到 2 台/);
+});
+test('the instruments module is reachable from the shared entry point',()=>{
+  const out=JSON.parse(execFileSync(process.execPath,['automation/run.mjs','instruments','list'],{cwd:root,encoding:'utf8'}));
+  assert.ok(out.length>=2&&out.every(i=>i.id&&i.name&&!('photo' in i)));
+  const help=execFileSync(process.execPath,['automation/run.mjs','help','instruments'],{cwd:root,encoding:'utf8'});
+  assert.match(help,/note <JSON文件路径>/);
+  const request=path.join(root,'.runtime/instrument-note-cli.json'),id=out[0].id;
+  fs.writeFileSync(request,'\uFEFF'+JSON.stringify({instrument:id,text:'CLI 补充记录',source:'虚构对话 task-fixture'}));
+  const noted=JSON.parse(execFileSync(process.execPath,['automation/run.mjs','instruments','note',request],{cwd:root,encoding:'utf8'}));
+  assert.equal(noted.id,id);
+  const shown=JSON.parse(execFileSync(process.execPath,['automation/run.mjs','instruments','show',id],{cwd:root,encoding:'utf8'}));
+  assert.match(shown.experience,/CLI 补充记录/);assert.equal(shown.has_photo,true);
+});

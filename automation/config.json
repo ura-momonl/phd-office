@@ -1,0 +1,314 @@
+{
+  "version": 1,
+  "profile": "D:/Main/PROFILE.md",
+  "ai": {
+    "automatic": false,
+    "execution": "existing-interactive-session",
+    "maxReviewPacketBytes": 8000,
+    "maxItemsPerReview": 8
+  },
+  "autonomy": {
+    "level": 1,
+    "per_project_running": 1,
+    "per_project_pending": 3,
+    "daily_runs": 6,
+    "max_chain_depth": {
+      "1": 0,
+      "2": 1,
+      "3": 3,
+      "4": 3
+    },
+    "debounce_seconds": 30
+  },
+  "modules": {
+    "agent": {
+      "entry": "../agent/run.mjs",
+      "actions": [
+        "status",
+        "work",
+        "ask",
+        "search",
+        "show",
+        "calls",
+        "title",
+        "handoff"
+      ],
+      "usage": "历史对话（只读，原文即检索源）：search <关键词，空格分隔，须全部出现在同一条对话里；标题含全部词的对话排最前，其余按最近；没有对话含全部词时（例如把记忆里的整句话直接放进来），自动改为按字词片段近似匹配，列出最像的 5 条候选和近似度，是候选不是结论，要看片段判断。能用 1～2 个有辨识度的短词时仍优先，精确> 列出匹配对话和命中片段（正在进行的这一轮发言不参与，免得搜到自己）；show <会话id前缀> 列出该对话每一轮的开头，show <会话id前缀>#<任务id前缀> 读那一轮的完整发言。calls <任务id前缀> 只读复盘一轮实际调用了什么：用户请求、按顺序的调用（工具、参数摘要、返回字符数、状态）和助手调用间说的话；calls <任务id前缀>#<序号> 展开某一次调用的输入和返回（过长只留头尾，加 :full 看全文）。程序不判断调用有没有用，也不打分，要结合用户请求自己判断；任务 id 前缀来自 show 列出的每一轮。title [会话id] 给仍用首句当标题的对话起标题；给 id 则重新起名（调用一次小模型）。对话第一次答完后、以及到第 10 条用户消息时各自动起一次标题，之后不再自动起。status 默认只给摘要（队列计数、最近 8 个会话），status full 才是含全部发言的完整快照（数 MB，几乎不需要；要读哪段对话用 show），work/ask 供工作台调度，不要在对话里自己调用。\n模型由明确的 model 选项或 agent/config.json 决定；消息提到 opus 不会切换模型。\n两位助手的子 agent 按主助手轮次收进默认折叠的总卡片，显示已完成 x/y，另列运行中、失败与已结束；展开后查看各子任务小卡片。无法确认独立身份的历史记录不计入数量；旧的已标记子 agent 发言也按历史记录收起，不猜测未标记内容的来源。卡片内保留来源标记，原始子 agent 发言不额外拼入后续主聊天历史；原生结果回传不变，子线程回复不替代主助手最终回复。后端修改须空闲重载后生效。Codex 交互式 work/chat 轮默认允许沙箱内联网（用户于2026-10-21批准）；保留 workspace-write 文件隔离及 on-request/auto_review 审批，不改变后台/ask、独立 Docker 离线沙箱或用户级配置。现有运行不热更新，后端空闲重载后后续工作轮生效。\nCodex 对话 work/chat 轮仅在明确 serverOverloaded 时等待 1 分钟、再等 3 分钟自动唤起，最多两次；沿用原模型与 thread，发续做提示而不重放原任务。对话显示等待提示，停止按钮可取消；不处理后台/ask、额度或权限错误、RPC 超时/拒绝及进程退出，不追溯唤起旧失败任务。需后端持续运行，续做会产生正常模型用量。\nCodex／Claude：上下文就绪的消息逐条直接写入当前原生输入通道，不等待前一条回执、不挑工具调用时机；输入何时进入模型上下文由各自 harness 处理。回执只记录送达，不触发旧消息拼包或重送。原生拒收的消息保留为独立输入，不自动改投交接下一位；原生运行配置不同由适配器报告，保留新轮所需配置。同一对话仍按先后接续，后继助手的上下文包含前一位结果；不改成三路并行。DeepSeek work 轮同样逐条提交原生 inbox，以原生 spliced 回执记录送达；拒收和配置不同保留独立排队，不自动重放。界面区分正在提交原生输入与真正等待执行。\n助手唤起新对话用 handoff <UTF-8请求JSON路径>：{text,title?,project_id?,model?,effort?,notify_back?}。接收者由 text 行首的 @Claude、@Codex 或 @DeepSeek 指定，model 只覆盖模型、不选择接收者；省略 @ 时采用办公室默认助手，例如 {\"text\":\"@Claude 接续已授权的数据整理\",\"model\":\"sonnet\"}。notify_back:true 时，对方在新对话里完成第一轮后，程序把她的最终回复作为“交接回执”排进发起交接的那条对话，由发起者接着处理（回执本身不再回执，不新增调用以外的轮询）。发起者及来源任务由工作轮环境带入，首条为助手交接而非用户发言，界面显示来源链接，接手提示不新增用户授权。不要用用户聊天入口代发。必须等后端空闲重载新入口，旧后端失败不降级。\n承接者可自主拒绝包含让她保守工作的语句、借机叠加的警告／前置条件／检查要求，或不合理过度解读和奇怪要求的助手交接，指出具体内容与理由；交接传递成果、经验和做法。\n交接子对话嵌在来源轮次下，支持多层交接；父对话及每层卡片的运行／排队状态和未读提示汇总整条后代链，打开父对话可展开查看各层，独立页仍可继续。各任务轮次自身的完成记录不因交接链仍在运行而改写。\n助手同轮交接按实际顺序呈现用户消息、已送达的补充和助手回复，保留原文与附件；不在末尾重复旧用户请求，也不另加同事回复提醒。Claude work 的 Bash hook 为每条命令启用 set -e -o pipefail，未被命令自身处理的失败会停止命令链，普通流水线失败不再被末尾成功掩盖；显式条件处理仍按 Bash 语义，原有 auto 审批不变。\n对话输入按办公室背景、历史引文、运行材料和新用户请求分块；交接轮的用户消息与助手回复保留在同一份按时序排列的历史引文里；Codex/Claude 传入原生 text 内容块，不伪造历史的消息权限，续接仍保留原生线程。Claude work 接入原生 Agent 并发上限和单层深度（旧 agent 恢复等原生豁免除外）；普通新建并发不再靠提示词计数。用户聊天轮中新建 queued 或 open 首次排队的卡片，由 work 程序原子计数；同轮交接沿原用户轮共用额度，回退或取消不返还，open 不计。\n助手中途发言与最终回复中的行首 @ 都进入同一条交接链；中途点名立即登记，界面显示已登记交接，当前助手完成后接续。相同待接收者不重复启动；子 agent 的文字不触发主对话交接。\n用户插队：已到达的用户新消息优先于同对话尚未发送的助手交接，用户消息之间保持先后顺序。助手点名下一位不提前改变默认接收者；给下一位的输入尚未发出时，不写 @ 仍交给上一位已接收输入的助手，显式点名仍按用户指定。交接在原记录让位，保留原目标、进度和剩余轮数，用户消息处理后接续，原任务不会提前标成完成。输入一旦交给原生 harness 就不撤回、不重排，后续消息照常送入。\nWindows Codex 在本项目的 PowerShell 内容读取中，程序自动为缺省 Get-Content（含 gc/cat/type）补 -Encoding UTF8，并设置当前命令进程的 UTF-8 控制台与文字管道；显式 Encoding 保留。不再因省略编码拒绝读取。原生提升审批和沙箱仍保留；不修改 profile、系统区域或文件字节。"
+    },
+    "housekeeping": {
+      "entry": "../housekeeping/run.mjs",
+      "actions": [
+        "plan",
+        "run",
+        "log"
+      ],
+      "usage": "定时清理：每天由后端现有节拍自动执行一次（不起新进程、不调模型），清掉可再生的残留——运行事件原始日志 events.jsonl（10 天）、每次运行实际发给模型的提示词副本 prompt.txt/native-prompt.txt/prompt-manifest.json（30 天，含重试后放在编号子目录里的那些）、验收副本（14 天）、临时脚本（7 天）、测试报告（14 天）、测试副本（2 天）、skill 备份（30 天）、队列改前备份 .runtime/work-edits（保留最新 10 份且超过 30 天）、入库前 catalog 快照（保留最新 3 份且超过 10 天）、文献全文库 sqlite 整库快照（约 800MB 一份，保留最新 1 份，3 天）、项目根 tmp/（7 天）。任何规则都不删最近一天内改过的东西，不跟随符号链接。plan 列出现在会删什么、各类大小、只报不删的三类（运行目录里任务自己留下的文件，>10MB 的下载、附件、写前快照，可能被某次结果的 outputs 引用；项目 FRAMEWORK.md 改前全文，项目版面唯一的回滚来源；一个月没改过、超过 50MB 的 .runtime 子目录），以及会缓慢增长的存储的当前体积和各自上限（对话 .runtime/agent/sessions.json 40MB、对话轮 work/turns.json 24MB、调用日志 .runtime/usage/runs.jsonl 16MB、记忆向量索引 200MB，超过时标记 over）；run 立即执行；log 看最近的删除记录（.runtime/housekeeping/ledger.jsonl）。housekeeping/policy.json 可写 {\"enabled\":false} 停用，或 {\"days\":{\"规则id\":天数}} 调整保留天数。后端修改须空闲重载后生效。"
+    },
+    "trigger": {
+      "entry": "../trigger/run.mjs",
+      "actions": [
+        "add",
+        "list",
+        "show",
+        "cancel",
+        "paper-status"
+      ],
+      "usage": "定时交接：到点由后端自己新开一个对话，把你写好的交接交给接手者（等同到点替你执行一次 agent handoff）。add <UTF-8 JSON 文件路径>：{at 或 in_minutes, text, title?, project_id?, model?, effort?, grace_minutes?}；at 是带时区的 ISO 时间（如 2026-10-22T20:00:00-05:00），in_minutes 是从现在起的分钟数；text 写给接手者的交接正文（须自带用户原话出处和要做的事，到点时你已不在场）；grace_minutes 默认 120，后端到点没运行时，晚到多久内仍补发，超过记为 missed 不发送。须从助手工作轮发起（发起者与来源任务由环境带入），登记后写进 .runtime/trigger/triggers.json。list 只列待触发，list all 含已触发／失败／错过／取消；show <id前缀> 看全文；cancel <id前缀> 取消待触发项。\n触发由后端现有 10 秒节拍检查，不新增进程、定时器或模型调用，等待期间不耗额度；到点才产生一次正常的交接对话。须开机且办公室后端在运行；只触发一次，失败写 failed 与原因，不重试，也不循环。后端修改须空闲重载后生效。\n个人量化纸面跟踪复用同一节拍，但不创建对话或调用模型。paper-status只读查看启用状态、下次月末信号/模拟成交、前向净值、后端心跳与加载状态；简报入口 workspace/outbox/personal-quant/paper/LATEST.md。跟踪只在用户已初始化的账本启用，月末与下一交易日各一个程序阶段，每月一份已读卡片，不接账户。首次初始化和手动到期检查见 workspace/shared/personal-quant/README.md。"
+    },
+    "weekly": {
+      "entry": "../weekly/run.mjs",
+      "actions": [
+        "status",
+        "view",
+        "context",
+        "preview",
+        "apply",
+        "export",
+        "tick"
+      ],
+      "usage": "status|view [周一日期] 只读；context [周一日期] 给助手读取项目框架、现有目标、任务、邮件日期与日程，未指定周次时工作日取本周、周末取下周（America/Chicago）。preview <JSON文件路径> 只读预览；apply <同一JSON文件路径> 按最新现状接收助手选出的目标并自动排期：周计划里只有待办（queued）的任务，没有任务的新目标由程序建成待办、未开始的已有任务被提升为待办；助手的待办在前置完成后由工作台自动开跑，所以先用 preview 看 queueing.will_run 并让用户认可再 apply。请求格式与边界见 weekly/README.md。export 导出计划/组会提纲，计划同样在周末默认取下周，组会仍取上个日历周；tick 周一开周只顺延目标，不复制旧工作块。"
+    },
+    "calendar": {
+      "entry": "../calendar/run.mjs",
+      "actions": [
+        "list",
+        "add",
+        "update",
+        "remove"
+      ],
+      "usage": "list [天数] 只读，默认未来 14 天：邮件/任务的截止与复查，加上事件账本（芝加哥时间）。add <JSON文件路径> 登记 {title,start,end?,kind:event|deadline,project_id?,note?,recurrence?:{frequency:daily|weekly|monthly|yearly,interval?:1,until?:YYYY-MM-DD}}；start/end 为 YYYY-MM-DD、芝加哥本地 YYYY-MM-DDTHH:mm 或带时区 ISO 时间；kind=deadline 只有 start，会按截止前 5 天和当天提醒。重复规则按芝加哥墙上时间展开，until 含当天，留空不限期；月/年中不存在的日期跳过。update <JSON文件路径> 用 {id,...修改字段} 修改事件（重复事件修改整个系列；recurrence:null 取消重复）。remove <事件id> 删除单次事件；重复事件用 remove <JSON文件路径>，内容 {id,scope:one,occurrence_date:YYYY-MM-DD} 仅删本次或 {id,scope:all} 删整个系列。周计划页面以悬浮小窗新增/修改，重复事件删除前选择仅本次或整个系列。 批量新增用 add <JSON文件路径>，内容 {events:[{title,start,end?,kind?,project_id?,note?},...],recurrence?:{frequency,interval?,until?}}，所有事项共用外层重复规则，各自从自己的 start 起算；整批校验后一次保存，任一项无效整批不写入。界面共用一次填写的主题／类型／项目／备注，“再加一个时间段”仅新增日期和起止时间，保存后各时间段仍为独立系列，编辑／删除不连带其他时间段。时间输入为24小时制，支持09:30或0930，留空为全天，并提供半小时间隔的时间建议；CLI批量格式不变。 周日历标题按时间块高度多行显示，放不下时在最后一行省略，鼠标提示或详情保留完整标题；日历事件块可点击或键盘回车打开旁边的详情卡片，查看时间、项目、备注及重复规则，并修改／删除；点外部、Esc或关闭按钮收起。下方不再另列长日程列表；月视图“还有N项”切到该周查看全部。"
+    },
+    "usage": {
+      "entry": "../usage/run.mjs",
+      "actions": [
+        "status",
+        "refresh",
+        "speed"
+      ],
+      "usage": "speed [天数，默认 7，0 为全部] 按模型列输出速率（输出 token ÷ 整次调用耗时，含排队、读上下文和推理；中位数只统计无工具调用且输出 ≥ 300 token 的完成调用），数据来自现有调用记录，页面「额度与消耗」里也有同样的表；status 只读，看 Codex／Claude 额度、DeepSeek 余额和最近 3 天按提供方的调用合计；status full 才是逐条调用记录（数百 KB，需要逐条分析时先用程序筛选再看）；refresh 刷新。页面分列总输入（含缓存）、总输出和非缓存指标，缓存是输入的子集，不重复相加。DeepSeek 统计本轮及已登记子助手；失败过程中已观测用量以 usage_partial 标明并计入下界，partial_usage 是部分记录数，不冒充完整用量；无记录仍为未知，不估算填零。顶部 DeepSeek 余额来自官方只读 /user/balance，按返回币种显示总余额（含赠金），悬停看明细；余额旁标峰值／谷值，不显示更新时间行。按北京时间周一至周五 09–12、14–18 为峰值，其余、周末和中国法定节假日为谷值；节假日表覆盖 2026 年，未覆盖年份的高峰候选时段标待核。失败标注上次余额或不可用，不伪造零值、百分比或重置时间，复用现有刷新。新 Claude 运行包含子助手用量，并在 model_usage 保留实际模型分项；重复累计结果与续接只记增量，无法确认基线时标用量未知，旧账不自动补写。用途与模型表统计参与任务数，不能跨模型相加。settings 中 automatic_codex_reset_credit 开启后，额度刷新及新 Codex 任务启动会读取最新额度，普通 Codex 窗口用尽且有可用卡才自动兑换一张；不购买、不重跑失败任务、不新增定时器或模型调用。兑换审计在 .runtime/usage/reset-credits.jsonl。"
+    },
+    "remote": {
+      "entry": "../remote/discord.mjs",
+      "actions": [
+        "check",
+        "discord"
+      ],
+      "usage": "check 只读检查配置；discord 启动本人/服务器/频道白名单桥接器。默认 DISCORD_NOTIFY=inbox，仅新事项按 ID 提醒一次，更新与重启不重复。卡片同步 reply/accept 选项，不同步进入对话。通知不调用模型，回复按钮沿用工作台执行规则。Open-Discord-Bridge.cmd 隐藏启动；remote/Install-Startup.ps1 安装当前用户登录自启；remote/Stop-Discord.ps1 停止。配置及验收见 remote/README.md；Token 仅本地填写。"
+    },
+    "work": {
+      "entry": "../work/run.mjs",
+      "actions": [
+        "list",
+        "add",
+        "update",
+        "plan",
+        "handoff",
+        "editor",
+        "edit",
+        "run"
+      ],
+      "usage": "list 给有末尾 end 标记的总览；list <项目id|open|queued|active|waiting_user|failed|review> 看明细，list all 看摘要，list full 看完整记录。handoff <ID或唯一前缀> 读取结果、父归属和执行历史。add <UTF-8 JSON文件路径>：{title,kind(mail/procurement/literature/data/cad/presentation/experiment/decision/framework),actor?,goal?,project_ids?,plan_node_id?,parent_id?,dependencies?,status?:open|queued,model?,effort?,due_at?,require_outputs?,log_requirement?}。parent_id用于归类，子操作默认沿用父操作的项目及框架位置，执行时带父操作目标和资料；不构成依赖、不自动推出父操作完成；真正前置放dependencies，外层DAG仍使用这些前置。简单工作一个操作即可，需要时agent再创建子操作。update <UTF-8 JSON文件路径>：{id,status?,handoff?,outputs?,brief?,parent_id?,reason?,goal?,plan_node_id?,require_outputs?,log_requirement?}。业务操作用status:done、handoff结果说明、outputs成果入口一次提交；后继和项目状态页读取同一份结果，不另写回复末尾的状态摘要，也不自动复制成brief.summary。brief仅在需要额外来源事实/未决事项时可选填写；work handoff读取完整记录。路径可用办公室根目录相对或绝对路径，纯说明可无文件。显式require_outputs及log_requirement仍按登记的约定处理，研究日志不由项目归属自动要求，普通操作日志放logs/。回复结束仅代表执行轮结束：未提交完成则操作回open，显示上一轮已结束未提交完成；不从回复路径、文件事件或续跑文字猜交付、不自动重试或转等用户。waiting_user由agent在确实缺少输入/用户决定时明确登记。run <UTF-8 JSON文件路径>：{id:操作ID,input:新输入或执行方向,after?:[操作ID或执行ID]}，明确安排同一操作的下一次执行；after等指定步骤本次执行结束后带结果回原会话，成功、失败、取消或本轮未提交均可返回（登记操作ID时，其名下仍在进行或排队的子操作也一并等候），由负责agent决定接续，不自动重试或完成父操作；运行记录存turns.json并关联operation_id，保留原结果和既有会话，完成后由agent向原操作提交新结果。不会把原操作done反复改active，不增加重跑布尔字段或自动循环器。执行历史分开记录本轮是否结束及本次操作提交结果。editor <id>、edit <JSON文件路径>沿用现有步骤编辑及revision；plan生成计划页，split为已有队列拆分入口。queued交给现有工作台派发，open不运行；用户实验仍由用户执行。直接聊天交办、已授权步骤接续、自主来源和额度沿用work/AUTONOMY.md及既有权限，不因parent_id取得额外授权。auto_start已取消。"
+    },
+    "settings": {
+      "entry": "../dashboard/settings.mjs",
+      "actions": [
+        "show",
+        "set",
+        "skills"
+      ],
+      "usage": "办公室运行参数（与工作台“更多-设置”页是同一份白名单；对话和后台调用参数保存在 agent/config.json，新建任务默认模型保存在 work/policy.json。每个模型选择框后都有独立的推理强度。reasoning_effort 控制 Codex，claude_reasoning_effort 控制 Claude，deepseek_reasoning_effort 控制 DeepSeek；前两位可选 low / medium / high / xhigh，DeepSeek 可选 off / low / high / max。task_models.mail / task_models.literature / task_models.presentation 分别选择邮件、文献、汇报的新任务模型，task_efforts.mail / task_efforts.literature / task_efforts.presentation 分别设置对应强度，保存到 work/policy.json。任务模型和强度在创建时记录，助手随模型切换；不改已有任务、普通聊天或后台收件判断，保存不启动任务。已部署后的设置修改无需重启；新增设置功能首次部署须空闲重载后端）。show 列出全部可改项、当前值和取值范围。max_active_agents 为同时运行的助手任务上限（1～10，默认 10，程序强制：达到后新任务保持排队，有空位后下一次调度自动接上，不含子 agent）；subagent_max_concurrency 为两位助手每个任务的子 agent 并发上限（1～10，默认 10，不含主助手），每轮工作上下文携带当前值；Codex 由原生线程上限执行，改值后下一次调用重开 thread；Claude 由原生 Agent 新建上限执行（原生恢复旧 agent 等豁免路径不受约束）；都不是跨任务全局信号量，也不保证服务容量。子 agent 只限同时存在的数量，不设每轮累计；queued_cards_per_turn 为每轮新建 queued 卡片上限（1～50，默认 10，由程序计数拒绝超额，上下文携带当前值）。set <JSON文件路径> 文件内容 {\"changes\":{\"reasoning_effort\":\"medium\",\"memory_v2.auto.idle_minutes\":45}}，只写有变化的键，任何一项不合法则整批不写；改动记入 .runtime/settings/changes.jsonl。只在用户要求调整时才改：这些项决定模型、推理强度和后台自动调用，直接影响额度消耗，改前说明旧值、新值和代价；总开关、autonomy、凭据不在此列。skills 只读列出项目内自建 skill（.agents/skills）：名称与描述、正文 token 估算、Claude 侧链接是否有效；仅核对文件与链接，不代表当前会话已发现或加载，估算不是实际账单。设置页的技能标签可查看正文及依据。助手可自主创建和修订项目内 skill：本体放 .agents/skills/<名>/SKILL.md（name 与目录同名，description 写触发条件），正文开头写依据、适用条件和验证范围；在 .claude/skills/ 建同名目录链接指向本体。skills 动作另有只读的“底座技能”部分：列出 Claude 和 Codex 在项目外自带的技能（用户级、官方同步、系统自带）及 token 估算，对照两边同名的用户级技能是否一致，插件目录只计数；内置而无文件的技能不在其中。覆盖前保留整个旧目录到 .runtime/skill-edits/<名>/<时间戳>/；创建或修改后通过两位助手原生入口核验。skill 不自动发起任务、不扩权；完整约定见 AGENTS.md 的“项目内自建 skills”。只管项目内的，用户级目录不在此列。"
+    },
+    "procurement": {
+      "entry": "../procurement/run.mjs",
+      "actions": [
+        "list",
+        "check",
+        "compare",
+        "record",
+        "ece-prepare",
+        "ece-status",
+        "ece-submit",
+        "ece-close",
+        "ece-track"
+      ],
+      "usage": "list 全部；check <请求id> 核对已录入报价的逐项乘法、小计及含运费/关税/税的总额，列出教育优惠、交期、有效期等缺项（不自动读取原文、不批准采购）；compare <请求id> 比较各家报价（只比较，缺什么会列出）。record <JSON文件路径> 登记或覆盖一条采购：{id(必填,小写字母数字和-), title(必填), specifications:[], required_by, mail_task_id, vendors(必填):[{name(必填), source(必填,来源邮件或文件), quote_number, currency, quoted_total(数字或null), shipping_included, tax_included, lead_time, valid_until, technical_match, items?:[{description,part_number,quantity,unit_price,line_total}], charges?:{subtotal,shipping,tariff,tax}, education_discount?:{status:unknown/confirmed/not_offered,evidence:原文依据}, commercial_notes?:[]}], notes}。金额验算按两位小数货币逐行四舍五入；未知金额填 null，不当作零。record 拒绝金额矛盾和无依据的已确认优惠，完整覆盖该 id；更新前先 list，保留无关信息。ECE网站工作流：ece-prepare <JSON文件路径> 按现有采购条目填单并上传一份PDF，保留待审窗口30分钟，绝不自动提交；输入为 {request_id,vendor,first_name?,last_name?,email?,phone?,shipping?:{street,room,city,state,zip},approver,spend_category,worktag,business_purpose,note_to_approver,approved_cost,approved_cost_basis,quote_attachment,links?:{料号:官网URL},shipping_rate?:Ground/2nd Day Air/Overnight,additional_information?}，姓名/电话/地址可来自本机defaults；不默认经费或金额。ece-status <preparation_id> 看阶段、预览、附件和approval_digest；仅Duo需用户接手，NetID使用已有保存项自动登录一次。ece-submit <JSON文件路径>：{preparation_id,approval_digest,confirmed_by_user:true,confirmation_source:用户批准来源}，只记录真实具体批准，不构成授权；在同一活页面核对并提交一次，回执/唯一新申请记录核对后登记台账。ece-close <preparation_id> 关闭待审窗口；ece-track <采购id> 只读查已登记申请状态。已有purchase_request的采购拒绝重复准备；失败或超时不自动重试。ece-submit 返回 queued:true 只表示命令已交给活页面；只有 ece-status 为 submitted 且有网页回执和唯一新申请编号，才算已提交。stopped/unconfirmed/过期先看日志、回执和学校申请记录，不当作失败重提。完整例子及边界见 procurement/README.md、procurement/examples/ece-request.example.json。"
+    },
+    "literature": {
+      "entry": "../literature/run.mjs",
+      "actions": [
+        "wos",
+        "list",
+        "browse",
+        "show",
+        "daily",
+        "recommend",
+        "discover",
+        "backfill",
+        "ingest",
+        "curate-task",
+        "library",
+        "fetch",
+        "login-set",
+        "auth-status",
+        "record",
+        "access",
+        "resolve",
+        "zotero-status",
+        "reconcile-work"
+      ],
+      "usage": "reconcile-work <包ID|all> 默认预览已入库包对应的遗留派工，--apply 写回；正常入库也自动收尾，失败/取消/运行中的记录保留，不调用模型。文献工具导航：完整入口、用途和验证状态见 literature/README.md「找文献工具」。wos \"<WoS查询>\" [--limit=1..50] [--page=1..] [--sort=TC+D] 查 Web of Science 题录和被引，单页 JSON 含 quota，不返回摘要/全文、不入库；密钥读 WOS_API_KEY 或 .runtime/literature/wos.credentials.local.json 的 api_key，机构成员档已实测可用。Wiley TDM token 在 .runtime/literature/wiley.credentials.local.json 的 api_token，已保存但尚未 API 实测、未接入 fetch；官方调用资料见 README。\n界面：资料库→文献，推荐卡显示理由、全文状态及推荐依据；点卡片打开阅读核对面板，顶部可到本地PDF或论文页面，段落按钮跳到推荐解读/原始摘要，收起返回卡片。搜索限当前范围；采集与索引状态折叠展示，RAG、页码高亮、笔记索引和反馈尚未接入。每日推荐：daily [YYYY-MM-DD] 看某天推荐与理由（默认Chicago今天）；recommend <JSON文件> 发布 {date,items:[{doi,reason,basis:abstract|fulltext,question,evidence,inspiration,reach}],note}，篇数灵活，零篇须说明；修订已有日传replace:true。推荐与元数据永久留存，不代表用户已读或喜欢，不下载全文。渐进查看：browse [daily|candidates|pool|local，默认daily] [页码，默认1] [关键词] 每页20条题名，不带摘要；show <doi> 看单篇现存摘要和全文入口，两者不联网。discover [天数] 抓候选一次，无模型/全文下载，完整数据写.runtime/literature，默认只输出统计和首屏题名；已有清单用browse，不反复discover。每日任务复用后台节拍，Chicago早8点后空闲时每天一次，失败不自动重试，服务关闭时不运行，不补跑多天；开关在sources.json.daily_recommendations。日常统一用 fetch <doi或arXiv id>：缓存→Zotero本地PDF→本地插件调用Zotero原生查找全文→去重后的OA原站→原有预算约束下的OpenAlex托管PDF；实际PDF经身份和SHA-256核验后移入literature/fulltext并登记（Zotero里不留副本），无需另跑record。保持Zotero运行，已启用zotero_native；原生可取得出版社版或作者稿，也可能找不到，不保证订阅版、不继承Edge登录、不自动操作验证界面。首次新获取返回native_acquired:true，再次复用缓存。不是官方Connector的自动点击；原生未找到时仍可Connector保存一次后重复同一fetch。日常UW取文已停用，鼠标宏仅显式特殊调用、绝不自动兜底；fetch --login仅返回停用说明，旧--no-campus兼容保留。显式--source/--hosted-only不查询Zotero。 fetch <DOI> --zotero-only 只用缓存及本地/原生Zotero，缺文件即返回needs_attention，不查OpenAlex元数据/额度/托管、不启OA浏览器；仍接受核验过的arXiv作者稿，不与其他来源或登录模式混用。原站仅404/410或正常页面无PDF可换独立来源；已有请求不重试。安全耗尽时search_suggested:true，助手可按README少量检索补漏；fetch <已登记DOI> --source=<已观察到的公开PDF地址> 仅核验该公开来源，不混用--login、不消耗托管额度。平台无副本/额度不可用/请求失败可跳过该平台，不重试；身份校验失败即停。arXiv作者稿核对官方期刊DOI、固定版本来源、题名及两位不同作者的完整姓名（允许同姓）；旧作者证据只兼容哈希未变缓存，新下载不按姓氏放行；提字异常需人工视觉核验并绑定哈希，缓存仍不联网。原站限流/拒绝/验证码停原站及镜像，不切UW、不重试；仅可试独立公开托管副本；未知异常或身份失败整篇停止；托管平台状态另记provider_notes；API key用OPENALEX_API_KEY或.runtime/literature/openalex.credentials.local.json（api_key，本机明文、不进备份/测试副本）。fetch不再使用或刷新UW会话；正常浏览器中的Duo仍由用户完成。login-set 在用户终端保存本机明文NetID（不进备份，勿发聊天）；auth-status 不显示敏感值。list 当前有效登记（不含deferred-publication归档）；归档记录仍保存在catalog，设library_status为active可恢复；当前关闭通用arXiv发现，未核实期刊发表者暂不入库，已发表作者稿不排除；library [init|status|ingest [条数] [--force]|embed [条数]|search \"<查询>\" [--k=8] [--refs]|hsearch \"<查询>\" [--k=8]] 派生SQLite索引（.runtime/literature/library.sqlite，可重建）：ingest 全部使用本机GPU MinerU（保留公式/表格/页码，按章节切块约1200字；失败列failed/mineru_errors，不回退其他解析器；旧索引不自动重建，已有文献由5080批量处理；参考文献块标refs默认不检索），embed 用本机GPU的BAAI/bge-m3（独立venv .runtime/tools/embed，fp16，离线运行，首次下载需 RAG_ALLOW_DOWNLOAD=1），search 为 BM25，hsearch 为 BM25+向量 RRF 融合（每次起一个GPU进程约9秒），都返回 doi/页码/片段，无模型API调用；增量：新入库论文再跑 ingest 与 embed 即可（按PDF哈希跳过未变）；扫描/图像PDF无文字会列入 failed；record <JSON文件> 登记{doi,title,authors:[],year,project_ids:[],fulltext_path(真实PDF),zotero_key}；resolve <doi> 联网取Crossref元数据并登记；access <doi> 给校园入口；zotero-status 查本地Zotero接口。老文献回填（无模型调用）：backfill \"<年> [起序号] [条数]\" 首次联网按 sources.json 的 backfill.topics（OpenAlex 主题分类）× 期刊清单取该年候选，按被引降序，程序粗筛（封面重复、更正回复、撤稿、排除词、同题重复）后存 .runtime/literature/backfill-<年>.json，并分页给 序号|刊|被引|题名（默认前150条），再看后面的传新起序号；ingest <JSON文件> {year,ranks:[序号]}（或 dois:[]）对选中的补摘要（标来源，残缺摘要不收）、取作者日期，登记为 library_tier=library；摘要仍缺的照登记并列出，按“仅题名”处理。curate-task \"<年> <被引门槛数> [codex|claude]\" 只打印一份回填任务请求（目标文案来自 prompts/fragments/literature/backfill-goal.md，status=open，不入队、不调模型），要跑时把它交给 work add；被引门槛必须由用户或派出者给出。 首页无DOI时只接受题名绑定的文末出版DOI块，或首页题名/PDF Title/唯一Subject DOI一致；参考文献DOI不放行。浏览器文件登记复用已验证的已有文件，不覆盖；失败返回结构化原因。PDF解析失败按pdf_reason区分结构损坏/解析器缺失/权限/超时/输出上限/文档限制，数字退出码为parser_exit_code；不返回原始stderr，不自动修文件。"
+    },
+    "prompt": {
+      "entry": "../prompts/run.mjs",
+      "actions": [
+        "fragments",
+        "uses",
+        "show",
+        "new",
+        "mv",
+        "rm",
+        "lint",
+        "standing",
+        "snapshot",
+        "layers",
+        "dupes",
+        "where",
+        "overhead",
+        "run"
+      ],
+      "usage": "提示词管理（不调模型）。模型可见的文案放在 prompts/fragments/<id>.md，代码经 prompts/templates.mjs 填值使用；片段里 {{名}} 是调用方给的值，{{>片段id}} 是引用另一个片段（单次替换，插入的内容不再解析）。常用规则只在 prompts/fragments/rule/ 写一次，其他片段引用它。fragments 列出全部片段（字数、需要的值、被谁引用）；uses <片段id> 看某片段被哪些片段和代码使用；show <片段id> 看原文；改、增、删：改就直接改 prompts/fragments/<id>.md；new \"<片段id> [正文]\" 新建；mv \"<旧id> <新id>\" 改名并同步代码、其他片段和登记表里的引用；rm <片段id> 删除（还有地方在用就拒绝并列出引用）（new 和 mv 的参数要加引号，写成一个字符串）；lint 检查缺失/循环引用、代码引用不存在的片段和未登记的 purpose（错误退出码为 1）；未使用片段、内联长句和重复句只列为查看线索，不要求豁免登记。snapshot [accept] 对固定的虚构输入渲染各模板并与 prompts/golden.json 比较，列出被改动的案例；确认差异无误后用 snapshot accept 接受新文案（测试会据此检查，防止改片段时无意改变其他场景）。盘点类：standing 按调用用途（purpose）和 provider 列出该调用拿到哪些常驻提示词（SYSTEM_PROMPT、AGENTS.md、CLAUDE.md；lint 会检查代码里新出现的 purpose 是否已在 registry.json 登记）。layers 列出各提示词面（常驻/每轮拼装/内联/文件/模块文档/skill，登记在 prompts/registry.json）的大小与由谁载入；dupes [最少汉字数，默认12] 找出出现在 ≥2 个文件的相同句子；where <短语> 字面查找该短语在各提示词文件的行号；overhead [最近运行数，默认600] 按用途统计后台调用的实际输入 token 与提示词大小（仅 Codex 运行有记录）；run <运行目录前缀> 看某次运行目录里的文件大小。界面：更多 → 提示词 → 按运行，最近100段对话列出全部保留输入，包含后续轮次和任务内交接，对话轮次与交接序号分别显示；查看原生发送记录（优先 native-prompt.txt，缺失时明确标为拼装稿），右侧为 manifest 片段清单；续接只显示本轮增量，不含原生常驻层和线程历史。新运行支持与目录同色的来源分块、内部来源和原样全文切换；框底已移除当时片段原文及查看当前版本面板，点击彩框仍可进入目录详情。位置在渲染时记录并核对正文哈希，旧运行不猜来源。片段正文由助手改文件或用命令修改，页面不提供源码编辑。详见 prompts/README.md；设计与分阶段见 prompts/DESIGN.md。"
+    },
+    "instruments": {
+      "entry": "../instruments/run.mjs",
+      "actions": [
+        "list",
+        "show",
+        "note"
+      ],
+      "usage": "仪器图鉴（实验室设备的用途、连接、使用经验、注意事项）。list 紧凑列出全部；show <名称关键词或id> 看一台的完整卡片。note <JSON文件路径> 给一台仪器追加一条带日期和来源的记录：{instrument(名称关键词或id), field(experience|cautions|reference_notes|control_notes，默认 experience), text, source}。用户告诉你某台设备的能力、限制或使用经验时，用它记下来，其他字段原样保留。"
+    },
+    "software": {
+      "entry": "../software/run.mjs",
+      "actions": [
+        "list",
+        "show",
+        "plan"
+      ],
+      "usage": "软件资产由 Codex 维护并接手操作。list 每项一行：操作者、工作目录、连接器、启动前提及验证结果；show <id> 看完整路线与验证范围；list full 输出完整 JSON（兼容原列表）。working_directory 是唯一唤起目录字段，不表示当前 MCP 已加载。Claude 涉及软件时按 software/README.md 以 @Codex 转交，写目标英文名和目录。plan <JSON文件路径> 只生成计划，不启动软件：{app(必填,list 里的 id), goal(必填), inputs:[], outputs:[]}。不自动探测、不轮询。"
+    },
+    "browser": {
+      "entry": "../browser/run.mjs",
+      "actions": [
+        "status",
+        "login-set",
+        "read",
+        "run"
+      ],
+      "usage": "status 看已登记站点、是否已存账号；login-set <站点> 由用户在自己的终端输入账号密码，存本机 .runtime/browser（不要把密码发进聊天）；read <站点> [路径或网址] [--shot=文件.png] [--headed] 登录后读取页面文字；run <站点> <脚本.mjs> [参数] 执行 export default async (page,{context,args}) => 结果 的脚本。每次调用都用已存账号重新登录（不保存、不复用 cookie），只试一次、失败即停。只读取不改动；预约、提交等会改变站点数据的操作先让用户确认内容。站点在 browser/sites.json 登记。"
+    },
+    "tui": {
+      "entry": "../tui/app.mjs",
+      "actions": [
+        "start",
+        "snapshot",
+        "curves"
+      ],
+      "usage": "终端版对话前端（命令 piri），连本机 Workbench 后端（先打开 Workbench）。首页是九帧像素角色（每帧 500ms、4.5 秒循环）、重绘的 PIRI OFFICE 标题、三位助手剩余容量和输入框；小窗口自动缩小图标，空间不足时显示文字标题。首页带老电视效果（像素扫描线、暗角、雪花、闪烁、翻滚亮带、偶发行抖动、开机展开），其他页面不加屏闪、滚动亮带或开机效果；输入框和状态栏不受影响；/crt 开关。终端支持 sixel（Windows Terminal 1.22+；启动时自动探测）时，首页人物和大标题改为一整幅真像素图（原图 1:1 放大、像素级扫描线与发光），不支持时用字符画；/sixel 开关。start 进入全屏界面；snapshot [宽x高] 打印一帧用于检查。curves 启动独立曲线调节页（本机 23487 端口），支持完整 0–255 光滑 RGB 曲线、原图对照和真实首页渲染预览，暗部、亮部及黑白端点均可调整；保存到 .runtime/tui-curves/selection.json，由助手读回后更新 tui/mascot-curves.json，TUI 启动时加载已应用曲线；页面保存不自动覆盖已应用版。调节页和启动入口保留，可反复修改。Ctrl+K 切换/搜索对话，默认自动跟随上一位回复者；@Claude/@Codex/@DeepSeek/@all 或 Alt+1…4 指定下一条由谁回答，Alt+0 恢复自动。默认可直接拖选文本，Ctrl+C 复制选区（无选区时退出），Esc 取消选区；选取时画面暂留，按键或滚轮恢复更新。滚轮和点击输入文字定位光标同时可用；Alt+M 或 /mouse 仍可切换原生拖选模式，↑↓/PgUp/PgDn 仍可滚动。Windows 复制使用系统 clip.exe，控制台模式通过已安装的 Python 调用 Win32 接口，不启动 PowerShell 脚本。在哪个文件夹里启动，在那里新建的对话就绑定该文件夹，Claude 和 Codex 可读写其中的文件（在办公室根目录或 Windows 系统目录启动则没有额外文件夹）。恢复或切换已有对话时，正常目录沿用后端保存的原绑定，不随启动目录改变；历史误绑的 Windows 系统目录不再授予额外读写权限；WebUI 新建对话仍不额外绑定文件夹。"
+    },
+    "dashboard": {
+      "entry": "../dashboard/server.mjs",
+      "actions": [
+        "serve",
+        "status"
+      ],
+      "usage": "serve 启动本地工作台；读取对话时，收件箱汇总先筛选实际需要显示的事项，再读取卡片文件，不逐条查阅无待处理卡片的历史对话轮；待处理和已处理卡片的显示规则不变。对话的进行中徽章在 Claude／Codex／DeepSeek 有运行中子 agent 时显示数量，按原生启动与完成事件更新，后台启动工具返回不扣数，归零隐藏数量；DeepSeek workflow 小鱼接入同一计数、活动行和折叠卡片，中途文字不进入主聊天上下文；沿用现有刷新，不新增轮询。最近会话右侧竖排，pin 在上、删除在下；已置顶的 pin 图标常驻显示，未置顶的 pin 和删除按钮仅在悬停或键盘聚焦时显示。最近会话与历史对话的图钉可置顶／取消置顶：侧栏先列全部置顶，再列最近 20 条未置顶对话，组内按最后活动时间排序；保存在服务器，刷新和其他设备保留，不改变历史检索排序、消息、草稿或任务。status 只读查询运行中的后端代码指纹（运行／磁盘／current|stale|unknown）。不自动重启；旧后端缺少指纹时提示任务结束后重新打开 Workbench。隐藏启动入口和后端重启仅对各自 PowerShell 进程使用 ExecutionPolicy Bypass，带下载标记的入口及其加载脚本无需输入 R；不更改系统或用户级执行策略。对话中的本地文档在电脑上普通点击用 Windows 默认软件打开；Ctrl+点击、中键或手机端仍预览／下载。脚本、程序、快捷方式和宏专用格式不走默认软件入口。兼容旧 /workspace/... 链接，仍检查真实路径和敏感文件。新链接用绝对本地路径或相对 /api/local-file?path=...，不写死 localhost。后端空闲重启并刷新页面后生效。 已登记的 Command Code 凭据文件可在本机普通点击，用记事本编辑；网页读取、下载、手机打开和其他内部文件仍不开放。"
+    },
+    "deepseek": {
+      "entry": "../software/deepseek-harness/run.mjs",
+      "actions": [
+        "status",
+        "provider",
+        "updates",
+        "prepare",
+        "run"
+      ],
+      "usage": "provider 不带参数查看当前通道；provider commandcode / provider official 切换下一次 DeepSeek 调用的计费通道，不调用模型、不覆盖另一家的凭据、不自动回退。Command Code Key 单独保存在 .runtime/commandcode/credentials.json；原生 Harness 使用已安装的 pi-ai 适配器，默认 deepseek-flash 映射为 deepseek/deepseek-v4.1-flash，工具、记忆与权限保持不变。模型 deepseek-flash＝普通 V4.1 Flash，deepseek-flash-fast＝Fast（仅 Command Code）；设置页可切通道。顶栏在 Command Code 通道显示套餐窗口剩余，官方通道显示官方余额。DeepSeek 已接入正式聊天（@DeepSeek），使用 API 余额；不新增自动群聊或后台调用。正式 work 轮另有原生工具 office_memory_maintain：action=status|ingest|reflect|profile|search，只操作本人记忆；ingest 可带 limit/since/facts，profile 可带 maxCalls，search 加 query 做 agentic 回溯，可带 topK/chars/maxRounds（1～3，默认3）；模型失败不重试，降级结果留档并报失败。复用既有模型通道，结果在本轮 memory-maintenance/<UUID>/，不改变 shell 沙箱。updates 立即检测 DSH 的 latest/next 新版并提醒，不安装、不调用模型；status 的 updates 字段读取检测缓存。自动检测复用后端现有节拍，每 24 小时一次，软件配置 update-policy.json 可停用，后端空闲重载后生效。以下 status / prepare / run 仍是独立工作目录的按需委派入口。status 只读安装与凭据是否配置；prepare <请求JSON> 只读预览；run <请求JSON> 通过完整官方 SDK 执行一项明确任务，消耗 API 用量。请求 {prompt_file,model?:deepseek-flash,reasoning_effort?,max_tokens?:64000}，max_tokens 是单次请求的输出上限（推理也算，官方上限 384K，不填用默认 64000），prompt_file 相对请求文件。每项任务用独立工作目录，结果／轨迹／产出留在 .runtime/deepseek-harness/jobs/<UUID>；委派者须复核。禁自动重试和额外子 agent；显式委派与新 queued 卡片共用每轮预算，子 agent 只限同时存在数。先用默认工具权限，拒绝时走正常审批，不放开全局权限；策略／Windows 隔离限制见 software/deepseek-harness/README.md。"
+    },
+    "ai": {
+      "entry": "./claude.mjs",
+      "actions": [
+        "prepare",
+        "claude"
+      ]
+    },
+    "projects": {
+      "entry": "../projects/run.mjs",
+      "actions": [
+        "list",
+        "outline",
+        "context",
+        "scaffold",
+        "framework",
+        "node-status",
+        "node-link",
+        "node-set",
+        "entry-add",
+        "node-add",
+        "archive",
+        "restore",
+        "editor",
+        "node-edit",
+        "read-nodes",
+        "impact",
+        "search"
+      ],
+      "usage": "项目资料渐进读取（资料库→项目）：从办公室根目录运行 node automation/run.mjs projects <动作>，不必 cd 到项目文件夹。项目不明确先 list；背景用 outline <项目id> 看目录摘要，具体问题用 search \"<项目id>#<关键词>\" 看命中，再用 read-nodes <项目id>#<节点ID,节点ID> 取相关原文；执行事项用 context <项目id>。默认不整份读取 FRAMEWORK.md 或递归通读项目目录，确需全项目梳理或编辑原文时可读原文件；摘要和片段不替代证据原文。\nsearch [项目id#]<查询词> 只读全文检索（FRAMEWORK 节点／记录和项目里的其他 .md；与 agent search 共用 automation/text-match.mjs：先要求全部词都出现，凑不齐就按字词片段近似匹配并标近似度（mode:near），不是语义检索；多个词用空格；每次现扫文件，无索引无缓存）。命中带 corrected_by（后来的记录声明更正了它）或 correction_note（正文写了后续更正但还没有记录声明）时，先读更正再引用，命中不会被隐藏。impact <项目id>[#节点id] 只读：列出已被更正的条目及直接引用它们的节点 referrers（links 或正文提到编号；是复核候选，不是已证实受影响，不改文件），不带节点 id 时另列「正文写了后续更正、但没有记录声明」的条目。更正的写法：新记录用 entry-add 的 corrects:[更早记录的 T- 编号] 声明，或 node-link 加 rel:'corrects'；旧条目不改，“已被更正”由程序反向算出，corrects 只能写在记录上、只能指向更早的记录。outline <project-id> 按需读取研究目录与完整摘要；项目关联不自动加载研究目录和执行状态。read-nodes <project-id>#<node-id>,<node-id> reads exact FRAMEWORK.md node subtrees, with source lines and revision; read-only, missing IDs fail explicitly. list 全部项目（含 id，已归档的带 archived:true）；context <项目id 或 unassigned> 只读，汇总该项目的邮件事项、采购、文献、工作和依赖；scaffold [项目id] 建项目文件夹，保留已有文件。framework <项目id> 只读检查 FRAMEWORK.md：重复 id、非法状态或日期、open 缺说明、links／任务 id／正文编号指向不存在的对象、页面会露出字面 ** 的行，并给出今天下一个可用编号。FRAMEWORK.md 是研究内容、历史标记、日期和关联的唯一记录，当前操作状态只在 work；logic 为论证地图，timeline 为完整日志，试错不放 logic，下面五个命令只改目标几行，引入新问题就整体不写：entry-add <JSON文件路径> 追加主题日志 {project_id,parent?(时间日志内的主题或子板块 id；不填则待归类，不接受逻辑节点或记录),title,date?,date_confirmed?,after?(没有日期但知道排在哪条之后时填那条的 T- 编号),body?,links?,work?,status?,note?,summary?}，返回分配的编号；测量、处理及重处理直接追加日志，body 记输入/方法参数/脚本版本/输出/结果与限制，links 关联原记录（重处理也关联旧版），work 关联处理任务；node-add <JSON文件路径> 新增板块或子板块 {project_id,parent(板块 id，null 为新的一级板块),id,title,body?,summary?,type?(info、logic 或 timeline),kind?(info 说明／milestone 阶段／attempt 日志中的一次尝试，只能完成或失败),status?,note?}；node-status <JSON文件路径> 改状态 {project_id,id,status:done|doing|failed|open|none,note?,reason?}，open 必须写 note，离开 done/failed 必须写 reason，状态只在用户点选或明确说了才改；node-link <JSON文件路径> 加关联 {project_id,from,to}；node-set <JSON文件路径> 改节点的简单字段（补日期等）{project_id,id,date?,date_confirmed?,after?,summary?,kind?}，null 删除该字段，设了 date 会清掉 after，不改状态、关联和正文。格式细节见 projects/FRAMEWORK-RULES.md 与 FRAMEWORK-TOOLS.md。archive <项目id> 归档已结束的项目、restore <项目id> 恢复：归档后它不再出现在项目列表、周计划、对话的项目选择和归属建议里，但任务、文献、邮件关联和文件都保留；只在用户明确要求时才归档。 editor <project-id> reads raw editable nodes, dates, revision and timestamped backup list. node-edit <JSON-file> uses {project_id,revision,action:content|fields|add-node|add-entry|move|delete,id?,parent?,title?,summary?,body?,kind?,type?,fields?:{date?,date_confirmed?,after?}}; content changes title/summary/body plus optional date fields, add-node allocates id, add-entry allocates T-id, move preserves subtree/IDs. Uses the same writer as the dashboard editor; saves a pre-edit backup, rejects stale revisions and structural prose. fields edits log dates using node-set correction rules; content may include fields atomically. Unclosed code fences are rejected. delete requires confirm:true, backs up the subtree, automatically detaches incoming references and task bindings, and leaves tasks, status, outputs and attachment files untouched. Deleted log IDs are not reused. No status change or task execution."
+    },
+    "mail": {
+      "entry": "../mail-flow/run.mjs",
+      "actions": [
+        "init",
+        "collect",
+        "status",
+        "packet",
+        "apply",
+        "requeue",
+        "search",
+        "backfill",
+        "outlook-tools",
+        "outlook-prepare",
+        "outlook",
+        "guide",
+        "graph-login",
+        "graph-status",
+        "read-login",
+        "read-status",
+        "send-login",
+        "send-status"
+      ],
+      "usage": "guide 只读输出交互式邮件快捷说明（mail-flow/INTERACTIVE-GUIDE.md）；所有 agents 可按需读取，交互式邮件任务只自动注入简短工作说明（MAIL-BRIEF.md），要回复或发送时再读此完整说明。outlook-tools [工具名] 查当前工具/schema；outlook-prepare 一次取 schema 和并行只读证据；outlook 按已批准参数执行，可附 verify 只读核对。后两者接受 JSON 文件、内联 JSON 或 - 标准输入；含正文默认用 UTF-8 JSON 文件并发送前读回核对，避免 PowerShell 5.1 默认 ASCII 管道丢字，具体见 mail guide。准备不发送、不批准；非只读动作须用户批准具体动作和最终参数，不自动重试。search \"关键词\" 只读查询账本全部邮件；collect/packet/apply 等由邮件流程运行。详细接口、附件限制与历史验证见 mail-flow/README.md。 graph-login [calendar] 启动微软官方 Graph 登录（calendar 显式申请 Calendars.ReadWrite，由用户自行同意）；graph-status 读取登录状态。send-login [等待秒数]/send-status 是发信、回信的同类通道（Mail.ReadWrite + Mail.Send，同样走 Node，不用 PowerShell SDK、不依赖 ChatGPT/Codex 账号；账号须与配置邮箱一致，登录一次长期有效）。read-login [等待秒数] 是只读邮件的另一条通道：用 Node 自己的 TLS 发起设备码登录，只申请 Mail.Read，适用于受限 shell 里 PowerShell/SDK 起不来的情况；先打印设备码再按需等待（0～600 秒），read-status 继续轮询，同一设备码在有效期内复用。正式会议用 create_event_native / fetch_event_native，参数见 outlook-tools；创建即发邀请，须批准全部参数。原生 HTML 回复仅在 mail-flow/config.json 的 replyTransport=graph 启用后使用；原生工具不依赖 Codex/MCP 连接器，原生回复准备的 verification_mode=immutable_sent_copy 表示发送自带副本核对，不需连接器文件夹模板。原信读取用 fetch_native（不是 fetch_message_native）；图片和文件附件可用 list_attachments_native {message_id} 列表、download_attachment_native {message_id,attachment_id} 保存到本地并返回 path/bytes/sha256，含内嵌图；不自动加载外链。未知或未启用的 *_native 工具名在本地直接拒绝并提示可用名称，不启动连接器、不自动纠正。其他名字仍查连接器动态目录。连接器操作按需启动，权限失败仍走正常工具授权。"
+    },
+    "memory2": {
+      "entry": "../memory2/run.mjs",
+      "actions": [
+        "status",
+        "search",
+        "show",
+        "context",
+        "sync",
+        "ingest",
+        "reflect",
+        "profile",
+        "account",
+        "forget",
+        "ledger"
+      ],
+      "usage": "办公室长期记忆（唯一记忆系统，agent/config.json memory_v2.enabled 控制是否进入提示）。所有动作接收 JSON 文件，owner 必填 codex|claude|deepseek，只能用自己的库。status {owner} 条数与画像；search {owner,query,method?:hybrid|keyword|vector|agentic,kind?:episode|atomic_fact,topK?,includeDeprecated?} 检索；agentic 按需调用模型，rounds 中的 failed/error 与 failed_rounds 标明降级原因；DeepSeek 正式 work 轮的模型维护和 agentic 回溯使用 office_memory_maintain 原生工具（search 加 query），避免 shell 内 pipe EPERM；show {owner,id:ep_…|af_…|profile} 读原文；context {owner,query} 看本轮会注入什么；sync {owner} 重建索引（顺带每 6 小时合并一次向量索引并清掉旧版本副本，索引体积因此保持在有界范围）；ingest {owner,since?:ISO时间,limit?} 从对话提取情节与原子事实（调用 gpt-6-luna，耗额度）；ingest 有失败时以非零退出，启动拒绝时报告 aborted:process-start-denied 并停止后续尝试，保留已完成项；完整维护由后端已有空闲节拍运行，owners 配置按次读取。reflect {owner} 聚类并合并相近情节（原条目只标弃用，不删）；profile {owner,maxCalls?} 更新用户画像 user.md。account {owner} 把已结束的对话轮里“注入了哪些记忆、助手是否用上”记入账本（不调模型）；ledger {owner,top?} 看账本；forget {owner,dryRun?:默认 true 只报告} 空闲太久的情节连同事实标 archived（可恢复），归档满一年的从 md 删除；forget {owner,restore:[ep_…]} 恢复归档；forget {owner,pin:[ep_…],off?} 钉住：不归档，并在每轮记忆块的常驻块里显示。数据在 .runtime/memory2/<owner>/，Markdown 为真源，索引可删后重建。设计与进度见 memory2/PORT-PLAN.md。"
+    }
+  },
+  "topics": {
+    "handoff": "状态摘要用于普通聊天里值得跨轮接续的成果，纯问答不用写。回复最后另起一行：状态摘要：{\"summary\":\"用户希望什么；已做成什么\",\"facts\":[{\"text\":\"接续要用的事实\",\"source\":\"来源\"}],\"open\":[\"尚需完成的事项\"],\"next\":\"请接手者接续形成什么结果\"}。summary写用户目标和已经做成的结论；facts按需要列事实及来源，文件写原位路径，邮件/对话/命令可写来源说明；open只写真正影响接续的未完事项，没有就留空；next表达接续目标而非执行规程，没有待接续工作可留空。条目不截断。格式不对时只保留回复文字，不登记摘要。程序把有效摘要保存为brief，供聊天展示和项目状态页使用；旧“交接：”标记仍可读取。\n业务操作不另写这行：用work update一次提交status:done、handoff结果说明和outputs成果入口即可，状态页直接读取这份结果；需要额外来源/未决事项可同次带brief，work handoff <ID>读取完整记录。给同事递交工作则用agent handoff另开对话，或行首@同事在同一对话接续；这两种给同事的话按rule/handoff-writing说明目标与成果，不是状态摘要。",
+    "card": "需要用户决定时，把卡片保存为本次运行目录里的 inbox.json：{category, kind:approval|acceptance|decision, title, origin?:来源卡片ID, message:要用户决定的具体问题, actions:[{id, label, type:reply|review|accept, reply:点选后要继续做的事}]}。按钮最多三个，由你按此刻情况提出（界面已有“和 agent 交流”，点标题可看依据，不要重复）；reply 把选择交回你继续，accept 记录确认。普通聊天、卡片对话和改文件都不自动要求验收；确需用户验收时明确保存 acceptance 卡片，review.json 只存依据。后台科研步骤交付真实文件仍自动要求验收。已完成的普通任务不需要卡片。失败或 waiting_user 状态本身不生成收件箱卡；执行错误保留在任务对话。若确需用户补资料、授权或决定，必须明确保存问题卡片；程序不再根据回复正文中的失败关键词猜测。实际缺失交付物及 require_outputs/log_requirement 检查仍会阻止完成并提示。回复卡片时，只有原事项及其来源链已全部办完、不需要用户再决定任何事，才保存 {kind, title, message:一两句结论, resolved:true}，不写 actions；程序只关闭这条链，并保留处理和撤销记录。同一对话可能有多件事，不能一概写 resolved；自由追问有多条独立待办链时程序不猜目标，需从对应卡片的“和 agent 交流”入口继续。还有问题、缺证据或仍在等回复时不要写 resolved。用户明确说明自行完成时也可撤掉过期 approval，但关闭审批绝不构成发送或付款授权；发出催信不等于整个排期完成。 自由追问若新卡仍是当前来源事项，用 origin 显式指向本轮提示中的来源卡片ID；新的独立事项不填，不以同一会话自动归入旧链。",
+    "review": "交付科研产出时，另存验收依据到本次运行目录里的 review.json：{criteria:本任务实际标准, evidence:[{field, extracted_value, unit, source:{path, location, excerpt}, local_value, conditions:{status:same|different|unknown, note}}], limitations:未解决问题}。只填实际读到的值与位置，未知用 null；缺输入文件时说明缺项。"
+  }
+}

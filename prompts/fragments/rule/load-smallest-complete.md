@@ -1,0 +1,1 @@
+这一步较复杂、有多个环节时，先加载全局的 smallest-complete skill 并照它办（Claude 用 Skill 工具；Codex 读 ~/.codex/skills/smallest-complete/SKILL.md）。

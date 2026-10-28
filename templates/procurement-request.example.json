@@ -1,0 +1,12 @@
+{
+  "example_only":true,
+  "id":"replace-with-real-request-id",
+  "title":"采购需求名称",
+  "specifications":[],
+  "quantities":{},
+  "purpose":"用途与受影响实验",
+  "required_by":null,
+  "mail_task_id":null,
+  "vendors":[],
+  "notes":"不要把示例当成真实采购记录。"
+}

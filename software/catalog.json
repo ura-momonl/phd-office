@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "apps": [
+    {
+      "id": "deepseek-harness",
+      "name": "DeepSeek Harness 0.2.1-rc.4",
+      "avatar": "dashboard/avatars/deepseek.png",
+      "executable": "D:/Main/assistant/.runtime/deepseek-harness/npm/node_modules/.bin/dsh.cmd",
+      "working_directory": "D:/Main/assistant",
+      "connector": "node automation/run.mjs deepseek run <request.json>",
+      "requires_running": false,
+      "operator": "codex / claude",
+      "owner": "codex",
+      "route": "完整官方 SDK 按需委派；先 help deepseek / prepare，再默认权限执行，拒绝时走正常审批。任务用独立工作目录与 Harness home，禁重试、完整会话上传及额外子 agent。派出者复核结果。另已接入 @DeepSeek 正式聊天；不新增自动群聊或后台调用。Windows 隔离边界和凭据见 software/deepseek-harness/README.md。",
+      "status": "0.2.1-rc.4 installed; three local patches retained; CLI version, eight mocked patch checks and existing-profile SDK initialization verified; no model request in this upgrade check",
+      "verified_at": "2026-10-27T00:56:50.811772Z",
+      "verification": {
+        "checked_at": "2026-10-27T00:56:50.811772Z",
+        "result": "passed_sdk_startup_and_patch_checks",
+        "scope": "Installed rc.4 CLI version and SDK initialization with the existing sdk profile passed; three local patches restored with exact hashes, syntax checked and eight mocked behavior checks passed. No real model, desktop tool or subagent request was sent in this upgrade check.",
+        "source": "logs/2026-10-26/codex-c9d68cd7.md"
+      },
+      "chat_verification": {
+        "checked_at": "2026-10-22T20:09:34.490Z",
+        "result": "passed_normal_host_sdk",
+        "source": ".runtime/agent/runs/1c7e7975-dba2-4da6-a363-86bf74a4caff/deepseek-system-python-verified/verified.json",
+        "backend_status_file": ".runtime/agent/runs/6536797d-06d0-40b8-aad8-ad88a0015b98/post-restart.json",
+        "scope": "Official SDK normal-host workspace-write shell ran office help work and wrote/read Chinese JSON. No administrator model."
+      }
+    },
+    {
+      "id": "computer-use",
+      "name": "Windows-MCP 0.8.7",
+      "executable": "D:/Main/assistant/.runtime/computer-use/venv/Scripts/windows-mcp.exe",
+      "working_directory": "D:/Main/assistant",
+      "connector": "software/computer-use/mcp.json",
+      "requires_running": false,
+      "route": "Codex / Claude work 轮共享本地 stdio MCP；先 Snapshot 核对活动窗口，再做前台鼠标键盘操作。单人控制桌面，不动未保存原始工程；说明及验收见 software/computer-use/README.md",
+      "status": "2026-10-16: native Snapshot readonly window query passed; other operations not exercised this turn",
+      "owner": "codex",
+      "operator": "codex / claude",
+      "verified_at": "2026-10-16T22:09:21Z",
+      "verification": {
+        "checked_at": "2026-10-16T22:09:21Z",
+        "result": "passed_readonly",
+        "scope": "Readonly desktop window query only; no keyboard, mouse, editing or saving tested",
+        "source": ".runtime/software-assets/2026-10-16/checks.json"
+      }
+    },
+    {
+      "id": "comsol",
+      "name": "COMSOL Multiphysics 6.4",
+      "executable": "D:/comsol/COMSOL64/Multiphysics/bin/win64/comsolbatch.exe",
+      "working_directory": "D:/comsol-ai",
+      "python": "D:/comsol-ai/.venv/Scripts/python.exe",
+      "requires_running": false,
+      "route": "优先复用已有 MPh/JPype 环境；脚本在固定目录运行，或 comsolbatch 解已定义模型。MPh 是独立后端，不接管桌面未保存模型",
+      "status": "installation and existing environment documented; simulation not exercised this turn",
+      "owner": "codex",
+      "operator": "codex",
+      "verified_at": null
+    },
+    {
+      "id": "altium",
+      "name": "Altium Designer 26",
+      "executable": "D:/Program Files/Altium/AD26/X2.exe",
+      "working_directory": "D:/Altium-ai",
+      "connector_workspace": "D:/Altium-ai/workspace",
+      "requires_running": true,
+      "connector": "D:/Altium-ai/eda-agent/.venv/Scripts/eda-agent.exe",
+      "route": "复用当前 altium MCP/eda-agent；启动软件，连接桥接器并先核对活动文档；按需发现工具",
+      "status": "2026-10-16: MCP status responded; application not running, live operations not ready",
+      "owner": "codex",
+      "operator": "codex",
+      "verified_at": null,
+      "verification": {
+        "checked_at": "2026-10-16T22:09:21Z",
+        "result": "app_not_running",
+        "scope": "MCP status response only; no live app operation",
+        "source": ".runtime/software-assets/2026-10-16/checks.json"
+      }
+    },
+    {
+      "id": "autocad",
+      "name": "AutoCAD 2026",
+      "executable": "D:/Program Files/AutoCAD/AutoCAD 2026/acad.exe",
+      "route": "已有 autocad_mcp MCP / ActiveX COM；保留活动图纸及未保存修改",
+      "status": "2026-10-16: MCP status responded; application not running, live operations not ready",
+      "owner": "codex",
+      "working_directory": "D:/cad-ai",
+      "connector": "D:/cad-ai/autocad-mcp/.venv/Scripts/autocad-mcp.exe",
+      "requires_running": true,
+      "operator": "codex",
+      "verified_at": null,
+      "verification": {
+        "checked_at": "2026-10-16T22:09:21Z",
+        "result": "app_not_running",
+        "scope": "MCP status response only; no live drawing operation",
+        "source": ".runtime/software-assets/2026-10-16/checks.json"
+      }
+    },
+    {
+      "id": "origin",
+      "name": "Origin 2024 SR1",
+      "executable": "D:/Origin2024/Origin64.exe",
+      "route": "先用内置 Python + 上游官方示例；外部 originpro 需选匹配的 Python 版本",
+      "examples": "vendor/origin-python-samples",
+      "status": "installed; scripts not exercised",
+      "owner": "codex",
+      "working_directory": "D:/Main/assistant",
+      "operator": "codex",
+      "verified_at": null
+    },
+    {
+      "id": "matlab",
+      "name": "MATLAB R2025a",
+      "executable": "D:/Program Files/MATLAB/R2025a/bin/matlab.exe",
+      "route": "明确分析任务后使用 -batch 运行脚本；参数与日志保存在对应项目",
+      "status": "installed; batch execution not exercised",
+      "owner": "codex",
+      "working_directory": "D:/Main/assistant",
+      "operator": "codex",
+      "verified_at": null
+    },
+    {
+      "id": "labview",
+      "name": "LabVIEW 2023 Q3",
+      "executable": null,
+      "route": "VI Server / 已有 VI；先核对接口和输入输出，再连接仪器",
+      "status": "installed; instrument workflow not configured",
+      "owner": "user",
+      "working_directory": "D:/Main/assistant",
+      "operator": "codex",
+      "verified_at": null
+    },
+    {
+      "id": "office",
+      "name": "Microsoft 365",
+      "executable": null,
+      "route": "已有 Word/PPT/Excel 技能与连接器；文件任务走文件技能，当前打开文档优先用活动会话",
+      "status": "installed; existing skills available",
+      "owner": "claude",
+      "working_directory": "D:/Main/assistant",
+      "operator": "codex",
+      "verified_at": null
+    },
+    {
+      "id": "fusion",
+      "name": "Autodesk Fusion",
+      "executable": null,
+      "route": "已有 Fusion Electronics 插件，具体工程按任务连接",
+      "status": "2026-10-16: catalog local endpoint recorded; current tools absent; CLI could not resolve CODEX_HOME; app operation unverified",
+      "owner": "codex",
+      "working_directory": "D:/fusion-ai",
+      "connector": "http://127.0.0.1:27182/mcp",
+      "requires_running": true,
+      "operator": "codex",
+      "verified_at": null,
+      "verification": {
+        "checked_at": "2026-10-16T22:09:21Z",
+        "result": "tools_not_exposed",
+        "scope": "Tool discovery only; MCP registration and app operation NOT verified; no configuration files read",
+        "source": ".runtime/software-assets/2026-10-16/checks.json"
+      }
+    },
+    {
+      "id": "zotero",
+      "name": "Zotero",
+      "executable": "D:/Main/assistant/.runtime/tools/zotero-desktop/Zotero_win-x64/zotero.exe",
+      "requires_running": true,
+      "route": "日常统一 literature fetch：缓存与本地PDF优先，缺失时调用已安装插件让Zotero原生查找全文，实际文件核验后登记；保持独立Zotero profile运行。不保证订阅出版社版，不继承Edge会话，不走旧UW代码、不自动启动鼠标宏。见software/zotero/README.md",
+      "status": "Office Zotero Fetch 0.2.1 installed and enabled; original native PDF route retained; bounded read-only native webpage Abstract batch verified without per-item desktop clicks; source gaps preserved",
+      "owner": "claude",
+      "working_directory": "D:/Main/assistant",
+      "operator": "codex",
+      "verified_at": "2026-10-20T20:54:19.257Z",
+      "verification": {
+        "checked_at": "2026-10-20T20:54:19.257Z",
+        "result": "passed_native_cli_acquisition",
+        "scope": "Fresh DOI absent from isolated Zotero library: real CLI invoked installed plugin/native downloader, validated and registered PDF; repeat reused cache without keyboard/mouse. Production plugin source matches tested XPI and invalid-DOI request returned400. Native ACS sample yielded arXiv manuscript, not publisher PDF.",
+        "source": ".runtime/agent/runs/5447dbef-aa6d-443c-8f3d-40e04b49f7bc/native-cli-verification.json"
+      },
+      "metadata_verification": {
+        "checked_at": "2026-10-21T21:59:38.815Z",
+        "result": "native-source-pass-complete",
+        "scope": "1385 source DOI checks, 630 complete Abstracts added to held input packages, 755 pages without labeled Abstract; Zotero keys/count/version unchanged, no PDF/models, 191 isolated tests. Article-title false positive corrected.",
+        "source": "output/literature-rebuild-20261021/batch-020/zotero-native-metadata/FINAL-RESULT.json"
+      }
+    },
+    {
+      "id": "rescript",
+      "name": "Rescript 1.2.4",
+      "executable": "D:/Zoom-recordings/Rescript/Rescript.exe",
+      "working_directory": "D:/Zoom-recordings",
+      "requires_running": true,
+      "route": "Import matching SRT and FLAC locally; locate by text, fine-trim with waveform, export new files without replacing originals. See software/rescript/README.md",
+      "status": "installed; Chinese UI and persisted telemetry-off verified; automated SRT import did not display transcript; linked cutting and exports not accepted",
+      "owner": "codex",
+      "operator": "codex",
+      "verified_at": null
+    }
+  ]
+}
