@@ -17,7 +17,7 @@ test('brand serves the transparent portrait; grey semi-transparent matte edge pi
     const brand=html.match(/<a class="brand"[^>]*>(.*?)<\/a>/s)?.[1];
     assert.ok(brand);
     assert.doesNotMatch(brand,/data-ico=/);
-    assert.match(html,/<link rel="icon" type="image\/png" sizes="96x96" href="data:image\/png;base64,[A-Za-z0-9+\/=]+">/,'browser tab icon is the same portrait on the warm plate');
+    assert.match(html,/<link rel="icon" type="image\/png" sizes="106x106" href="data:image\/png;base64,[A-Za-z0-9+\/=]+">/,'browser tab icon is the portrait at exact 2x, without the sidebar plate');
     assert.doesNotMatch(html,/<link rel="icon" type="image\/svg\+xml"/);
     assert.match(brand,/PIRI Office<small>Research Support &amp;<br>Workflow Automation/);
     const encoded=brand.match(/<img src="data:image\/png;base64,([A-Za-z0-9+/=]+)" width="53" height="53" alt="">/)?.[1];
