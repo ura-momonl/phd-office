@@ -396,8 +396,11 @@ function rewindContinuation(provider,c,cut,removed) {
   return {...base,...fork,turns:keep,seen:[...new Set(keep.flatMap(t=>t.got || []))].filter(i=>i<cut),
     contextHash:undefined,executionContextHash:undefined,projectSourceHash:undefined,focusHash:undefined,memoryIds:[]};
 }
-export function editMessage({session_id,task_id,text}) {
+// `keep_attachments` (ids) picks which of the message's own attachments stay (absent = all); `images`/`files` add newly uploaded ones.
+export function editMessage({session_id,task_id,text,keep_attachments,images,files}) {
   if(typeof text!=='string' || !text.trim())throw new Error('请输入要做的事');
+  if(keep_attachments!==undefined && !Array.isArray(keep_attachments))throw new Error('keep_attachments 必须是附件 id 列表');
+  const decoded=decodeImages(images),decodedFiles=decodeFiles(files);
   const state=readState({sessions:[]}),session=state.sessions.find(s=>s.id===session_id);
   if(!session)throw new Error('未知会话');
   const queue=read('work/queue.json');
@@ -409,6 +412,9 @@ export function editMessage({session_id,task_id,text}) {
   if(tail.some(m=>m.inbox_reply))throw new Error('后面含卡片回复，不能从这里重新生成');
   const keptTasks=new Set(kept.map(m=>m.task_id).filter(Boolean));
   if(tail.some(m=>keptTasks.has(m.task_id)))throw new Error('这条发言夹在上一轮回复中间，不能从这里重新生成');
+  const kept_attachments=(session.messages[cut].attachments || []).filter(a=>!keep_attachments || keep_attachments.includes(a.id));
+  if(kept_attachments.filter(a=>a.kind!=='file').length+decoded.length>4)throw new Error('每条消息最多 4 张图片');
+  if(kept_attachments.filter(a=>a.kind==='file').length+decodedFiles.length>10)throw new Error('每条消息最多 10 个文件（图片另计）');
   const target=session.messages[cut],removed=new Set(tail.map(m=>m.task_id).filter(Boolean)),id=randomUUID(),at=new Date().toISOString();
   const continuations=Object.fromEntries(['codex','claude'].map(p=>{const {fileSnapshot,...c}=session[continuationKey(p)] || {};return [p,session[continuationKey(p)] ? c : null];}));
   write(`.runtime/agent/branches/${session.id}/${id}.json`,{id,session_id:session.id,at,cut_index:cut,replaced_task_id:task_id,task_ids:[...removed],
@@ -426,7 +432,8 @@ export function editMessage({session_id,task_id,text}) {
   const job=submit({text,session_id:session.id,model:item.model,effort:item.effort,...node});
   modifySession(session.id,s=>{
     const message=s.messages.find(m=>m.role==='user' && m.task_id===job.task_id);
-    if(target.attachments?.length)message.attachments=target.attachments;
+    const attachments=[...kept_attachments,...saveImages(decoded),...saveFiles(decodedFiles)];
+    if(attachments.length)message.attachments=attachments;
     message.edited={at,branch:id,replaced:tail.length};
   });
   return {...job,branch:id,replaced:tail.length};

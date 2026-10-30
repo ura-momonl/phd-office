@@ -82,8 +82,8 @@ export function bindSettings({root,tabs,body,connections,post,fail}) {
       +row('字体',o.fonts.map(([id,n])=>opt('font',id,`<span class="font-sample" style="font-family:${id==='default' ? 'inherit' : `var(--font-${id})`}">Aa 字体 0123</span><small>${esc(n)}</small>`,n)).join(''));
   };
   function render() {
-    tabs.innerHTML=[{id:'connections',title:'连接'},...data.groups,{id:'avatars',title:'外观'}].map(t=>`<button type="button" role="tab" class="settings-tab${t.id===tab ? ' active' : ''}" aria-selected="${t.id===tab}" data-settings-tab="${esc(t.id)}">${esc(t.title)}</button>`).join('');
-    body.innerHTML=data.groups.map(g=>`<article class="panel" data-settings-section="${esc(g.id)}" ${g.id===tab ? '' : 'hidden'}><div class="panel-heading"><h2>${esc(g.title)}</h2></div><p class="muted">${esc(g.note)}</p>${rows(g)}<details class="setting-recent"><summary>最近修改</summary><div data-settings-recent="${esc(g.id)}">${recent(g)}</div></details><div class="settings-actions"><span class="settings-status muted" role="status"></span><button type="button" class="secondary" data-settings-reset disabled>放弃修改</button><button type="button" class="secondary primary" data-settings-save disabled>保存</button></div></article>`).join('')+`<article class="panel" data-settings-section="avatars" ${tab==='avatars' ? '' : 'hidden'}><div class="panel-heading"><h2>配色与字体</h2></div><p class="muted">只改外观，不影响功能；选择立即生效，保存在这台浏览器里。</p><div class="theme-picker">${themeChoices()}</div><div class="panel-heading"><h2>头像</h2></div><p class="muted">点“更换”上传图片，在弹出的窗口里拖动和缩放来取景，确定后聊天里立刻更新；“还原默认”可换回原来的头像。</p><div id="avatar-tuner"></div></article>`;
+    tabs.innerHTML=[{id:'connections',title:'连接'},...data.groups,{id:'avatars',title:'外观'},{id:'update',title:'更新'}].map(t=>`<button type="button" role="tab" class="settings-tab${t.id===tab ? ' active' : ''}" aria-selected="${t.id===tab}" data-settings-tab="${esc(t.id)}">${esc(t.title)}</button>`).join('');
+    body.innerHTML=data.groups.map(g=>`<article class="panel" data-settings-section="${esc(g.id)}" ${g.id===tab ? '' : 'hidden'}><div class="panel-heading"><h2>${esc(g.title)}</h2></div><p class="muted">${esc(g.note)}</p>${rows(g)}<details class="setting-recent"><summary>最近修改</summary><div data-settings-recent="${esc(g.id)}">${recent(g)}</div></details><div class="settings-actions"><span class="settings-status muted" role="status"></span><button type="button" class="secondary" data-settings-reset disabled>放弃修改</button><button type="button" class="secondary primary" data-settings-save disabled>保存</button></div></article>`).join('')+`<article class="panel" data-settings-section="avatars" ${tab==='avatars' ? '' : 'hidden'}><div class="panel-heading"><h2>配色与字体</h2></div><p class="muted">只改外观，不影响功能；选择立即生效，保存在这台浏览器里。</p><div class="theme-picker">${themeChoices()}</div><div class="panel-heading"><h2>头像</h2></div><p class="muted">点“更换”上传图片，在弹出的窗口里拖动和缩放来取景，确定后聊天里立刻更新；“还原默认”可换回原来的头像。</p><div id="avatar-tuner"></div></article><article class="panel" data-settings-section="update" ${tab==='update' ? '' : 'hidden'}><div class="panel-heading"><h2>从 GitHub 更新</h2></div><p class="muted">只下载 GitHub 上有变化的文件并逐个校验；本地改过的文件不会被覆盖，GitHub 版本放到 .runtime/github-update/incoming/ 供合并。点按钮才联网，没有自动检查。应用后代码要重启后端才生效。</p><div class="settings-actions"><span class="settings-status muted" role="status" data-update-status></span><button type="button" class="secondary" data-update-check>检查更新</button><button type="button" class="secondary primary" data-update-apply disabled>应用更新</button></div><pre class="update-output" data-update-output hidden></pre></article>`;
     mountAvatarTuner(body.querySelector('#avatar-tuner')).catch(e=>fail(e.message));
     body.querySelectorAll('[data-setting-key]').forEach(el=>{el.dataset.original=JSON.stringify(valueOf(el));});
     showTab();
@@ -100,6 +100,20 @@ export function bindSettings({root,tabs,body,connections,post,fail}) {
     const b=e.target.closest('button');if(!b)return;
     if(b.dataset.themeSet){const [axis,val]=b.dataset.themeSet.split(':');window.officeTheme?.set({[axis]:val});root.querySelector('.theme-picker').innerHTML=themeChoices();return;}
     if(b.dataset.settingsTab){tab=b.dataset.settingsTab;showTab();return;}
+    if(b.dataset.updateCheck!==undefined || b.dataset.updateApply!==undefined) {
+      // 先预览，预览出有可应用的变化才亮出“应用更新”；应用是单独的一次点击。
+      const box=b.closest('[data-settings-section]'),apply=b.dataset.updateApply!==undefined,out=box.querySelector('[data-update-output]'),status=box.querySelector('[data-update-status]'),applyBtn=box.querySelector('[data-update-apply]'),checkBtn=box.querySelector('[data-update-check]');
+      checkBtn.disabled=applyBtn.disabled=true;status.classList.remove('settings-error');status.textContent=apply ? '正在更新…' : '正在检查…';
+      try {
+        const r=await post(apply ? '/api/update/apply' : '/api/update/check',{});
+        out.textContent=r.output;out.hidden=!r.output;
+        if(!r.ok)throw new Error('更新没有完成，详情见下方输出');
+        const pending=!apply && /加 --apply 应用/.test(r.output);
+        status.textContent=apply ? '已应用；如有代码变化，请重启后端' : pending ? '有可应用的更新' : '没有需要更新的文件';
+        applyBtn.disabled=!pending;
+      } catch(err) {status.textContent=err.message;status.classList.add('settings-error');}
+      checkBtn.disabled=false;return;
+    }
     const section=b.closest('[data-settings-section]');
     if(!section || (b.dataset.settingsSave===undefined && b.dataset.settingsReset===undefined))return;
     const controls=[...section.querySelectorAll('[data-setting-key]')],status=section.querySelector('.settings-status');

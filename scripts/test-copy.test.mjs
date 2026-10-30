@@ -61,5 +61,7 @@ test('runner copy keeps each catalogued project baseline and excludes live outpu
     assert.ok(paths.includes(dir+'/README.md'),project.id+' README must exist');
     assert.ok(paths.filter(p=>p.startsWith(dir+'/')).every(p=>[dir+'/README.md',dir+'/FRAMEWORK.md'].includes(p)),project.id+' must not contain real payloads');
   }
-  assert.ok(paths.includes('dashboard/companion/assets/hall/bg.png'),'real local UI assets are still exercised');
+  assert.ok(paths.includes('dashboard/companion-assets.mjs'),'generic optional scene loader is exercised');
+  assert.ok(!paths.includes('dashboard/companion.local.json'),'personal resource paths are not copied');
+  assert.ok(paths.every(p=>!p.startsWith('dashboard/companion/assets/')),'personal scene images are not shipped in the source tree');
 });

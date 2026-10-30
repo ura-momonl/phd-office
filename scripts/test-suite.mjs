@@ -17,7 +17,7 @@ export const modes = {
   'weekly-ui': ['Calendar and weekly plan/review', ['calendar/calendar','weekly/weekly']],
   'unread-ui': ['Final-reply unread and project read boundary', ['dashboard/unread']],
   'board-ui': ['Board navigation and unread UI', ['dashboard/board','dashboard/unread']],
-  'companion-ui': ['Local scenes, assets, notes and UI', ['dashboard/companion/tests/animation','dashboard/companion-notes','dashboard/companion','dashboard/performance','dashboard/ui-state']],
+  'companion-ui': ['Optional external scenes, assets, notes and UI', ['dashboard/companion/tests/animation','dashboard/companion-assets','dashboard/companion-notes','dashboard/companion','dashboard/performance','dashboard/ui-state']],
   latency: ['Conversation I/O, baselines and UI', ['automation/files','automation/file-baselines','automation/file-state','automation/agent','automation/continuation','dashboard/ui-state','dashboard/performance','dashboard/restart']],
   'state-ui': ['Scoped transport and UI consumers', ['dashboard/ui-state','automation/chat','automation/markdown','automation/project-framework','calendar/calendar','dashboard/unread','dashboard/board','dashboard/performance','dashboard/restart','dashboard/settings','dashboard/skills-lint','dashboard/project-related','automation/handoff','dashboard/handoff-tree','projects/docs']],
   literature: ['Offline literature fixtures and real PDF parser', ['literature/wos','literature/fetch','literature/fetch-batch','literature/fetch-backoff','literature/publication','literature/abstracts','literature/view','literature/daily','literature/library','literature/rebuild-routing','literature/rebuild-work','software/zotero/native-fetch/plugin']],

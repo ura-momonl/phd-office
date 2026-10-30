@@ -8,6 +8,8 @@ import {root,read,write,sharedReads} from '../automation/files.mjs';
 import {createServer,snapshot} from './server.mjs';
 import {launchEdge} from '../automation/browser-launch.mjs';
 import {drain} from '../agent/run.mjs';
+import {companionPackage} from './companion-assets.mjs';
+const companion=companionPackage();
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Use scripts/run-tests.mjs --companion-ui --keep');
 
 test('first new-chat avatar loads from its separate image file while queued', {timeout:30000},async()=>{
@@ -129,13 +131,15 @@ test('image validators reuse bytes and notice replacements; private responses ar
   const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+server.address().port;
   try{
-    for(const url of ['/avatars/codex.webp','/companion/assets/hall/bg.png']){
+    for(const url of ['/avatars/codex.webp',...(companion ? ['/companion/assets/hall/bg.png'] : [])]){
       const first=await fetch(base+url),bytes=Buffer.from(await first.arrayBuffer());
       assert.ok(first.headers.get('etag'),url+' needs a validator');
       assert.equal(first.headers.get('cache-control'),'private, no-cache');
       const cached=await fetch(base+url,{headers:{'if-none-match':first.headers.get('etag')}});
       assert.equal(cached.status,304);assert.equal((await cached.arrayBuffer()).byteLength,0);
-      const file=path.join(root,'dashboard',url),original=fs.readFileSync(file);
+      const file=companion?.assets.get(url) ?? path.join(root,'dashboard',url);
+      assert.ok(file.startsWith(path.resolve(root)+path.sep),'replacement tests must only edit their isolated resource copy');
+      const original=fs.readFileSync(file);
       try{
         fs.writeFileSync(file,Buffer.concat([original,Buffer.from('fixture replacement')]));
         const replaced=await fetch(base+url,{headers:{'if-none-match':first.headers.get('etag')}});
@@ -145,7 +149,7 @@ test('image validators reuse bytes and notice replacements; private responses ar
     }
     for(const url of ['/api/state','/health'])assert.equal((await fetch(base+url)).headers.get('cache-control'),'no-store',url);
     // Scripts and styles are revalidated, not stored blind: a change shows on refresh, an unchanged file costs a 304.
-    for(const url of ['/app.js','/style.css','/companion/scene-kit.js']){
+    for(const url of ['/app.js','/style.css',...(companion ? ['/companion/scene-kit.js'] : [])]){
       const first=await fetch(base+url);
       assert.equal(first.headers.get('cache-control'),'private, no-cache',url);
       assert.ok(first.headers.get('etag'),url);
@@ -215,7 +219,7 @@ test('startup paints saved chat while capabilities and markdown are delayed, the
   }
 });
 
-test('new-chat background and idle frames start together, and a late renderer keeps the same scene and draft', {timeout:30000},async()=>{
+test('new-chat background and idle frames start together, and a late renderer keeps the same scene and draft', {timeout:30000,skip:!companion},async()=>{
   const files=['.runtime/agent/sessions.json','agent/config.json'],originals=Object.fromEntries(files.map(f=>[f,read(f)]));
   write('agent/config.json',{...originals['agent/config.json'],enabled:false});write('.runtime/agent/sessions.json',{sessions:[]});
   const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -254,7 +258,7 @@ test('new-chat background and idle frames start together, and a late renderer ke
   }
 });
 
-test('large-office chat starts before extra sprites and renders saved sends despite a stale in-flight poll', {timeout:60000},async()=>{
+test('large-office chat starts before extra sprites and renders saved sends despite a stale in-flight poll', {timeout:60000,skip:!companion},async()=>{
   const originals=Object.fromEntries(['work/queue.json','.runtime/agent/sessions.json','agent/config.json'].map(f=>[f,read(f)]));
   write('agent/config.json',{...originals['agent/config.json'],enabled:false});
   const at='2026-10-11T12:00:00Z';

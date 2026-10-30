@@ -903,6 +903,19 @@ test('editing an earlier user message archives the old branch, forks each native
     const again=editMessage({session_id:A.session_id,task_id:next.task_id,text:'@Codex next-edited'});
     assert.equal(sessionOf(A.session_id).codex_continuation,undefined,'a legacy continuation cannot be cut exactly, so it is dropped');
     await execute(again.task_id,turn('T3','cx-3','3',false));
+    // Attachments of an edited message: keep some, drop others, add new uploads; absent keep_attachments keeps all.
+    write(file,{...read(file),sessions:read(file).sessions.map(s=>s.id!==A.session_id ? s : {...s,messages:s.messages.map(m=>m.task_id===again.task_id && m.role==='user' ? {...m,attachments:[{id:'keep-1',kind:'file',name:'k.txt',size:1,path:'.runtime/agent/files/k.txt'},{id:'drop-1',kind:'file',name:'d.txt',size:1,path:'.runtime/agent/files/d.txt'}]} : m)})});
+    const att=editMessage({session_id:A.session_id,task_id:again.task_id,text:'@Codex att',keep_attachments:['keep-1'],files:[{name:'new.txt',data_url:'data:text/plain;base64,aGk='}]});
+    const attNames=sessionOf(A.session_id).messages.find(m=>m.task_id===att.task_id).attachments.map(a=>a.name);
+    assert.deepEqual(attNames,['k.txt','new.txt']);
+    assert.ok(fs.existsSync(sessionOf(A.session_id).messages.find(m=>m.task_id===att.task_id).attachments[1].path),'a new upload is saved');
+    await execute(att.task_id,turn('T3','cx-4','4',false));
+    const plain=editMessage({session_id:A.session_id,task_id:att.task_id,text:'@Codex att2'});
+    assert.equal(sessionOf(A.session_id).messages.find(m=>m.task_id===plain.task_id).attachments.length,2,'without keep_attachments all stay');
+    await execute(plain.task_id,turn('T3','cx-5','5',false));
+    const bare=editMessage({session_id:A.session_id,task_id:plain.task_id,text:'@Codex att3',keep_attachments:[]});
+    assert.equal(sessionOf(A.session_id).messages.find(m=>m.task_id===bare.task_id).attachments,undefined,'all attachments removed');
+    await execute(bare.task_id,turn('T3','cx-6','6',false));
   } finally {
     write('work/queue.json',saved.queue);write(file,saved.sessions);write('agent/config.json',saved.cfg);fs.rmSync('.runtime/agent/branches',{recursive:true,force:true});fs.rmSync(configDir,{recursive:true,force:true});
     if(saveEnv===undefined)delete process.env.CLAUDE_CONFIG_DIR;else process.env.CLAUDE_CONFIG_DIR=saveEnv;

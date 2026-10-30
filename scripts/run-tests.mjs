@@ -13,6 +13,7 @@ import { createRequire } from 'node:module';
 import { includeTestFile,freshTestCopy,removeTestCopy } from './test-copy.mjs';
 import { pdfTextExecutable } from '../literature/pdf-tools.mjs';
 import {selectTests,discoverTests,modes,testSummary,testPassed} from './test-suite.mjs';
+import {companionPackage} from '../dashboard/companion-assets.mjs';
 
 const source = fileURLToPath(new URL('../', import.meta.url));
 const selection=selectTests(source,process.argv.slice(2));
@@ -45,6 +46,17 @@ try {
     if(include)copiedPaths.push(path.relative(source,file).split(path.sep).join('/'));
     return include;
   } });
+  // Exercise the optional local scene using only a private copy of public assets.
+  // A fresh download without local configuration never needs these resources.
+  const companion=companionPackage(source);
+  if(companion) {
+    const directory=path.join(copy,'.runtime/test-companion');
+    for(const [url,file] of companion.assets) {
+      const dest=path.join(directory,url.slice('/companion/'.length));
+      fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(file,dest);
+    }
+    fs.writeFileSync(path.join(copy,'dashboard/companion.local.json'),JSON.stringify({directory:'.runtime/test-companion'})+'\n');
+  }
   const copied=performance.now();
   console.log(`copy_ms: ${(copied-started).toFixed(1)}`);
   // workspace/inbox and workspace/outbox hold real drafts; the filter above skipped them by name

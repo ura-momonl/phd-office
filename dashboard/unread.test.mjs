@@ -61,6 +61,12 @@ test('unread dots follow actual viewing and synchronise across independent deskt
     await dot('shared').waitFor({state:'detached'});assert.equal(await dot('project').count(),1);
     await recent('project').click();await dot('project').waitFor({state:'detached'});
     await page.locator('.nav[data-page="projects"]').click();await projectCard.getByText('1 条新更新',{exact:true}).waitFor();
+    // The project page offers a per-update and an all-at-once read button that does not open the conversation.
+    await page.locator(`[data-project-open="${pid}"]`).first().click();
+    await page.locator('.project-new-updates .project-update-read-all').click();
+    await page.locator('.project-new-updates').waitFor({state:'detached'});
+    assert.ok(await page.evaluate(()=>Object.keys(JSON.parse(localStorage.getItem('lab-agent-read') || '{}')).length>0));
+    await page.locator('.nav[data-page="projects"]').click();await projectCard.getByText('无新更新',{exact:true}).waitFor();
     await page.locator('.nav[data-page="chat"]').click();
     await page.locator('[data-page="tasks"].chat-tab').click();
     await page.locator('#tasks-list [data-session="task"]').click();

@@ -1,11 +1,11 @@
 // Deterministic engine tests, not a browser/visual acceptance substitute.
-import test from 'node:test';
+import test,{describe} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
-import {fileURLToPath} from 'node:url';
-const base=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+import {companionPackage} from '../../companion-assets.mjs';
+const base=companionPackage()?.directory;
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Run only in a sanitised test copy');
 async function fixture({debug=false,width=1100,character,roam=false,lighting=true,weather=true,randomSeed=123,random,responsive=false,scene='store'}={}){
   let now=0,rafId=0,resize,mainCanvas,seed=randomSeed;const queue=new Map(),draws=[],scales=[],translations=[],ops=[];
@@ -45,6 +45,7 @@ async function fixture({debug=false,width=1100,character,roam=false,lighting=tru
   function moveToStart(){handle.player.path=null;handle.player.onArrive=null;handle.player.x=160;handle.player.y=120;}
   return {handle,cv,bubble,draws,scales,translations,ops,contexts,root,queue,step,click,moveToStart,win,make,resize:()=>resize()};
 }
+describe('optional personal scene animation', {skip:!base},()=>{
 test('station fine rain is all in front; stronger fog stays behind, with masks and lifecycle intact',async()=>{
   const t=await fixture({scene:'rainy-station'});t.step(0);
   const firstShadow=t.ops.findIndex(o=>o.kind==='shadow');
@@ -642,4 +643,5 @@ test('random initial selection covers all four scenes, is picked once, and works
     assert.equal(picker.current,id);assert.equal(t.queue.size,1);
     picker.destroy();assert.equal(t.queue.size,0);
   }
+});
 });

@@ -147,10 +147,11 @@ function error(message) {$('error').textContent=message;$('error').hidden=!messa
 // including its animation loop; ordinary state polling preserves the same frame.
 function refreshCompanion() {
   const slot=$('transcript').querySelector('.companion-slot');if(!slot)return;
+  slot.hidden=!companionsAvailable;
   if(page!=='chat' || document.visibilityState!=='visible'){slot.replaceChildren();return;}
   refreshCompanionNotes();
   if(slot.children.length)return;
-  if(!companionsAvailable){slot.textContent='小场景已准备好；本轮结束后更新后端并刷新，即可在这里见面。';return;}
+  if(!companionsAvailable){slot.replaceChildren();return;}
   const frame=document.createElement('iframe');frame.className='companion-frame';
   frame.title='像素陪伴小场景';frame.src='/companion/index.html';
   frame.setAttribute('sandbox','allow-scripts');slot.replaceChildren(frame);
@@ -367,7 +368,7 @@ function renderChat() {
   const follow=!savedChatPosition && !selecting && (reset || transcript.scrollHeight-transcript.clientHeight-oldTop<80);
   transcriptKey=key;
   if(!s?.messages.length) {
-    transcript.innerHTML='<div class="companion-welcome"><div class="companion-slot"></div><section class="companion-notes" aria-label="今天的小留言" aria-live="polite"></section></div>';
+    transcript.innerHTML='<div class="companion-welcome"><div class="companion-slot" hidden></div><section class="companion-notes" aria-label="今天的小留言" aria-live="polite"></section></div>';
     refreshCompanion();
   } else {
     // The optional closing status-summary line is stored as task.brief.
@@ -456,21 +457,36 @@ function renderChat() {
 // Only a plain chat turn of an idle conversation can be edited and regenerated; the server re-checks everything (cards, steered follow-ups, exploration).
 const editable=(s,m,jobs)=>editAvailable && s.origin==='chat' && m.role==='user' && m.task_id && !m.inbox_reply && !m.round && !jobs.length &&
   state.work.items.find(i=>i.id===m.task_id)?.mode!=='card' && !state.work.items.find(i=>i.id===m.task_id)?.merged_into;
+// The editor works on a copy of the message's attachments: old ones can be removed (x), new ones added; nothing changes until "保存并重新生成".
+const editState=new WeakMap();
+function renderEditAttachments(box) {
+  const st=editState.get(box);
+  box.querySelector('.message-edit-attachments').innerHTML=[...st.keep.map((a,i)=>[a,'k'+i,`/api/chat/image?id=${encodeURIComponent(a.id)}`]),...st.added.map((a,i)=>[a,'n'+i,a.data_url])].map(([a,key,src])=>
+    `<div class="image-preview ${a.kind==='file' ? 'file-preview-card' : ''}">${a.kind==='file' ? `<div class="file-preview-icon">${ico('book')}</div>` : `<img src="${esc(src)}" alt="${esc(a.name)}">`}<span title="${esc(a.name)}">${esc(a.name)}</span><span>${fileSize(a.size || 0)}${key[0]==='n' ? ' · 新增' : ''}</span><button type="button" data-edit-remove="${key}" aria-label="移除 ${esc(a.name)}" title="移除附件">×</button></div>`).join('');
+}
 function openMessageEditor(article,taskId) {
   const s=state.agent.sessions.find(x=>x.id===sessionId),index=s.messages.findIndex(m=>m.role==='user' && m.task_id===taskId);
   if(index<0 || article.querySelector('.message-edit'))return;
   const after=s.messages.length-index-1,box=document.createElement('div');
   box.className='message-edit';
-  box.innerHTML=`<textarea aria-label="编辑发言"></textarea><small>保存后，这条之后的 ${after} 条发言会移出当前对话（旧分支存档保留，文件改动不会回退），并从这条重新生成。</small><div class="message-edit-actions"><button type="button" class="text-button" data-edit-cancel>取消</button><button type="button" class="text-button" data-edit-save="${esc(taskId)}">保存并重新生成</button></div>`;
+  box.innerHTML=`<textarea aria-label="编辑发言"></textarea><div class="message-edit-attachments image-previews" aria-label="这条发言的附件"></div><input type="file" multiple hidden data-edit-files><small>保存后，这条之后的 ${after} 条发言会移出当前对话（旧分支存档保留，文件改动不会回退），并从这条重新生成。可以移除原有附件或重新上传，保存时一并生效。</small><div class="message-edit-actions"><button type="button" class="text-button" data-edit-attach>添加附件</button><button type="button" class="text-button" data-edit-cancel>取消</button><button type="button" class="text-button" data-edit-save="${esc(taskId)}">保存并重新生成</button></div>`;
   box.querySelector('textarea').value=s.messages[index].text;
-  const text=article.querySelector('.message-text');text.hidden=true;text.after(box);box.querySelector('textarea').focus();
+  editState.set(box,{keep:[...(s.messages[index].attachments || [])],added:[]});renderEditAttachments(box);
+  box.querySelector('[data-edit-files]').onchange=async e=>{
+    const input=e.target,files=[...input.files];input.value='';if(!files.length)return;
+    const st=editState.get(box);error('');
+    try {st.added.push(...await readAttachmentFiles(files,[...st.keep,...st.added]));renderEditAttachments(box);}catch(err) {error(err.message);}
+  };
+  const text=article.querySelector('.message-text');text.hidden=true;text.after(box);article.querySelector('.message-images')?.setAttribute('hidden','');box.querySelector('textarea').focus();
 }
 function closeMessageEditor(article) {
-  article.querySelector('.message-edit')?.remove();article.querySelector('.message-text').hidden=false;
+  article.querySelector('.message-edit')?.remove();article.querySelector('.message-text').hidden=false;article.querySelector('.message-images')?.removeAttribute('hidden');
 }
 async function saveMessageEdit(article,taskId) {
-  const text=article.querySelector('.message-edit textarea').value.trim();if(!text)return;
-  const job=await post('/api/chat/edit',{session_id:sessionId,task_id:taskId,text});
+  const box=article.querySelector('.message-edit'),text=box.querySelector('textarea').value.trim();if(!text)return;
+  const st=editState.get(box);
+  const job=await post('/api/chat/edit',{session_id:sessionId,task_id:taskId,text,keep_attachments:st.keep.map(a=>a.id),
+    images:st.added.filter(a=>a.kind==='image').map(({name,data_url})=>({name,data_url})),files:st.added.filter(a=>a.kind==='file').map(({name,data_url})=>({name,data_url}))});
   transcriptKey='';
   if(job.session && job.task){
     const i=state.agent.sessions.findIndex(x=>x.id===job.session_id);
@@ -488,26 +504,29 @@ function renderAttachmentPreviews() {
   $('image-previews').hidden=!pendingAttachments.length;
   $('image-previews').innerHTML=pendingAttachments.map((a,i)=>`<div class="image-preview ${a.kind==='file' ? 'file-preview-card' : ''}">${a.kind==='file' ? `<div class="file-preview-icon">${ico('book')}</div>` : `<img src="${a.data_url}" alt="${esc(a.name)}">`}<span title="${esc(a.name)}">${esc(a.name)}</span><span>${fileSize(a.size)}</span><button type="button" data-remove-image="${i}" aria-label="移除 ${esc(a.name)}" title="移除附件">×</button></div>`).join('');
 }
+// Checks the limits for `files` added to the attachments already `current` ({kind,size}), then reads them as data URLs.
+async function readAttachmentFiles(files,current) {
+  const incoming=files.map(f=>({file:f,kind:imageTypes.includes(f.type) ? 'image' : 'file'}));
+  const all=[...current.map(a=>({kind:a.kind==='file' ? 'file' : 'image',size:a.size || 0})),...incoming.map(a=>({kind:a.kind,size:a.file.size}))];
+  if(all.some(a=>a.kind==='file') && !filesAvailable)throw new Error('文件上传需要更新后的服务：等这轮任务结束，再重新打开办公室即可。');
+  if(all.some(a=>a.kind==='image') && !imagesAvailable)throw new Error('图片功能需要更新后的服务：等运行中的任务结束，再重新打开办公室即可。');
+  const images=all.filter(a=>a.kind==='image'),docs=all.filter(a=>a.kind==='file');
+  if(images.length>4)throw new Error('每条消息最多 4 张图片');
+  if(images.some(a=>a.size>6*1024*1024))throw new Error('单张图片不能超过 6 MB');
+  if(images.reduce((n,a)=>n+a.size,0)>12*1024*1024)throw new Error('图片总大小不能超过 12 MB');
+  if(docs.length>fileLimits.count)throw new Error('每条消息最多 '+fileLimits.count+' 个文件（图片另计）');
+  if(docs.some(a=>a.size>fileLimits.each))throw new Error('单个文件不能超过 '+fileLimits.each/1024/1024+' MB');
+  if(docs.reduce((n,a)=>n+a.size,0)>fileLimits.total)throw new Error('文件总大小不能超过 '+fileLimits.total/1024/1024+' MB（图片另计）');
+  return Promise.all(incoming.map(({file:f,kind})=>new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onerror=()=>reject(new Error('文件读取失败，请重新选择'));
+    reader.onload=()=>resolve({kind,name:f.name || '剪贴板图片',size:f.size,data_url:reader.result});reader.readAsDataURL(f);
+  })));
+}
 async function addAttachments(files) {
   if(submitting || readingAttachments || !files.length)return;
   error('');readingAttachments=true;$('send').disabled=true;
   try {
-    const incoming=files.map(f=>({file:f,kind:imageTypes.includes(f.type) ? 'image' : 'file'}));
-    const all=[...pendingAttachments,...incoming.map(a=>({kind:a.kind,size:a.file.size}))];
-    if(all.some(a=>a.kind==='file') && !filesAvailable)throw new Error('文件上传需要更新后的服务：等这轮任务结束，再重新打开办公室即可。');
-    if(all.some(a=>a.kind==='image') && !imagesAvailable)throw new Error('图片功能需要更新后的服务：等运行中的任务结束，再重新打开办公室即可。');
-    const images=all.filter(a=>a.kind==='image'),docs=all.filter(a=>a.kind==='file');
-    if(images.length>4)throw new Error('每条消息最多 4 张图片');
-    if(images.some(a=>a.size>6*1024*1024))throw new Error('单张图片不能超过 6 MB');
-    if(images.reduce((n,a)=>n+a.size,0)>12*1024*1024)throw new Error('图片总大小不能超过 12 MB');
-    if(docs.length>fileLimits.count)throw new Error('每条消息最多 '+fileLimits.count+' 个文件（图片另计）');
-    if(docs.some(a=>a.size>fileLimits.each))throw new Error('单个文件不能超过 '+fileLimits.each/1024/1024+' MB');
-    if(docs.reduce((n,a)=>n+a.size,0)>fileLimits.total)throw new Error('文件总大小不能超过 '+fileLimits.total/1024/1024+' MB（图片另计）');
-    const added=await Promise.all(incoming.map(({file:f,kind})=>new Promise((resolve,reject)=>{
-      const reader=new FileReader();reader.onerror=()=>reject(new Error('文件读取失败，请重新选择'));
-      reader.onload=()=>resolve({kind,name:f.name || '剪贴板图片',size:f.size,data_url:reader.result});reader.readAsDataURL(f);
-    })));
-    pendingAttachments.push(...added);renderAttachmentPreviews();saveComposer();
+    pendingAttachments.push(...await readAttachmentFiles(files,pendingAttachments));renderAttachmentPreviews();saveComposer();
   }catch(e){error(e.message);}finally{readingAttachments=false;$('send').disabled=false;}
 }
 // Remaining quota changes colour as it runs low, so a tight allowance is visible at a glance.
@@ -1149,6 +1168,7 @@ document.addEventListener('click',async e=>{
       if(b.dataset.page==='projects')projectId='';show(b.dataset.page);
     }
     if(b.dataset.session)selectSession(b.dataset.session);
+    if(b.dataset.updateReadAll){let changed=false;for(const u of agentUpdates(state))if(u.project_ids?.includes(b.dataset.updateReadAll) && Date.parse(u.at)>Number(agentReadAt[u.sessionId] || 0)){agentReadAt[u.sessionId]=Date.parse(u.at);changed=true;}if(changed){localStorage.setItem('lab-agent-read',JSON.stringify(agentReadAt));renderRecentSessions();renderHistory();renderProjects();void syncReadState();}}
     if(b.dataset.updateRead){const id=b.dataset.updateRead,at=Number(b.dataset.updateAt);if(at>Number(agentReadAt[id] || 0)){agentReadAt[id]=at;localStorage.setItem('lab-agent-read',JSON.stringify(agentReadAt));renderRecentSessions();renderHistory();renderProjects();void syncReadState();}}
     if(b.dataset.chatOpen)openChatRef(b.dataset.chatOpen,b.dataset.chatTask);
     if(b.dataset.sessionPin){
@@ -1165,6 +1185,8 @@ document.addEventListener('click',async e=>{
     if(b.dataset.project && selectSession()){$('project-context').value=b.dataset.project;saveComposer();}
     if(b.dataset.editMessage)openMessageEditor(b.closest('article'),b.dataset.editMessage);
     if(b.dataset.editCancel!==undefined)closeMessageEditor(b.closest('article'));
+    if(b.dataset.editAttach!==undefined)b.closest('.message-edit').querySelector('[data-edit-files]').click();
+    if(b.dataset.editRemove){const box=b.closest('.message-edit'),st=editState.get(box),i=Number(b.dataset.editRemove.slice(1));(b.dataset.editRemove[0]==='k' ? st.keep : st.added).splice(i,1);renderEditAttachments(box);}
     if(b.dataset.editSave){b.disabled=true;try {await saveMessageEdit(b.closest('article'),b.dataset.editSave);} finally {b.disabled=false;}}
     if(b.dataset.answer){b.disabled=true;try {await submitAnswer(b.closest('.question-card'));} catch(e) {b.disabled=false;throw e;}}
     if(b.dataset.stop){await post('/api/stop',{task_id:b.dataset.stop});await load();}

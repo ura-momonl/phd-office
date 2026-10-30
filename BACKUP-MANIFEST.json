@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-10-30T20:13:55.146Z",
+  "created_at": "2026-10-30T21:29:03.570Z",
   "source_head": "9672207a2bee00e78fa162da887e466fd52c38a7",
   "source_files": [
     {
@@ -584,8 +584,8 @@
     },
     {
       "path": "agent/run.mjs",
-      "bytes": 90146,
-      "sha256": "7ec4400d7d8780e00f58ceca85c1a49edb7105b2f6edc0fcd9215a04d96d4ed1"
+      "bytes": 91007,
+      "sha256": "2d6e71d6934272caa5f3ff5a18db9d7e08b0c60c96b7da6221ec859844371b38"
     },
     {
       "path": "agent/shell-guard.mjs",
@@ -719,8 +719,8 @@
     },
     {
       "path": "automation/continuation.test.mjs",
-      "bytes": 76506,
-      "sha256": "db2dafdb19dc2042e4b920a3e14eab6e10dc3f0be6f41aa949f1d12edcbff158"
+      "bytes": 78163,
+      "sha256": "9b0a46f834ccdc33605c0d7d537498a319e3ec174f7ff63887e449fcf22e9e78"
     },
     {
       "path": "automation/data-analysis-mode.test.mjs",
@@ -873,6 +873,11 @@
       "sha256": "69ca163d3bf8f2bcdf22a2805fd5ad1e24383e23756ea5ad371a8ba075f961c3"
     },
     {
+      "path": "dashboard/COMPANION.md",
+      "bytes": 1311,
+      "sha256": "e4cfc6442606eded00242cba9f06e46deb0efc8708eaa86a1a48e6a048dc50bc"
+    },
+    {
       "path": "dashboard/Install-Startup.ps1",
       "bytes": 1057,
       "sha256": "f145643f65fdfed88ed13d4a51d07afc606ab0f83ab420661a51b10a04100466"
@@ -929,8 +934,8 @@
     },
     {
       "path": "dashboard/app.js",
-      "bytes": 141434,
-      "sha256": "01316ccdec141442877cdd7844e13e75d8f5ce5dee8669becc82ec706eaff4e4"
+      "bytes": 144463,
+      "sha256": "ae3ffdf66bce7f3c8ad3620f757f9169811f306949169ddd465ccaa36e9ccb03"
     },
     {
       "path": "dashboard/avatar-tuner.js",
@@ -946,6 +951,11 @@
       "path": "dashboard/avatars.mjs",
       "bytes": 2056,
       "sha256": "13f9b0c72c242dfec04ae4c94cf7a48dae1bc5b0a6d02dc99a4b9233d4197e34"
+    },
+    {
+      "path": "dashboard/avatars/brand-piri-53.png",
+      "bytes": 5677,
+      "sha256": "79835d5645ce0768bdbbd3e946878ebc627e604c2b1c2a216490980b134100b4"
     },
     {
       "path": "dashboard/avatars/claude.webp",
@@ -998,6 +1008,11 @@
       "sha256": "4651ebded6a0e7d220a230618db08f5c5158049f8959d0785a5fab5b726b24de"
     },
     {
+      "path": "dashboard/brand.test.mjs",
+      "bytes": 2932,
+      "sha256": "7dd7e462e53951834b21a14a684babb3edbcf07f97c151b66f3ce9e378a73d57"
+    },
+    {
       "path": "dashboard/cards.mjs",
       "bytes": 4195,
       "sha256": "f1c1d0a5f732b269b30b5b57d200730abfd3978b403742b5fd670ee3e0895821"
@@ -1013,6 +1028,16 @@
       "sha256": "f1d97ad594efb78634a64b3851b85e3aa1715ec8098b62de442eaac0d1f3dc98"
     },
     {
+      "path": "dashboard/companion-assets.mjs",
+      "bytes": 1254,
+      "sha256": "ad0b9e1359bf52f5005f8e49f1da4133be912f34c168ea2024a315a23ccd3028"
+    },
+    {
+      "path": "dashboard/companion-assets.test.mjs",
+      "bytes": 7535,
+      "sha256": "f5b532a300214282df5a030ba0f522096a26fa52523c8c77a71545c4322c2381"
+    },
+    {
       "path": "dashboard/companion-notes.mjs",
       "bytes": 4799,
       "sha256": "de23747f678d8448b26f217e7ecf2f71885b6dc92e237b1f000ac7d897f9f665"
@@ -1024,1238 +1049,13 @@
     },
     {
       "path": "dashboard/companion.test.mjs",
-      "bytes": 32235,
-      "sha256": "fb0bb38c7e9c0b1767c6af1a566b6368235873ce50399ab0b13c59e279d2f994"
-    },
-    {
-      "path": "dashboard/companion/EXTRA-ACTIONS.md",
-      "bytes": 4899,
-      "sha256": "0755f640283a2337fef579bba6b87e8e3afb98bef00b5e1e40de5924db4edfd8"
-    },
-    {
-      "path": "dashboard/companion/README.md",
-      "bytes": 8331,
-      "sha256": "1e5e0d2f3be0ade250083f7520ad2e2a9f4a545d23c370af9ccf13bda6db46b4"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f0.png",
-      "bytes": 4662,
-      "sha256": "aadf140d1c8d9ab38b2f2f9a1a3563928019db0eccf30d27ba1c06c11286b8bd"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f1.png",
-      "bytes": 4215,
-      "sha256": "9124782f6d218515531a94135db3f78fde263ae3851aab917a8f6d24098d90f4"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f2.png",
-      "bytes": 4172,
-      "sha256": "3fde070ec7cfb5cccabd6ed76a035232823699bdce6a8d2cb21b2f516a098929"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f3.png",
-      "bytes": 4186,
-      "sha256": "3b2a4511e615358397ac482ac77da26f352954f72830d575e4451ba1f2194d5e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f4.png",
-      "bytes": 4192,
-      "sha256": "a5ff06fe5d013f0b86fa3e98dcb988ea1f494b53770076e53065569cee0dd12f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f5.png",
-      "bytes": 4232,
-      "sha256": "e86fb20e055b6b326d09c88b49eb1a1fc3ae8932a7e9756dadc6fb9b95621b7b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f6.png",
-      "bytes": 4389,
-      "sha256": "8b2ff6ed35d2aafa0e2995a904e0c095ffe8f1745e3b979dbb926e5d6a450e86"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/chin_think_anim/f7.png",
-      "bytes": 4270,
-      "sha256": "7b43224676c782a1e6fcbd0ea4388369351f25dd4f2e16a9a3155101a18f3230"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f0.png",
-      "bytes": 5007,
-      "sha256": "d02bb807c9c931f9fbd382fee52b3c3a7b99d99c69cde4e8d197037693e07f77"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f1.png",
-      "bytes": 4627,
-      "sha256": "a7b6e61cf636b561ef21571af5662b39a5e2c5bbcf4f4e10f1daf15f146b7517"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f2.png",
-      "bytes": 4650,
-      "sha256": "c0a3f9dde221021f52badc65f95420eccb5311d7ca56f3eb81d41e57d93c8264"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f3.png",
-      "bytes": 4520,
-      "sha256": "c825e787a1848598cd2857657587533e8c71ab34144a8f26fd795a926db0d176"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f4.png",
-      "bytes": 4377,
-      "sha256": "75b1a839926ff7f6dc2a7470e3c270c5248db56e99b441f9d5d4e3a762b7700e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f5.png",
-      "bytes": 4425,
-      "sha256": "6a9aa6a15a50c2963e869f1056ed8111eed9309ff5a194df3e0711d85badbc30"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f6.png",
-      "bytes": 4458,
-      "sha256": "ecf25a0caf18c95a4bee3f94cbfc4247cdffe69e3e12803ed9f55aa9c59b1546"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/double_peace_anim/f7.png",
-      "bytes": 4583,
-      "sha256": "6335c41a64439e711c7c5a8ee12e45e0b10c1e148115bb4fec22e9d56477f6ad"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f0.png",
-      "bytes": 5061,
-      "sha256": "428af7e99fca41dc602da9e98c5eb29b8013b041f9cf17fa33f98a03f713b04f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f1.png",
-      "bytes": 4739,
-      "sha256": "f107a1cbf20a3080b702be1325f467ac5bde67d9d2ce9408caadacf4feebecfe"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f2.png",
-      "bytes": 4622,
-      "sha256": "fa2a7c0db03347b87c47be5ec3f6de576e1652efcb9e8a763754344f067e78ba"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f3.png",
-      "bytes": 4447,
-      "sha256": "630d5fc6258eceb41de061bdc009e6bad962e5c240d0d66d3ae4496680d70583"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f4.png",
-      "bytes": 4430,
-      "sha256": "3e65602f33ca4fe489353c1d0ecae893308e9eeeb4047a505b81bdcb65043704"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f5.png",
-      "bytes": 4466,
-      "sha256": "6bc082001f891b5ce4791ef4ca3026d76902e95200d3fcaa5f96038eb9336737"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f6.png",
-      "bytes": 4639,
-      "sha256": "f27323118c4c27ebc20b8a57fddec1d3b53cb5580972f2030f9fc312f4fef5a6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/held_item_show_anim/f7.png",
-      "bytes": 4730,
-      "sha256": "89911d3b322e7ef3dcad60cbabd52f3499eaea13ffb546ab021ce93d3681452e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f0.png",
-      "bytes": 5211,
-      "sha256": "0ae35c012876c86273398628a0caf04f53859b1b8740ae8da86d53ea828931d0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f1.png",
-      "bytes": 4665,
-      "sha256": "04722780304ad66bbd4910528392f10105fb4ca4a22922115edda7a428a1c234"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f2.png",
-      "bytes": 4699,
-      "sha256": "dd1978d6507f0647df87f36711ed8e00e41b19d8b486f4b0cb99f6bc6829e765"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f3.png",
-      "bytes": 4738,
-      "sha256": "f6acd928eab25cdce2406da737d8e219e7ce3edba8e5f055ff7b6ed208ad6e58"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f4.png",
-      "bytes": 4724,
-      "sha256": "4b945922668b1ffc9e93b7bf6010c5b06c356b1b440429ec335343c9b13a95b7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f5.png",
-      "bytes": 4791,
-      "sha256": "14ead65ec192f29d9ec047482ded0ac0cafd8b26e64990ffabd04abdf458281b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f6.png",
-      "bytes": 4958,
-      "sha256": "9dab10ead7c2c1ba0259fd9980dd6031ae7bd04c7455647d6acefc188a4050e9"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/idle_anim/f7.png",
-      "bytes": 4926,
-      "sha256": "2dd4679bf4c9a96c22c13b5b4bbeb9f84ac415f9ac3733ebdeb76ba513ab2ef0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f0.png",
-      "bytes": 4921,
-      "sha256": "8d5399ce2a8296d7383ddc2b563bace56312550f657c03905faed142ba17b7ae"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f1.png",
-      "bytes": 4535,
-      "sha256": "0c687baaab5b039b5225fd1767cbe6f26b532a757487fef359c4357fe2e9b14a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f2.png",
-      "bytes": 4519,
-      "sha256": "a9ac17aa852278392f686f72fab3ce7843511aeafdd61cb287890b47e57dd358"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f3.png",
-      "bytes": 4539,
-      "sha256": "7cb29843d0d8e769e1bb111fdaa0e61d0c5bd4dd98523f90458c967bfe5c72df"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f4.png",
-      "bytes": 4532,
-      "sha256": "2a5a786eebda04a3f525794bca9206d420a1022bc3173d528e5b786cbc3bf89c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f5.png",
-      "bytes": 4575,
-      "sha256": "48540f9e3179896fb606cc4b84803ec3e6e7ce6ecf0027aaaa5f7851e7b535e7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f6.png",
-      "bytes": 4554,
-      "sha256": "072e3a843bc06e17406e9cfb2b216f25a12c8dd4692dc5b967300cfa2d2e6fe3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/palm_up_shrug_anim/f7.png",
-      "bytes": 4562,
-      "sha256": "998eb36febf2b6b47e870e26de7f7689fbd32595acf11b7623555d728addbfe2"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f0.png",
-      "bytes": 5146,
-      "sha256": "bc8322cbdbd7ab16c3346c7b71ff46887ae6cab4c5b04faf0998a4f2fa3a4e28"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f1.png",
-      "bytes": 4798,
-      "sha256": "77a0ebda47009c0a4a756c085a58fe9d9d7ed5b70c2d1014cc1a8adf49c2a33b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f2.png",
-      "bytes": 4478,
-      "sha256": "cee023e02104532e2659e184d52153223055ffc15cb842f9e709bf234f7c6022"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f3.png",
-      "bytes": 4631,
-      "sha256": "82c5ced86c946eb96954b963159e6133289a23994ff1fe7dc968c464c1ede66e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f4.png",
-      "bytes": 4604,
-      "sha256": "46738f747696949f17deaab901e7f30be18504ed061cff5c7c52849e605852de"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f5.png",
-      "bytes": 4664,
-      "sha256": "af5e41c777a9032011cf67a35811bee7dd948a0b9575f38ec0dfc122303f2c12"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f6.png",
-      "bytes": 4886,
-      "sha256": "8e3072fb33c3167507fe79ce8becbd953c6d0e3a27dff6c7540331a0405adf2f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/surprised_palms_anim/f7.png",
-      "bytes": 4781,
-      "sha256": "25cb0d8b971b410966765dd5fb861c5ceba40afddd925c56ba841171e2f16300"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f0.png",
-      "bytes": 2771,
-      "sha256": "39703377a4037d696a372ed89004a81b9cf9f62ff5c4029a72e5a62dc86253a0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f1.png",
-      "bytes": 2823,
-      "sha256": "45014e5ab2c2491dc20ac7187ff8ae82e6f201c621df3a8d616ccaf225d0d20b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f2.png",
-      "bytes": 2832,
-      "sha256": "e5d6a9770a33c114081cb9134fd91ecbc0e19454e5213a6d915c469dc84c6665"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f3.png",
-      "bytes": 2757,
-      "sha256": "978065ac5645b217c053211dd7bcfa08ddbcf8c683475dbc5dc75f5c875c10d0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f4.png",
-      "bytes": 2774,
-      "sha256": "e4eec64b7762d38f0400cd6ba42837a87a0edbb9ca9cc836c6afa78377acc455"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f5.png",
-      "bytes": 2831,
-      "sha256": "e71187e663522b9ed771d639e94bd17a062c894876aad4428e643fe832d598ef"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f6.png",
-      "bytes": 2841,
-      "sha256": "d68497e48903b1d0e574e40f47b4abd1db8058f5d202dcd1e8f111ca73d27793"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_back_anim/f7.png",
-      "bytes": 2848,
-      "sha256": "181bebcdb042b9e420ca7e395d4c21d0fdbb4874813333e7f31dd1632e907f2e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f0.png",
-      "bytes": 3627,
-      "sha256": "e5e89ed407bd71873618b79dc3f002da6a770b64ae626671d9361ad714920ca1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f1.png",
-      "bytes": 3508,
-      "sha256": "60342a1e74f0dc22f2ce9dcf4dfe5756fd352a1c825031d713bdce4a028e9886"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f2.png",
-      "bytes": 3397,
-      "sha256": "8b02739119a5cc32cb1d80cdc80861a78f7a37bbe58a3b538fdd7bb59ea5413e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f3.png",
-      "bytes": 3308,
-      "sha256": "92ce0de8d83b0643c60a54851720a3e01863e1a8829703568cb971c485be73e1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f4.png",
-      "bytes": 3452,
-      "sha256": "a2ee3e7924b7c1c3626378ca847aa8c8e95a6229c13b51867138c1c76de91da9"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f5.png",
-      "bytes": 3258,
-      "sha256": "59c1446afd4594da3582c69af112b43103e06a1212a89fe3a576d43cfab7b02a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f6.png",
-      "bytes": 3457,
-      "sha256": "a0d56e19dd5473a3b12ab41df4e58e68c3782a0eac869369be7fbfecc11e4118"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_front_anim/f7.png",
-      "bytes": 3398,
-      "sha256": "bba721e1128daf02d38b803235cc3969a532544a3ed06eb8657186a11faf9e82"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f0.png",
-      "bytes": 2920,
-      "sha256": "f68f6372b71dd15c27248955c00da8735af4904a737d7397a4d4b42eaedeea5a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f1.png",
-      "bytes": 2678,
-      "sha256": "9fa3a37afd6a32de2711afd9567f5fe752a1c3552932fa3ac965ebb162913790"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f2.png",
-      "bytes": 2792,
-      "sha256": "e60f154f0f89da6afed0a7429005c3ca128505c9d1f462cfcaf11988812be42f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f3.png",
-      "bytes": 2766,
-      "sha256": "b5dc960fd3d30362f36eec803eca75382dcd3b10fe49d684c0226f1edea9e9b7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f4.png",
-      "bytes": 2804,
-      "sha256": "57d40fca88711c25053e0ecf5b5c1b35b05806347f0d453a12666ed5f603589a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f5.png",
-      "bytes": 2731,
-      "sha256": "565a57c97f85a85a7107d67ef95d75784a7baedbf1511e09f3e684a8a5f2bea8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f6.png",
-      "bytes": 2789,
-      "sha256": "47e86b039bd4e178323344fca21edfbeadc31a9a39c4796fc1125f0fb5a10cf1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/walk_right_anim/f7.png",
-      "bytes": 2994,
-      "sha256": "e1a83b43ae042f3f0634068393018c60a35fd03c2486bfc57283c0b3ec6aad91"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f0.png",
-      "bytes": 4426,
-      "sha256": "a9add04271e3aa9788381da164b752fbe1a20ee54e65a4631fdf9e8022b7dc15"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f1.png",
-      "bytes": 4013,
-      "sha256": "1597013215aa02fd018cbbb96c0e15961962705c384278f144eaad308223f787"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f2.png",
-      "bytes": 4013,
-      "sha256": "5853ff197176d3825b7dc758d983639e0a192e70ebc1a127b8488e963e483f0e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f3.png",
-      "bytes": 4021,
-      "sha256": "5e1660b62e3d0e6aec76fcd2092e2d8dc737a6a12438427e2987bf81479da9ef"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f4.png",
-      "bytes": 3997,
-      "sha256": "196d0fe77e93dc2fad326c4f014f8485456bac58869cb5e1ebb1e419b4be6895"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f5.png",
-      "bytes": 4052,
-      "sha256": "c68cf1aa4d3187040aba21cec95b05e16cb4f4edb3b5cb9f0fb506673cd2ebe7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f6.png",
-      "bytes": 4117,
-      "sha256": "4db9b46671fb37a78ab2c66eb4df7c87b64dfebf632a38140c7b7f5c380fdfe2"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/claude/wave_anim/f7.png",
-      "bytes": 4017,
-      "sha256": "cfa2774b910c9c8887f1e989f836df50e292a5407738c6d8492f187f834b691f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/cheer.png",
-      "bytes": 3133,
-      "sha256": "c9cd1940f84a598798e6e230171833a074f310c3654056ec830102ccca6b6af5"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle.png",
-      "bytes": 3148,
-      "sha256": "bad9d9bc312f79c9fc2ec66be304d19c9338a973fe9b165d6d881734af622ede"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f0.png",
-      "bytes": 3107,
-      "sha256": "c7edb76fc46ad8ea7c9b6e6c96dba1b877c4ab2fce9fd060e95835aeab7e88af"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f1.png",
-      "bytes": 2983,
-      "sha256": "ae674194ffc2a45c769875b1a45ce2ceaf02ed8d66d26a46c31eb66f7f2ce1f6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f2.png",
-      "bytes": 2930,
-      "sha256": "fefa84225391272c7e74368fe4a82c79ff93c038c86e93adfcd377143127394b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f3.png",
-      "bytes": 2982,
-      "sha256": "cbe673a99fb3ad0f5491f6afee05e13745b4421a4b711d9a61bbf8a015a0c5c3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f4.png",
-      "bytes": 2977,
-      "sha256": "8d4d4a3a5dec58b0e8dae5268f8a818ecf3760d035f6f9fc1fd59bf2c3c08396"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f5.png",
-      "bytes": 2958,
-      "sha256": "a1d2c1f433da47281ab23d00eb0909c78a6f8511b2189e2aad1205c784c94927"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f6.png",
-      "bytes": 2971,
-      "sha256": "bed2de338ee43232425b575489297c559c214de14b6422c7c450b0c793430185"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/idle_anim/f7.png",
-      "bytes": 2897,
-      "sha256": "944a4199c5fada9390447c423deeddfb6864ffdaf79c2386496461484d10704f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f0.png",
-      "bytes": 3424,
-      "sha256": "2d6feabd42d7aca83eb953550b2ad9ef1e0de537d7017a8a6d26ff8f4c91d430"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f1.png",
-      "bytes": 3261,
-      "sha256": "c5f816b171a96a3150612334dc4ccf446c396f3d29751857299981faa663953a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f2.png",
-      "bytes": 3108,
-      "sha256": "117528d1e29301a7c6f93e18086981421cfba8e5d758acbfa62fadd4ca5fc90a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f3.png",
-      "bytes": 3211,
-      "sha256": "6598d7057e22aa128d17924ed152b5c286b4291082cecf354f5add315f1354c0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f4.png",
-      "bytes": 3329,
-      "sha256": "e6561f2df3818be3b0cb15831e92451ac2608a57c666a70b5c4faffc04fe8608"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f5.png",
-      "bytes": 3406,
-      "sha256": "a1f608f2dab4ae9c9ef224a3930e8d30c099b2f5dfeac97ac292af169282f7ee"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f6.png",
-      "bytes": 3301,
-      "sha256": "c42e8d387352e8acb17551d57cdef2b9e02177a1917d69970a4e10dd9cc34186"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/jacket_tidy_anim/f7.png",
-      "bytes": 3267,
-      "sha256": "592419bf18b3b2b700a523a8d66f168ea210c777bbf57a61cd03320b38d7fb08"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f0.png",
-      "bytes": 3423,
-      "sha256": "d1703e798e78477f28ab42c12ffd7fe27ba3e355c2bda775929015a277467013"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f1.png",
-      "bytes": 3218,
-      "sha256": "50923b1dafb4ec662f61f9e7ad6b6f265a493af02ac0c7e86e926446d5bfbfa6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f2.png",
-      "bytes": 3070,
-      "sha256": "97d4483e1e1b062afb7238f978f95fcb73b169a9b2997584e95819cf35473d21"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f3.png",
-      "bytes": 2975,
-      "sha256": "e34e604fe03b9567dbd64dc0a6fda76c329cb19b3439bffc5a90b70eb82d71c6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f4.png",
-      "bytes": 2968,
-      "sha256": "0b0a6051013d5318378bd45b58c792f2b7aa9a986ab3e910b2b84a8ed9a0feb7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f5.png",
-      "bytes": 2991,
-      "sha256": "4ef6dda71b7e2f460efbe201c5ec822537a0c7dd977ea89323fce4d273b15199"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f6.png",
-      "bytes": 3163,
-      "sha256": "fc9d84bbc8ff1b9a006522754951820f9a77c6a163d8c8627b949689b6274895"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/polite_bow_anim/f7.png",
-      "bytes": 3316,
-      "sha256": "efab28c39c5818c4635b90f6d0a7235e16913cd3fbeac24a1e9f9760990aac63"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f0.png",
-      "bytes": 3304,
-      "sha256": "5f493ef9c20de0af7a5f812e8a77bc8839a2b54fa5d27df24f0f516478cb469c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f1.png",
-      "bytes": 3084,
-      "sha256": "09c9b69af679ec0f0133a70084d675ae87474a81167649e4b6348948f72fd574"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f2.png",
-      "bytes": 3084,
-      "sha256": "429a1799c824a297090fad1fd48d3fe56404007363e02a1eab1b6f8c1a4f9454"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f3.png",
-      "bytes": 3098,
-      "sha256": "0e63737b8d3a7659cd052b7abfd2d092fbdef94aa4b282207be6cec8b471485d"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f4.png",
-      "bytes": 3120,
-      "sha256": "67e84c7d38bc631193fafbc6bd1f99f4735d03f9258c560495681fd7eb6ff387"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f5.png",
-      "bytes": 3094,
-      "sha256": "433b94b5fdf57a82cfdd32dead3133fe86311ce452b9be54caf0373aa340071d"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f6.png",
-      "bytes": 3091,
-      "sha256": "c9d1d92268e0b01baa51bc1dc4813176c64f6415f1c71f820c0f62b527c802d1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/read_stand_anim/f7.png",
-      "bytes": 3088,
-      "sha256": "61836206c3af1a322e33ae851c60af58f9ece8ee76ae6d2259a6195bf34d4b6f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f0.png",
-      "bytes": 3315,
-      "sha256": "af1062b337b4360e7e800cc9b56c54bd23222b5c1b1e6dcff8e168ff103fed42"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f1.png",
-      "bytes": 3012,
-      "sha256": "5202d6d8f116df77863670f6cc56a9cced962a5bea0b7fffc61ab5c640af8605"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f2.png",
-      "bytes": 2986,
-      "sha256": "1e6d117a95cfa4ee7efaba578f251f2a6c2158a63a60c72da5b1c818a5969544"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f3.png",
-      "bytes": 2904,
-      "sha256": "6777fad9432a98563adf1787f0caa4fc0a1758e67855e94bdbba65a2d2927441"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f4.png",
-      "bytes": 2891,
-      "sha256": "6e130987a43c6ad2608ad3487e551acc5c643f54904bce6689eadc6929b3a313"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f5.png",
-      "bytes": 2905,
-      "sha256": "cec50a68aa2f620f05fc81829d0c707e6e0b10c26332df979e4f91ac1907b2ce"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f6.png",
-      "bytes": 2902,
-      "sha256": "4280dd6dad05fd5ed35c1f6247683a9cbc4a0e702070dfd1bda5533d2a2249f7"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/sip_anim/f7.png",
-      "bytes": 3018,
-      "sha256": "e8dd5462c3543453dde344d760dfb666a172e55b63ddffbd7af77db376d173b3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f0.png",
-      "bytes": 3595,
-      "sha256": "149fa4fbf4ab2a31f9ab5025cb1fdc4017ae96864d7a5b1e7850928f17597997"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f1.png",
-      "bytes": 3417,
-      "sha256": "2f2148d09034b8688854946667d9d5bf9619295ee5e32983cd10f9aff2caf16d"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f2.png",
-      "bytes": 3457,
-      "sha256": "7e42a2f651a9f79b92e315284330ce0f23ca9bf4f31f9c5db61eca9c7d37cccc"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f3.png",
-      "bytes": 3479,
-      "sha256": "116eaa47a044aba841e7157f39c6a129e55e57a45c38308c62a1a651d3ddb00e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f4.png",
-      "bytes": 3343,
-      "sha256": "b44ff3c051d427b59f9f71716fafd029997faafb1174f97aec3e5f983674a5e9"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f5.png",
-      "bytes": 3468,
-      "sha256": "78b745379ec3f82e5be478af4c007c56298e111b8e169e243fbdeaea01fe98aa"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f6.png",
-      "bytes": 3442,
-      "sha256": "caf32ad5a571eef1acba0692a08ff7dd464ae10be747a78b8d9011bc77cb28df"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/touch_hair_anim/f7.png",
-      "bytes": 3439,
-      "sha256": "5b61a9d48ccc743f58c0552b54fe8aa526c63e7e8ed082e6c024ce25f4d90643"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f0.png",
-      "bytes": 2054,
-      "sha256": "87305d4f3d8b946ecbc56f095c7b9419f2bb93370c0c15b54387c912b6223c31"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f1.png",
-      "bytes": 1995,
-      "sha256": "0ff3001ad8cbd2c343db86fff4aba8dfbbc93af0d5694f143398f12e4d311008"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f2.png",
-      "bytes": 1981,
-      "sha256": "0b179b391db2b9ae76d5a076db413e3515148d34a641b645e71778bc9597ad1c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f3.png",
-      "bytes": 2102,
-      "sha256": "b8e83e7ad6725e41746659045983b830e8ad1d66e2c606294ad1eee27f53c195"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f4.png",
-      "bytes": 2119,
-      "sha256": "b8d5910a7ebaa929e8ef7ccfa7ea0c12af8bff256be75ef456fe3cfcb99f4d49"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f5.png",
-      "bytes": 2057,
-      "sha256": "580b2097f453c96e0e38ea06d68a5d9920c24a06a1128fb1e234190335343b6e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f6.png",
-      "bytes": 2035,
-      "sha256": "48663d5fb958ecda005677d4c6565e62fe1978cb3e5dbcfc22180c6c427a368c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_back_anim/f7.png",
-      "bytes": 2092,
-      "sha256": "4992ecdb3f38e530c689083439b50bf53b566d42a08cb9ba6facc14093785ce3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f0.png",
-      "bytes": 2591,
-      "sha256": "96888768d864cf52126e7007d4d47a31ce3d93b18a10401e9420efc2de264443"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f1.png",
-      "bytes": 2505,
-      "sha256": "e69626a0f5734e5a45a287d1504c2f255d9148e695b3a2a9d4876a19974a2b8b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f2.png",
-      "bytes": 2518,
-      "sha256": "94fd194a816c6ce0b8b08c8a8eabfb0a3b4681d92d571eb82911cf9004fd33e0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f3.png",
-      "bytes": 2513,
-      "sha256": "ed22e674daef9ff24da877890e3cefc79f180d33a6425af9f235500acc839107"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f4.png",
-      "bytes": 2480,
-      "sha256": "716f618da99d4055751b3600cd03b8f8ea14169b864291f4a44a48e876269334"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f5.png",
-      "bytes": 2448,
-      "sha256": "5f168079eb8ba453dee5bddce5a5906a1a1db521e322edb3bf41c6fb0762b551"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f6.png",
-      "bytes": 2553,
-      "sha256": "36fd292463f9b633c62c5033ed9f5b5c2f59f30b56cb7b85d1de0b9da15e9d68"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_front_anim/f7.png",
-      "bytes": 2428,
-      "sha256": "04cb169eb10409dd92cae528cbb9c72730bf16c84fd29a48d650f8e6a77aae94"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right.png",
-      "bytes": 2469,
-      "sha256": "64f38b241754a6ecfc51f0a38d9298d52280413d429c6235b422871e999d025c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f0.png",
-      "bytes": 2306,
-      "sha256": "699bec28e4eacbf1217a0f571592c625b59440808fc4e131af05707d81b85c4c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f1.png",
-      "bytes": 2270,
-      "sha256": "504a05ef94e54ee80585d36855ed60413232a1e0f3619b1b3fbff86ef688475b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f2.png",
-      "bytes": 2425,
-      "sha256": "545a1e36b91fe03d2497cc43e51c257501629960679f8b60082d4f78094562e1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f3.png",
-      "bytes": 2465,
-      "sha256": "2dd49c9d222e2b5cfef448e55fdc8496e8de35ca7eeb5e14063a36dd367d0896"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f4.png",
-      "bytes": 2412,
-      "sha256": "45d3615b0c91651d3fe76167b76c230014b3f062cf16c2fc0c0c2ea4beb14011"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f5.png",
-      "bytes": 2265,
-      "sha256": "1c63f388411dde765de2ff6c3468e163a91fe15292fcac126f4655dfbdcc618f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f6.png",
-      "bytes": 2353,
-      "sha256": "13c25320a6fad63f9152af85a87e8e5fe3da423cd06d38a1f5841a3095a090d3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/walk_right_anim/f7.png",
-      "bytes": 2367,
-      "sha256": "c35e55a75b3a641308f639852f08b71d6bdd78978b03ba4ababfa8638e03bdf0"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave.png",
-      "bytes": 3099,
-      "sha256": "d52061571c308ba8777b979744463cf20f9deda482ea9efa5a295ae6afb59486"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f0.png",
-      "bytes": 3056,
-      "sha256": "cf8ec6623f903fd0147e297f3e25d682baa7525e3ce4bf3dcf0e7b4945dfd9ca"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f1.png",
-      "bytes": 2965,
-      "sha256": "5428153694ab35e15366fe8c4afc7b0da960224c26f8c690984a2b886e84db1d"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f2.png",
-      "bytes": 2940,
-      "sha256": "f1cf15eb27b5428693d1882be16adbe321e2b231ff3f63676b3460e5e3b001c3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f3.png",
-      "bytes": 2908,
-      "sha256": "0c4bf46fd3c210e61781e4a5d85ce9d57562d41a9738719ab8032d4c6068fc21"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f4.png",
-      "bytes": 2873,
-      "sha256": "a61cecdc0a1223467ca08cefc189accccc62a74de3f955a69cbf34b1b51e4473"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f5.png",
-      "bytes": 2914,
-      "sha256": "3b2a85ba707ff1702032b33fdd37043a92b8798dc6ca1bb0d4fd92f45833d570"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f6.png",
-      "bytes": 2947,
-      "sha256": "a44d54daf2c37cb6048884486e656873d79a0fa2d226be78382b7f07bd6aab26"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wave_anim/f7.png",
-      "bytes": 2951,
-      "sha256": "300f0a929522639ed4061e9b13ffb408787dc53a75b39c305d06b19adad19c71"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f0.png",
-      "bytes": 3606,
-      "sha256": "be2c280c172a3e0b2e81a47124a45acc2ea7be0485cd4039238909e8f27e532a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f1.png",
-      "bytes": 3608,
-      "sha256": "f78686dc744f4616dfeb0d09096c6644557441b5b779fea3f0fa5fc513cd721e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f2.png",
-      "bytes": 3643,
-      "sha256": "115ccb6c0fe1667c7508c4574a11131e3f4b1bcd8fce1cc1506e0fac9713ca3a"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f3.png",
-      "bytes": 3595,
-      "sha256": "8c3ea98e031181852a01c0b94f0bd7f2b7b839f9410796fc12f2eea59cf77917"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f4.png",
-      "bytes": 3601,
-      "sha256": "b9f90189cd05780842f0bdf865f9e660110248d0d74951c2728101d8e5113052"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f5.png",
-      "bytes": 3607,
-      "sha256": "ef44eec33ddf15ac78c11db5e6748385de9956278fe990a765c6ae1a8aef9ff1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f6.png",
-      "bytes": 3604,
-      "sha256": "cfcebb286bb0c13bdf2e4916e3d2f54a3337378223f3a2acf571e10cebe5bc31"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/wink_finger_anim/f7.png",
-      "bytes": 3554,
-      "sha256": "9921b5cc39da73d20a350cd8fbde4caa276cfa256daf6493c188565c7591e276"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f0.png",
-      "bytes": 3307,
-      "sha256": "920e7cf0114277d3967a77bd2dc60563c497a83691590d8bc55a0355906660fb"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f1.png",
-      "bytes": 3208,
-      "sha256": "e2d3bc6f54f6a9f85f6f01c1be3a89adf612e04d5133889073e65a55d81308cb"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f2.png",
-      "bytes": 3157,
-      "sha256": "0c701b676db14f0475c8935433fae1302b9ceb2badd5083f04a6fdb3514056f8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f3.png",
-      "bytes": 3195,
-      "sha256": "0b5dce95dd26659155ebd623e538eeb0654a2e8c2d73176e28a2fae353782911"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f4.png",
-      "bytes": 3206,
-      "sha256": "5c359fee6f293e43e52be73851bb9b2484d0e81ac300fc50c69a555789e12ccf"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f5.png",
-      "bytes": 3181,
-      "sha256": "33aafedd7b7b948b677e9319e5d0c76f798b515022bf4308288717d0dc6ae96c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f6.png",
-      "bytes": 3194,
-      "sha256": "ca4a89fdfbaf6773ee327450dcc1efadbbeb8685c6970a37ec37543ae31fecb5"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/sol/yawn_anim/f7.png",
-      "bytes": 3233,
-      "sha256": "98b58077ada37852ff593ef1578c8bea6e6dd0ca3924858d45aa397ec0b6579e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/cheer.png",
-      "bytes": 3481,
-      "sha256": "2eee2d948bff29df9d0a6f68d628c2c260681b59f040ce9638f8d0cf2759299f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle.png",
-      "bytes": 3327,
-      "sha256": "8c14fe126c9a1bba2a8108d41bb029884617f07ce4ee83fb60fef0c62e3e1015"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f0.png",
-      "bytes": 3299,
-      "sha256": "5e86d5a0f6c38175ec7790054ee16883736bb0dc1fa432939a936665c885c858"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f1.png",
-      "bytes": 2834,
-      "sha256": "d6359e083e461317b1739c78a6253b474fa6eb0aefe4795908ee411664dc8b68"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f2.png",
-      "bytes": 2802,
-      "sha256": "9d5278da643588fb18f7e141a4e884eed625d8f2765607da78127d1f55128ba8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f3.png",
-      "bytes": 2743,
-      "sha256": "20ffc0dffe75e1e7d81dadcf5b8c0ddbb980091f45133af579b04f6b28e47494"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f4.png",
-      "bytes": 2796,
-      "sha256": "9e26cbcaba248612295a74f89a6c63c63f93241dcbe893445766165b2d78298d"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f5.png",
-      "bytes": 2838,
-      "sha256": "0d1d2b31b812daf28e11e5aeeb9905b1d53f0359d4c9c563692b77eab9121ff8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f6.png",
-      "bytes": 2846,
-      "sha256": "a1c312ffc16e496fdc8077e103ccbb47eb05c3f4fe4f9c150f91679509c18532"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/idle_anim/f7.png",
-      "bytes": 2887,
-      "sha256": "857d19bbdcf2282c2bb202301868a6146d9052e53b0614e2efa608d2237f6246"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f0.png",
-      "bytes": 3884,
-      "sha256": "f6867f58cb2d02d8288af24ddd3bb7a7e5f41d12312103c29cc92b85b9497290"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f1.png",
-      "bytes": 3142,
-      "sha256": "7c15c0c3fb62babbfe8fef725d5fa1cc485e17aa8c9fe0a29ae3f968194e5559"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f2.png",
-      "bytes": 3164,
-      "sha256": "8602fd8c747c0faa8e0c6e38956195fd96cd855f19533097457417bf278fa303"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f3.png",
-      "bytes": 3144,
-      "sha256": "046618d084eb5696d666df4f779905e3472d8e2a6213bf338ebcae7cfef1c972"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f4.png",
-      "bytes": 3110,
-      "sha256": "e17ca25b6cf4445c879cb8cc85a18ba5e9e6ebd2edf852c44332b10e5554ab31"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f5.png",
-      "bytes": 3166,
-      "sha256": "64150eda439947e5cd219940ec8aae631f789fee5aa723bb5104a37a20d3c2f2"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f6.png",
-      "bytes": 3100,
-      "sha256": "ec26ab79379572f05d66aad969c8ec7780a7fb58dc31dcae0b070f40708665ea"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/shy_sweet_anim/f7.png",
-      "bytes": 3111,
-      "sha256": "17e54cbc56b652d8e2301a75b9e9b29076319dc7f46472fac430e4a332f88422"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f0.png",
-      "bytes": 2651,
-      "sha256": "371710c9f6fb17a49b8aa1c8df112ce81ae2403d00856bc2142cd6eccc3dd0aa"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f1.png",
-      "bytes": 2527,
-      "sha256": "3955b7b382545444e4af7e1ec0490390262cde6e9f7f62f43a894bca124af202"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f2.png",
-      "bytes": 2566,
-      "sha256": "9203f2025b7b8fa2d776a6bdb13c271443a1f55bff517270a5f7486836ba2371"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f3.png",
-      "bytes": 2625,
-      "sha256": "847295a4321315efb7cfc6ee3fd1b00444c2cab144b14952b3cb1db28527c0ca"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f4.png",
-      "bytes": 2616,
-      "sha256": "14c868b816306951dff6dff1f30abd2e25021226888e6df15bbafaa329c60ffc"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f5.png",
-      "bytes": 2500,
-      "sha256": "7e0a8eee04cfb504cfcc71b34cca04fa469d92a213e94550aed4ae19e8f50b4e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f6.png",
-      "bytes": 2514,
-      "sha256": "5de27bcb945d7cee57d7e2161e2a1c3cedea789475d82f465ad4920d30480b67"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_back_anim/f7.png",
-      "bytes": 2528,
-      "sha256": "9c3a3a0375a8c72d72eb143c395f5e8db7337848dfa167b7e1cd790e38db12ce"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f0.png",
-      "bytes": 2531,
-      "sha256": "1c0471f8d50c1beb6b41ece57cf190b54940c0fecf18881d9de1b60f64957de8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f1.png",
-      "bytes": 2535,
-      "sha256": "48f0abba233e4c5020fac30be737c908ec00537ddac3becd9d8d5938cd50d274"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f2.png",
-      "bytes": 2535,
-      "sha256": "d7887b1b5c0bdf2d894e265b03319c60326b7e5c6740b9d6cce218c3cfebd20b"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f3.png",
-      "bytes": 2544,
-      "sha256": "0114495dacde68878ea17acf260f9c64dc0f4bbe70e2894b340c84480e22d764"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f4.png",
-      "bytes": 2538,
-      "sha256": "fd12826728f15429a5b432bc2a555c244052b6326a1c920e5418f8e9f4e606a2"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f5.png",
-      "bytes": 2532,
-      "sha256": "33aed7b684e2d5456f11b9d5f955513ad8c7ce1312498a3b23cb47f67f5b4058"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f6.png",
-      "bytes": 2511,
-      "sha256": "00ffa2a46bc1ecace6084164216ab3d3a4fdd3d6112fd3a4541ad89753a13817"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_front_anim/f7.png",
-      "bytes": 2535,
-      "sha256": "383cd81f3826f5b78e0a9fb9f878273d5bf4012e1cde4c394f30e3fa4b2b39b5"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right.png",
-      "bytes": 2888,
-      "sha256": "db6adbe679ff960771a51f8c9cd0e0fabdf307851a55c6d2122c57070c3b2ed9"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f0.png",
-      "bytes": 3300,
-      "sha256": "0e912af9f6c16582ff15dd2cf808d5600495bec33d4ec2af7d69f5b5c6f8c7d6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f1.png",
-      "bytes": 2587,
-      "sha256": "d9c74a5d9598e0c0b0df3ca9b5a6e0cf0e4543064c9e5bdc55a817da06b5f9a8"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f2.png",
-      "bytes": 2528,
-      "sha256": "dd1c49f8241c3872a66803d794afd91a51141cd449304fca28bdea8928409ce1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f3.png",
-      "bytes": 2570,
-      "sha256": "ca8b7b425074118b83ef9e0633dc0b643d2efce8824e93b2ce4cc96ec5c79ee3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f4.png",
-      "bytes": 2610,
-      "sha256": "991fb848b35a41c3f395e89faf057158392985a96d0d4bd9c726e38d5f9f89d1"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f5.png",
-      "bytes": 2570,
-      "sha256": "326fd9489854460b7bbbecd68636fe017f3ba65bb792f9d719021a0dae8155d4"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f6.png",
-      "bytes": 2540,
-      "sha256": "52ddcfaeda3b2d835249c8a32b6716aafd0d72d44b20da31375e3fc28883e85c"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/walk_right_anim/f7.png",
-      "bytes": 2565,
-      "sha256": "af419123845cf9a8cb91394ebce5b153d22def674b0f2e4953275e977d662fd2"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave.png",
-      "bytes": 3498,
-      "sha256": "f004b55efacca057aedb9a5dc33f503849b2a3da60b42e89139ceba4749ea7a3"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f0.png",
-      "bytes": 3456,
-      "sha256": "5ee37f9055d9adaa4e3ce3fe309378e5f089526ad7d9ef7b98d27dff80e3b6a6"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f1.png",
-      "bytes": 2898,
-      "sha256": "2468a62f73046cc138edcbb7fce8d6ebfb1162abd333e6fd3bd3241574ee1146"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f2.png",
-      "bytes": 2875,
-      "sha256": "4ffaef538807773772fd6769c35113872e22d2e332ed60233488442bc18df80f"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f3.png",
-      "bytes": 2875,
-      "sha256": "35f095443cf315274a23e0be2f4c1de18221d1f69a724df4704df9f315b1c56e"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f4.png",
-      "bytes": 2893,
-      "sha256": "3c03dd08f3661feb585a2ba352f95b694e6adb7dc885d7205f4cc65677dc9413"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f5.png",
-      "bytes": 2904,
-      "sha256": "8ece9fecd838eeb9981e0573b98347fa14d64f672db6d0d5caa0d2046750e013"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f6.png",
-      "bytes": 2953,
-      "sha256": "2e07ef8a32495d88f5b9a41b1168fa617f3ac6ecc1d205c1db5a53174476ca48"
-    },
-    {
-      "path": "dashboard/companion/assets/chars/user/wave_anim/f7.png",
-      "bytes": 2963,
-      "sha256": "e7692540d5fd4de0b6633ba0ba0468e14c4faf1145dbacd1f4b99278242d08d2"
-    },
-    {
-      "path": "dashboard/companion/assets/hall/bg.png",
-      "bytes": 21655,
-      "sha256": "13c15b24195eeb1a8bd9e1821b7e9177c8fcba97c2171f30afb0310089cb7705"
-    },
-    {
-      "path": "dashboard/companion/assets/rainy-station/bg.png",
-      "bytes": 26198,
-      "sha256": "4c40c345505e746b416f49404c856f30cfb29ebbba04b11b209688989fe80ae2"
-    },
-    {
-      "path": "dashboard/companion/assets/store/bg.png",
-      "bytes": 34496,
-      "sha256": "680b71d5a97ad1b6161e8147a7c775d9fc6bf23e24945fa79df5d35b8ebe9ff0"
-    },
-    {
-      "path": "dashboard/companion/assets/sunset-diner/bg.png",
-      "bytes": 30406,
-      "sha256": "1936c982ad61d4d2418b307ba3b47059e0673709340222bb5e81b78dd876622e"
-    },
-    {
-      "path": "dashboard/companion/index.html",
-      "bytes": 1953,
-      "sha256": "c57cf70a8057718cfea55c21fcaf0bd6cd8f6573316c0619a47fc5d70066e4db"
-    },
-    {
-      "path": "dashboard/companion/scene-kit.css",
-      "bytes": 843,
-      "sha256": "9b0b39be636047a470c9c9f38d61a6f8aada15925c44636a56cf9eabb8450b3f"
-    },
-    {
-      "path": "dashboard/companion/scene-kit.js",
-      "bytes": 27105,
-      "sha256": "1c9ea69e2a13f258103dcc527122ac76a9420a14792be84084c4cb29e7718355"
-    },
-    {
-      "path": "dashboard/companion/scene-picker.js",
-      "bytes": 1992,
-      "sha256": "729f8149a1aaeb7e0b6a1dc314453d304ed1a881df386cd99366afeb35032f7a"
-    },
-    {
-      "path": "dashboard/companion/scenes/hall.js",
-      "bytes": 1993,
-      "sha256": "c6cc686c7429230aef897918c93f857fef3b74a2d6cebf99b4705ab0dfe583a6"
-    },
-    {
-      "path": "dashboard/companion/scenes/postapocalyptic.js",
-      "bytes": 3531,
-      "sha256": "51e88098ff1942271cb849698a86f7c619311509f0dbe32bbb7dfe949973bcb6"
-    },
-    {
-      "path": "dashboard/companion/scenes/store.js",
-      "bytes": 4315,
-      "sha256": "7a142416aadcd69e14b189f0af80637f1a619c2d53835e234676552f55773ee7"
+      "bytes": 32357,
+      "sha256": "1846b856bfe85006d3250282815ded8839852b8ceea0434f5686b2841b2a90e2"
     },
     {
       "path": "dashboard/companion/tests/animation.test.mjs",
-      "bytes": 44321,
-      "sha256": "4fd05087dd8eaa2fee20f7718e17e627d0402bb016c051856109817ab864a13c"
+      "bytes": 44390,
+      "sha256": "1ca13e228b6122a49999f6f10361bfae1379ea69e3297c0cd1e77a1de257fc9c"
     },
     {
       "path": "dashboard/complete-text.test.mjs",
@@ -2278,6 +1078,16 @@
       "sha256": "b79490688d6d997d6e41f3b2c509146de9ec720bf78ee581bc64ced1c802cc8e"
     },
     {
+      "path": "dashboard/github-update.mjs",
+      "bytes": 1111,
+      "sha256": "de1d657d08bc32f76d8b890f95ee05afcaac043d5b26fec4741afc8e364f0634"
+    },
+    {
+      "path": "dashboard/github-update.test.mjs",
+      "bytes": 1271,
+      "sha256": "600a72c9d07bfdb454a7a23e41c560c241d61489f6507577ae5f59de5a8337aa"
+    },
+    {
       "path": "dashboard/handoff-tree.test.mjs",
       "bytes": 7620,
       "sha256": "4dc65d12600185521e19c2c0fd889139f77cc41e87acd685fca0283cb352f3e2"
@@ -2294,8 +1104,8 @@
     },
     {
       "path": "dashboard/index.html",
-      "bytes": 23526,
-      "sha256": "176aa0a62b9796d775296e9fc95554391fd466aee498797ef12cb94790b6accb"
+      "bytes": 41051,
+      "sha256": "da3f4ca0c63688aa7f3c249d3048461cf51e412ac2bb06d72e16d64688eb4461"
     },
     {
       "path": "dashboard/instruments.css",
@@ -2339,8 +1149,8 @@
     },
     {
       "path": "dashboard/performance.test.mjs",
-      "bytes": 27363,
-      "sha256": "4a0479a465465f503c3dfaf2861fa8f4efbccdf12ce08227f5f1e83b6b7424cc"
+      "bytes": 27710,
+      "sha256": "ac3d7d365f9449f51e1871199ad0f55e6dd2807ba0210160560744f2970f1bc6"
     },
     {
       "path": "dashboard/powershell.js",
@@ -2419,13 +1229,13 @@
     },
     {
       "path": "dashboard/server.mjs",
-      "bytes": 46168,
-      "sha256": "b6bdee5a4a9ec49568c6e46499a5668b3e103d2a6f21568a3fc6b76d58ccfc13"
+      "bytes": 46192,
+      "sha256": "eee493d45ef09e959568790d8266fa3b1153dc07c5e76ed05e36ca4b64905979"
     },
     {
       "path": "dashboard/settings-view.js",
-      "bytes": 13804,
-      "sha256": "131c1d54dd6259074326294c95327b7828e1d5d5a9182812dc1609e7e65b67f0"
+      "bytes": 15881,
+      "sha256": "7b3bd0220a35154532d8638ba222b85d6833dad84c2d7c2f039c94b7b3162dbd"
     },
     {
       "path": "dashboard/settings.mjs",
@@ -2469,8 +1279,8 @@
     },
     {
       "path": "dashboard/style.css",
-      "bytes": 58737,
-      "sha256": "4cd9f4192e2334ae9e5a1a7dc11a7a89f8605b83d952020cc775b83c49e1c86b"
+      "bytes": 58942,
+      "sha256": "a49fbf5945fa69e96817c6573703287f05545c7b3a07636ab8992e6e014d7877"
     },
     {
       "path": "dashboard/test-spawn.mjs",
@@ -2499,8 +1309,8 @@
     },
     {
       "path": "dashboard/unread.test.mjs",
-      "bytes": 14226,
-      "sha256": "05a805ba4b7b1282a494da1af1159ea5cdbe4ba0d485691aa2df311f587a3b90"
+      "bytes": 14997,
+      "sha256": "ae32eb7ceb5165d2ef09263e070b90968ebcf65fee73aa2c9afd41bc1234036c"
     },
     {
       "path": "dashboard/usage-view.js",
@@ -2519,13 +1329,13 @@
     },
     {
       "path": "dashboard/workspace.css",
-      "bytes": 66307,
-      "sha256": "e65d2deff3080ba969cb69677add21e724e48895d28f45223965e25972b8eadc"
+      "bytes": 66744,
+      "sha256": "15ae73120dd2b2ab199ad008ba34fe6f73a64f15ec42a585e039faefab7c8751"
     },
     {
       "path": "dashboard/workspace.js",
-      "bytes": 63348,
-      "sha256": "9ad172fa9098fd45db6567c7afd3a6aac3a925e52beb6321d30921ae786c6704"
+      "bytes": 63551,
+      "sha256": "b5213ae47e7d18c4bedb2279c21bb3bcc4b2b83523ea69d9626efb341cd1502b"
     },
     {
       "path": "deepseek/LIFE.md",
@@ -3994,8 +2804,8 @@
     },
     {
       "path": "scripts/run-tests.mjs",
-      "bytes": 13407,
-      "sha256": "453211ace72c661d1120b43965ae0341b13d71018cadfdd3d06192eb20043dfd"
+      "bytes": 14118,
+      "sha256": "fdea464ba8da4a731488fa39806c4f03fb8e989a473cd6573cb5a0e64632dab2"
     },
     {
       "path": "scripts/safe-ports.mjs",
@@ -4014,18 +2824,18 @@
     },
     {
       "path": "scripts/test-copy.mjs",
-      "bytes": 2704,
-      "sha256": "d9fe676bd542718ef38e67317a4ff4626a18eebb1dbf4bd31cebe899f3648365"
+      "bytes": 2793,
+      "sha256": "cf634d382661b17ee487a28188cefbfe213c93f27408ab747eb095ca025a4ac7"
     },
     {
       "path": "scripts/test-copy.test.mjs",
-      "bytes": 5013,
-      "sha256": "8664c6cc91f629d3c0701153b0c007564e7764997a449a32354707830da6c0d4"
+      "bytes": 5246,
+      "sha256": "4dee89932f14e21128246fa8f16205afb00cb5a832edb6a411e4e0010a9eaa49"
     },
     {
       "path": "scripts/test-suite.mjs",
-      "bytes": 8037,
-      "sha256": "458b92d6577d0a5bbb6124ffc1b0cbfafcf2db8b25df5acb77a5f3bf429f3e68"
+      "bytes": 8078,
+      "sha256": "b775f19666d3e1ab66322403b5bb4e559232796af957f4ac5bf4b77acb11d364"
     },
     {
       "path": "scripts/test-suite.test.mjs",

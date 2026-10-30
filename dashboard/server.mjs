@@ -27,6 +27,7 @@ import {memory2Tick} from '../memory2/auto.mjs';
 import {memoryVersion} from '../memory2/telemetry.mjs';
 import {runtimeCodeStatus} from '../automation/file-state.mjs';
 import {companionNotes,ensureCompanionNotes,notesBusy} from './companion-notes.mjs';
+import {companionPackage} from './companion-assets.mjs';
 import {splitState} from './ui-state.mjs';
 import {avatarView,avatarCss,setCustomAvatar,customFile} from './avatars.mjs';
 import {executionRows,runningSubagents} from './activity.mjs';
@@ -38,6 +39,7 @@ import {saveFragment,newFragment,moveFragment,removeFragment,snapshot as acceptS
 import {instrumentCatalog,instrumentCode,openInstrumentCode,runInstrumentCode,saveInstrument} from '../instruments/library.mjs';
 import {launchPowerShell} from './powershell.mjs';
 import {settingsView,saveSettings,skillsView} from './settings.mjs';
+import {runGithubUpdate} from './github-update.mjs';
 import {createSpeech,SPEECH_LIMITS} from './speech.mjs';
 import {resolveLocalFile,resolveWorkspaceFile,openInDefaultApp,localFileHeaders,localFileRequestAllowed,revealInExplorer,localActionAllowed} from './local-files.mjs';
 import {literatureList,literaturePaper} from '../literature/view.mjs';
@@ -184,13 +186,8 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
   assets['/prompts-view.js']='prompts-view.js';assets['/prompts-view.css']='prompts-view.css';assets['/instruments.js']='instruments.js';assets['/instruments.css']='instruments.css';assets['/theme.css']='theme.css';assets['/theme.js']='theme.js';
   assets['/literature.js']='literature.js';assets['/format.js']='format.js';
   assets['/powershell.js']='powershell.js';assets['/voice-input.js']='voice-input.js';
-  // Only shipped static scene files are public, never D:/pixellab-ai or raw office data.
-  const companionDir=path.join(root,'dashboard/companion');
-  for(const file of fs.readdirSync(companionDir,{recursive:true,withFileTypes:true})){
-    if(!file.isFile() || !/\.(html|js|css|png)$/.test(file.name))continue;
-    const rel=path.relative(companionDir,path.join(file.parentPath,file.name)).split(path.sep).join('/');
-    assets['/companion/'+rel]='companion/'+rel;
-  }
+  const companion=companionPackage();
+  for(const [url,file] of companion?.assets ?? [])assets[url]=file;
   for(const file of ['markdown.js','local-file-types.js','markdown.css','vendor/markdown/marked.js','vendor/markdown/purify.js','vendor/markdown/katex.js','vendor/markdown/katex.min.css'])assets['/'+file]=file;
   for(const font of fs.readdirSync(path.join(root,'dashboard/vendor/markdown/fonts')).filter(f=>/^KaTeX_[\w-]+\.(woff2?|ttf)$/.test(f)))assets['/vendor/markdown/fonts/'+font]='vendor/markdown/fonts/'+font;
   const server=http.createServer(async (req,res) => {
@@ -264,7 +261,7 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
         res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(result));return;
       }
       if (req.method === 'GET' && url.pathname === '/health') {
-        res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({app:'phd-workflows',version:2,code:runtimeCodeStatus(),started_at:startedAt,backend_restart:!!restartBackend,restart_pending:!!server.restartPending,restart_error:server.restartError || null,background_busy:automating || notesBusy() || speech.busy,memory2:true,memory_version:memoryVersion,companion_scenes:true,companion_daily_notes:true,chat_images:true,chat_files:true,chat_file_limits:FILE_LIMITS,project_files:true,chat_steering:true,chat_parallel_sessions:true,chat_markdown:true,chat_powershell:true,powershell_cwd:root,chat_speech:speech.available(),speech_limits:SPEECH_LIMITS,chat_search:true,chat_session_titles:true,chat_pins:true,chat_edit:true})); return;
+        res.setHeader('Content-Type','application/json'); res.end(JSON.stringify({app:'phd-workflows',version:2,code:runtimeCodeStatus(),started_at:startedAt,backend_restart:!!restartBackend,restart_pending:!!server.restartPending,restart_error:server.restartError || null,background_busy:automating || notesBusy() || speech.busy,memory2:true,memory_version:memoryVersion,companion_scenes:!!companion,companion_daily_notes:true,chat_images:true,chat_files:true,chat_file_limits:FILE_LIMITS,project_files:true,chat_steering:true,chat_parallel_sessions:true,chat_markdown:true,chat_powershell:true,powershell_cwd:root,chat_speech:speech.available(),speech_limits:SPEECH_LIMITS,chat_search:true,chat_session_titles:true,chat_pins:true,chat_edit:true})); return;
       }
       if (req.method === 'GET' && url.pathname === '/api/state') {
         const page=url.searchParams.get('page'),full=snapshot({page});
@@ -339,13 +336,13 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
       if (req.method === 'GET' && url.pathname === '/api/settings') {
         res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(settingsView()));return;
       }
-      if (req.method === 'POST' && ['/api/settings','/api/avatars/upload','/api/chat/read','/api/instruments/save','/api/instruments/open','/api/instruments/run','/api/prompts/preview','/api/prompts/save','/api/prompts/new','/api/prompts/mv','/api/prompts/rm','/api/prompts/snapshot-accept','/api/companion/notes','/api/backend/restart','/api/work/add','/api/work/edit','/api/work/move','/api/tasks','/api/task-update','/api/chat','/api/chat/handoff','/api/chat/edit','/api/chat/answer','/api/chat/session','/api/chat/title','/api/chat/pin','/api/projects/archive','/api/projects/related','/api/projects/files','/api/projects/edit','/api/stop','/api/inbox/ack','/api/inbox/undo','/api/inbox/respond','/api/projects/focus','/api/projects/status','/api/weekly/intent/add','/api/weekly/intent/update','/api/weekly/intent/remove','/api/weekly/review','/api/weekly/start','/api/usage/refresh','/api/links/resolve','/api/calendar/add','/api/calendar/update','/api/calendar/remove'].includes(url.pathname)) {
+      if (req.method === 'POST' && ['/api/settings','/api/update/check','/api/update/apply','/api/avatars/upload','/api/chat/read','/api/instruments/save','/api/instruments/open','/api/instruments/run','/api/prompts/preview','/api/prompts/save','/api/prompts/new','/api/prompts/mv','/api/prompts/rm','/api/prompts/snapshot-accept','/api/companion/notes','/api/backend/restart','/api/work/add','/api/work/edit','/api/work/move','/api/tasks','/api/task-update','/api/chat','/api/chat/handoff','/api/chat/edit','/api/chat/answer','/api/chat/session','/api/chat/title','/api/chat/pin','/api/projects/archive','/api/projects/related','/api/projects/files','/api/projects/edit','/api/stop','/api/inbox/ack','/api/inbox/undo','/api/inbox/respond','/api/projects/focus','/api/projects/status','/api/weekly/intent/add','/api/weekly/intent/update','/api/weekly/intent/remove','/api/weekly/review','/api/weekly/start','/api/usage/refresh','/api/links/resolve','/api/calendar/add','/api/calendar/update','/api/calendar/remove'].includes(url.pathname)) {
         if (!String(req.headers['content-type']).startsWith('application/json')) throw new Error('JSON required');
         const origin = req.headers.origin;
         if (origin && new URL(origin).host !== req.headers.host) throw new Error('Origin mismatch');
         // The user chat entry takes what the user says in the interface (and the Discord relay, which sends its own Origin); an assistant opens a new conversation with `agent handoff`.
         if(url.pathname==='/api/chat' && !origin && req.headers['x-phd-client']!=='tui'){res.statusCode=403;throw new Error('用户聊天入口只接界面和 Discord 里的用户发言。助手要另开对话请用 node automation/run.mjs agent handoff <UTF-8请求JSON路径>。');}
-        const limit=url.pathname==='/api/avatars/upload' ? 9*1024*1024 : url.pathname==='/api/instruments/save' ? 3*1024*1024 : url.pathname==='/api/projects/edit' ? 512000 : url.pathname==='/api/projects/related' ? 80000 : url.pathname.startsWith('/api/prompts/') ? 512000 : url.pathname==='/api/weekly/review' ? 64000 : ['/api/chat','/api/chat/handoff'].includes(url.pathname) ? Math.ceil((FILE_LIMITS.total+IMAGE_LIMITS.total)*4/3)+1024*1024 : url.pathname==='/api/projects/files' ? Math.ceil(FILE_LIMITS.total*4/3)+1024*1024 : 16000;
+        const limit=url.pathname==='/api/avatars/upload' ? 9*1024*1024 : url.pathname==='/api/instruments/save' ? 3*1024*1024 : url.pathname==='/api/projects/edit' ? 512000 : url.pathname==='/api/projects/related' ? 80000 : url.pathname.startsWith('/api/prompts/') ? 512000 : url.pathname==='/api/weekly/review' ? 64000 : ['/api/chat','/api/chat/handoff','/api/chat/edit'].includes(url.pathname) ? Math.ceil((FILE_LIMITS.total+IMAGE_LIMITS.total)*4/3)+1024*1024 : url.pathname==='/api/projects/files' ? Math.ceil(FILE_LIMITS.total*4/3)+1024*1024 : 16000;
         const chunks=[];let size=0;for await (const chunk of req) {size+=chunk.length;if(size>limit)throw new Error('Task request too large');chunks.push(chunk);}
         const request=JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');let item;
         if(server.restartPending){res.statusCode=503;throw new Error('后端正在重启，暂不接受新操作。');}
@@ -375,6 +372,7 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
           item={...job,session:agentSnapshot().sessions.find(s=>s.id===job.session_id),task:read('work/queue.json').items.find(t=>t.id===job.task_id)};
           res.once('finish',()=>setImmediate(()=>{if(!server.restartPending)void drain().catch(e=>console.error(e.message));}));
         }
+        else if(url.pathname==='/api/update/check' || url.pathname==='/api/update/apply')item=await runGithubUpdate(url.pathname==='/api/update/apply');
         else if(url.pathname==='/api/settings')item=saveSettings(request.changes);
         else if(url.pathname==='/api/avatars/upload')item={view:setCustomAvatar(request.who,request.image ?? null)};
         else if(url.pathname==='/api/chat/read')item=markChatRead(request.read_at,{agent:agentSnapshot(),work:read('work/queue.json')});
@@ -429,7 +427,7 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
         serveImage(req,res,path.join(root,'dashboard/avatars/deepseek.png'),'image/png'); return;
       }
       if (req.method === 'GET' && assets[url.pathname]) {
-        const file = path.join(root,'dashboard',assets[url.pathname]);
+        const file = path.isAbsolute(assets[url.pathname]) ? assets[url.pathname] : path.join(root,'dashboard',assets[url.pathname]);
         const mime=url.pathname.endsWith('.png') ? 'image/png' : url.pathname.endsWith('.css') ? 'text/css; charset=utf-8' : /\.m?js$/.test(url.pathname) ? 'text/javascript; charset=utf-8' : /\.woff2?$/.test(url.pathname) ? (url.pathname.endsWith('.woff2') ? 'font/woff2' : 'font/woff') : url.pathname.endsWith('.ttf') ? 'font/ttf' : 'text/html; charset=utf-8';
         serveImage(req,res,file,mime); return;
       }

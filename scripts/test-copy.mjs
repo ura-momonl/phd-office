@@ -27,6 +27,7 @@ const skip=new Set(['.runtime','.probe-tmp','node_modules','vendor','.git','.cla
 export function includeTestFile(source,file) {
   const relative=path.relative(source,file),parts=relative.split(path.sep),name=path.basename(file);
   if(relative==='..' || relative.startsWith('..'+path.sep) || path.isAbsolute(relative))return false;
+  if(relative.split(path.sep).join('/')==='dashboard/companion.local.json')return false;
   if(['output','tmp'].includes(parts[0]))return false;
   if(parts[0]==='workspace' && parts[1]==='archives')return false; // dated reset snapshots (12.9 GB on 2026-10-21); tests build their own
   if(parts[0]==='literature' && ['fulltext','archive'].includes(parts[1]))return false;

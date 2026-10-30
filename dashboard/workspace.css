@@ -11,7 +11,7 @@
 .ico{width:1em;height:1em;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav span{display:grid;place-items:center;width:18px;height:18px;font-size:18px;flex-shrink:0}
 .new-session span{display:inline-grid;place-items:center;vertical-align:-4px;width:17px;height:17px;font-size:17px;margin-right:10px}
-.brand-mark{display:grid;place-items:center}.brand-mark .ico{width:22px;height:22px;stroke-width:2}
+.brand-mark{display:grid;place-items:center}.brand-mark img{display:block;width:53px;height:53px;max-width:none;object-fit:contain;image-rendering:pixelated;align-self:start}
 .assistant-emblem .ico{width:30px;height:30px}
 .project-icon .ico{width:19px;height:19px}
 .sidebar{background:linear-gradient(180deg,var(--c-sidebar-top),var(--c-sidebar-bottom))}
@@ -31,7 +31,10 @@ button.primary:hover{filter:brightness(1.08)}
 .sidebar .nav:hover:not(.active){background:color-mix(in srgb,var(--nav) 5%,var(--c-sidebar-hover-base))}
 .sidebar .new-session{background:var(--c-sidebar-raised);border-color:var(--c-sidebar-border)}
 .sidebar .session-entry.selected{background:var(--c-sidebar-selected)}
-.sidebar .brand-mark{background:var(--c-sidebar-mark);color:var(--c-sidebar-mark-text)}
+.sidebar .brand{background:transparent;border-radius:0;padding:0;gap:8px;align-self:flex-start;align-items:flex-end;overflow:visible}
+.sidebar .brand-mark{background:#625a52;width:48px;height:48px;flex-shrink:0;border-radius:9px;margin:0 0 -2px;overflow:hidden;grid-template-columns:minmax(0,1fr)}
+.sidebar .brand-mark img{width:44px;height:44px;margin:4px 0 0 2px;justify-self:start}
+.sidebar .brand>span:last-child{color:#f6c9a2;margin-bottom:-3px;line-height:1.35}.sidebar .brand small{color:#b9a592;line-height:1.4;margin-top:3px}
 .assistant-emblem{background:#f4ebf5;color:#a16b96}
 .assistant-emblem{border-color:#e7d7e9}
 .rail-label{color:#8fb39f}
@@ -93,7 +96,7 @@ button.primary:hover{filter:brightness(1.08)}
 .image-preview img{display:block;width:102px;height:70px;object-fit:cover}
 .image-preview span{display:block;padding:4px 6px;font-size:10px;color:#738979;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .image-preview button{position:absolute;right:4px;top:4px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 1px 6px #0002;color:#597263;line-height:1}
-.message-images{grid-column:2;display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.message-images{grid-column:2;display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.message-images[hidden]{display:none}
 .message-images a{display:block;max-width:100%;border:1px solid #d4e3d8;border-radius:10px;overflow:hidden;background:#f5f8f4}
 .message-images img{display:block;max-width:100%;width:auto;max-height:220px;object-fit:contain}
 .file-preview-card{flex-basis:160px}.file-preview-icon{display:grid;place-items:center;height:70px;color:#53836a}.file-preview-icon .ico{width:30px;height:30px}
@@ -115,7 +118,7 @@ button.primary:hover{filter:brightness(1.08)}
   /* Keep the brand and primary navigation, without the desktop-sized masthead. */
   .sidebar{min-width:0;padding:8px 12px;gap:4px}
   .brand{font-size:13px;gap:8px;white-space:nowrap}.brand small{display:none}
-  .brand-mark{width:24px;height:24px}
+  .sidebar .brand{background:transparent;padding:0;border-radius:0;overflow:visible;align-items:center}.sidebar .brand>span:last-child{margin-bottom:0;line-height:1.5}.sidebar .brand-mark{background:transparent;width:28px;height:28px;border-radius:0;margin-top:0;align-self:center}.sidebar .brand-mark img{width:28px;height:28px;image-rendering:auto;margin:0;justify-self:center;align-self:center}
   .new-session{min-height:34px;padding:6px 10px}
   .sidebar nav{margin-top:0;gap:2px}
   .nav{min-height:36px;margin:0;padding:7px 8px;white-space:nowrap}
@@ -431,7 +434,7 @@ button.primary:hover{filter:brightness(1.08)}
 /* Detail reminders share the overview's unread boundary; project content stays intact. */
 .project-new-updates{margin-bottom:20px}
 .project-update-list{max-height:260px;overflow-y:auto;margin-top:10px}
-.project-update-row{display:flex;align-items:flex-start;gap:8px;border-top:1px solid var(--border)}.project-update-row .project-update-entry{flex:1;min-width:0;width:auto;border-top:0}.project-update-read{flex-shrink:0;margin-top:12px;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;color:#367d68;background:#e8f2ef;border:1px solid #cfe4dc;white-space:nowrap}.project-update-read:hover{background:#d9ece6}.project-update-entry{display:block;width:100%;padding:12px 4px;text-align:left;line-height:1.7;border-top:1px solid var(--border);border-radius:4px;overflow-wrap:anywhere}
+.project-update-row{display:flex;align-items:flex-start;gap:8px;border-top:1px solid var(--border)}.project-update-row .project-update-entry{flex:1;min-width:0;width:auto;border-top:0}.project-update-read{flex-shrink:0;margin-top:12px;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;color:#367d68;background:#e8f2ef;border:1px solid #cfe4dc;white-space:nowrap}.project-update-read:hover{background:#d9ece6}.project-update-read-all{margin-top:0;margin-left:8px;font-weight:400}.project-update-entry{display:block;width:100%;padding:12px 4px;text-align:left;line-height:1.7;border-top:1px solid var(--border);border-radius:4px;overflow-wrap:anywhere}
 .project-update-entry:hover{background:var(--teal-bg)}
 .project-update-entry:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
 .project-update-title{display:flex;align-items:baseline;gap:8px;font-size:12px}
@@ -472,7 +475,7 @@ button.primary:hover{filter:brightness(1.08)}
 .fw-steps-head .fw-grip{padding-left:0}
 
 .message-edit-open{margin-left:auto;font-size:11px;opacity:.6}.message:hover .message-edit-open,.message-edit-open:focus-visible{opacity:1}
-.message>.message-edit{grid-column:2;display:grid;gap:8px}.message-edit textarea{width:100%;min-height:90px;resize:vertical;font:inherit}.message-edit small{color:var(--muted);font-size:11px}.message-edit-actions{display:flex;gap:16px;justify-content:flex-end}
+.message>.message-edit{grid-column:2;display:grid;gap:8px}.message-edit textarea{width:100%;min-height:90px;resize:vertical;font:inherit}.message-edit small{color:var(--muted);font-size:11px}.message-edit-actions{display:flex;gap:16px;justify-content:flex-end}.message-edit-attachments:empty{display:none}
 
 .header-reset{display:block;margin-top:5px;font-size:9px;opacity:.85;text-align:left;white-space:nowrap}
 /* Pending-announcement text and a subtle sheen on the filled bar; no panel or quota-colour changes. */

@@ -5,22 +5,24 @@ import path from 'node:path';
 import {root,read,write} from '../automation/files.mjs';
 import {createServer} from './server.mjs';
 import {launchEdge} from '../automation/browser-launch.mjs';
+import {companionPackage} from './companion-assets.mjs';
+const companion=companionPackage();
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Use scripts/run-tests.mjs --companion-ui --keep');
 
-test('scene assets are served locally with correct MIME and cannot expose source data or tokens',async()=>{
+test('scene assets are served locally with correct MIME and cannot expose source data or tokens',{skip:!companion},async()=>{
   const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+server.address().port;
   try{
     for(const [route,mime] of [['index.html','text/html'],['scene-kit.js','text/javascript'],['scene-kit.css','text/css'],['scenes/hall.js','text/javascript'],['scenes/postapocalyptic.js','text/javascript'],['assets/sunset-diner/bg.png','image/png'],['assets/rainy-station/bg.png','image/png'],['assets/hall/bg.png','image/png'],['assets/chars/claude/walk_right_anim/f7.png','image/png'],['assets/chars/sol/sip_anim/f7.png','image/png'],['assets/chars/sol/touch_hair_anim/f7.png','image/png'],['assets/chars/claude/idle_anim/f7.png','image/png'],['assets/chars/claude/chin_think_anim/f7.png','image/png'],['assets/chars/claude/palm_up_shrug_anim/f7.png','image/png'],['assets/chars/claude/double_peace_anim/f7.png','image/png'],['assets/chars/claude/held_item_show_anim/f7.png','image/png'],['assets/chars/claude/surprised_palms_anim/f7.png','image/png'],['assets/chars/sol/jacket_tidy_anim/f7.png','image/png'],['assets/chars/sol/polite_bow_anim/f7.png','image/png'],['assets/chars/user/shy_sweet_anim/f7.png','image/png']]){
       const r=await fetch(base+'/companion/'+route);assert.equal(r.status,200);assert.ok(r.headers.get('content-type').startsWith(mime));
-      assert.deepEqual(Buffer.from(await r.arrayBuffer()),fs.readFileSync(path.join(root,'dashboard/companion',route)));
+      assert.deepEqual(Buffer.from(await r.arrayBuffer()),fs.readFileSync(path.join(companion.directory,route)));
     }
     assert.equal((await (await fetch(base+'/health')).json()).companion_scenes,true);
     for(const route of ['/companion/README.md','/companion/tests/animation.test.mjs','/companion/..%2f..%2fagent/config.json','/companion/%2e%2e/%2e%2e/work/queue.json','/companion/assets/chars/user/idle_anim/f8.png','/companion/.private/pixellab-token.dpapi'])assert.equal((await fetch(base+route)).status,404,route);
   }finally{await new Promise(r=>server.close(r));}
 });
 
-test('new-chat random scenes run without switches or scrollbars: extra actions, roam, talk, polling, teardown, draft and responsive sizes', {timeout:180000},async()=>{
+test('new-chat random scenes run without switches or scrollbars: extra actions, roam, talk, polling, teardown, draft and responsive sizes', {timeout:180000,skip:!companion},async()=>{
   const cfg=read('agent/config.json');write('agent/config.json',{...cfg,enabled:true});
   const noteCalls=[];
   write('.runtime/agent/sessions.json',{sessions:[{id:'companion-test',title:'界面验收旧对话',origin:'chat',project_ids:[],task_ids:[],created_at:new Date().toISOString(),messages:[{role:'user',text:'原有的聊天内容不变',at:new Date().toISOString()}]}]});
