@@ -252,10 +252,35 @@ export function readFrameworkNodes(projectId, ids) {
   });
   return {project_id:projectId, source:file, revision:createHash('sha256').update(source).digest('hex'), nodes};
 }
+// 板块正文开头的“**目的…**”段（标题行加紧跟的列表）。步骤所在栏自己没写时，程序沿上级栏找最近的一段带给做事的人，不靠写的人记得引用。
+export function purposeBlock(body) {
+  const m = /^\*\*目的[^\n]*\*\*[ \t]*\n+((?:- [^\n]*(?:\n|$))+)/m.exec(body || '');
+  return m ? `${m[0].trimEnd()}` : '';
+}
+export function inheritedPurpose(node) {
+  for (const up of [node, ...[...node.ancestors].reverse()]) {
+    const text = purposeBlock(up.body);
+    if (text) return { text, from: up === node ? null : up.title };
+  }
+  return null;
+}
+// 项目的逻辑部分（type=logic 的板块）：各节点标题加摘要，由程序直接给做时间日志里步骤的人，背景不靠自己去读。节点本身在逻辑部分里时不重复。
+export function logicOutline(parsed, node) {
+  const roots = parsed.roots.filter(r => r.meta.type === 'logic');
+  if (!roots.length || roots.some(r => r === node || node.ancestors.includes(r))) return '';
+  const lines = [];
+  const walk = (m, depth) => { if (m.id && m.meta.summary) lines.push(`${'  '.repeat(depth)}- ${m.title}：${m.meta.summary}`); for (const c of m.children) walk(c, depth + 1); };
+  for (const r of roots) for (const c of r.children) walk(c, 0);
+  return lines.length ? `研究理解（项目逻辑部分的节点标题与摘要）：\n${lines.join('\n')}` : '';
+}
 export function frameworkNode(projectId, nodeId) {
   if (!projectId || !/^[a-z0-9-]+$/.test(projectId) || !fs.existsSync(frameworkFile(projectId))) return null;
-  const n = parseFramework(fs.readFileSync(frameworkFile(projectId), 'utf8')).byId.get(nodeId);
-  return n ? { id: n.id, title: n.title, description: n.meta.summary || '', files: n.meta.files || [] } : null;
+  const parsed = parseFramework(fs.readFileSync(frameworkFile(projectId), 'utf8'));
+  const n = parsed.byId.get(nodeId);
+  if (!n) return null;
+  const purpose = inheritedPurpose(n);
+  const description = [n.meta.summary || '', purpose ? `${purpose.from ? `（以下目的取自上级栏「${purpose.from}」）\n` : ''}${purpose.text}` : '', logicOutline(parsed, n)].filter(Boolean).join('\n\n');
+  return { id: n.id, title: n.title, description, files: n.meta.files || [] };
 }
 
 // 只读：哪些条目已被后来的记录声明更正，谁直接引用它们（links 或正文提到编号）。引用者是复核候选，不是已证实受影响的依赖者，程序不替人判断，也不写任何标记。

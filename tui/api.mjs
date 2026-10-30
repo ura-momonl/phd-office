@@ -1,5 +1,5 @@
 // Thin client for the Workbench backend. The TUI keeps no conversation state of its own.
-export const base = () => `http://127.0.0.1:${Number(process.env.PHD_DASHBOARD_PORT || 8787)}`;
+export const base = () => `http://127.0.0.1:${Number(process.env.PHD_DASHBOARD_PORT || 18787)}`;
 
 async function json(r) {
   const body = await r.json().catch(() => ({}));

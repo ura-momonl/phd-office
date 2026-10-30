@@ -44,6 +44,8 @@ import {lint,renderGolden,fragments,standing,codePurposes} from './run.mjs';
 import {claudeArgs} from '../agent/claude.mjs';
 import {continuationSignature} from '../agent/codex.mjs';
 import {SYSTEM_PROMPT} from '../agent/native.mjs';
+import {taskPrompt} from './templates.mjs';
+import {taskArgs} from './golden-cases.mjs';
 const fragDir=files=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'prompt-frag-'));
   for(const [id,body] of Object.entries(files)){fs.mkdirSync(path.dirname(path.join(dir,id+'.md')),{recursive:true});fs.writeFileSync(path.join(dir,id+'.md'),body);}
@@ -101,6 +103,22 @@ test('the office system text has one registered source for all three colleagues'
   assert.equal(surface.path,'prompts/office-system.md');
   assert.deepEqual(surface.loaded_by,['claude-work','claude-ask','codex-work','codex-ask','deepseek-work','deepseek-ask']);
   assert.deepEqual(where('你是用户的科研工作助手').map(hit=>hit.path),['prompts/office-system.md']);
+});
+
+test('operation mechanics stay in the shared system prompt, while task-specific inputs stay in the request',()=>{
+  assert.match(SYSTEM_PROMPT,/已获授权、输入标有「本操作 ID」的 work 操作/);
+  assert.match(SYSTEM_PROMPT,/普通聊天和 ask 判断保持各自的任务与输出格式/);
+  for(const phrase of ['用 work update <UTF-8 JSON文件路径> 一次提交','本操作一旦调用子 DCG','"after":["子操作ID或执行ID"]','waiting_user','最终回复简要说明']) {
+    assert.ok(SYSTEM_PROMPT.includes(phrase),phrase);
+    for(const args of Object.values(taskArgs))assert.ok(!taskPrompt(...args).includes(phrase),phrase);
+  }
+  for(const args of Object.values(taskArgs)) {
+    const text=taskPrompt(...args);
+    assert.ok(text.includes(args[0].title));assert.ok(text.includes(args[0].goal));
+  }
+  const authorized=taskPrompt(...taskArgs['task-authorized-outputs-log']);
+  for(const phrase of [taskArgs['task-authorized-outputs-log'][1],'不对外发送邮件','本操作交付实际文件','项目日志交付要求','"parent":"example-project"','自主来源'])assert.ok(authorized.includes(phrase),phrase);
+  assert.ok(SYSTEM_PROMPT.includes('~/.codex/skills/smallest-complete/SKILL.md'));
 });
 
 test('traceFragments lists every fragment a render used, including includes, and nothing outside the call',()=>{
@@ -245,15 +263,15 @@ test('the prompt page data lists scenarios with their standing prompts and follo
   assert.equal(o.scenarios.find(s=>s.purpose==='card'&&s.provider==='claude').agents_md,'no','Claude ask does not read AGENTS.md');
   const reach=id=>o.fragments.find(f=>f.id===id).purposes;
   assert.deepEqual(reach('card'),['card']);assert.deepEqual(reach('title'),['title']);
-  assert.ok(reach('turn/intro').includes('chat'));assert.ok(reach('rule/untrusted-data').includes('auto'),'reached through the fragments that include it');
+  assert.ok(reach('turn/intro').includes('chat'));assert.ok(reach('rule/no-mail-send').includes('auto'),'reached through the fragments that include it');
   assert.deepEqual(reach('companion/note'),['companion-note']);
   assert.deepEqual(o.lint.errors,[]);
-  const f=promptFragment('rule/untrusted-data');
-  assert.equal(f.body,fragmentSource('rule/untrusted-data'));assert.ok(f.included_by.length&&f.segments.length&&Array.isArray(f.history));
+  const f=promptFragment('rule/no-mail-send');
+  assert.equal(f.body,fragmentSource('rule/no-mail-send'));assert.ok(f.included_by.length&&f.segments.length&&Array.isArray(f.history));
 });
 test('promptPreview expands unsaved text and reports a broken draft instead of throwing',()=>{
-  assert.ok(promptPreview('rule/untrusted-data','草稿 {{>turn/record}}').segments.some(s=>s.from==='turn/record'));
-  assert.match(promptPreview('rule/untrusted-data','{{>rule/untrusted-data}}').error,/循环/);
+  assert.ok(promptPreview('rule/no-mail-send','草稿 {{>turn/record}}').segments.some(s=>s.from==='turn/record'));
+  assert.match(promptPreview('rule/no-mail-send','{{>rule/no-mail-send}}').error,/循环/);
 });
 import {fragmentSource} from './compose.mjs';
 import {createHash} from 'node:crypto';

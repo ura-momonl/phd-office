@@ -619,6 +619,7 @@ function renderProjects() {
   if(!state)return;
   if(state.ui && state.ui.page!=='projects')return;
   if(dragging())return; // a poll must not replace the nodes being dragged
+  if($('project-detail').querySelector('[data-project-related-form] [data-dirty]'))return;
   preserveExpansions($('project-detail'));const view=projectsView(state,projectId,$('project-search').value,renderMarkdown,agentReadAt,editingProject===projectId);
   $('project-grid').innerHTML=view.cards;$('project-overview').hidden=view.selected;$('project-detail').hidden=!view.selected;
   $('project-detail').innerHTML=view.detail;restoreExpansions($('project-detail'));
@@ -946,7 +947,7 @@ function weeklyChat(key) {
   }[key];
   if(text && selectSession()){$('message').value=text;saveComposer();}
 }
-document.addEventListener('input',e=>{if(e.target.closest?.('#weekly-body') && e.target.matches('input:not([type=checkbox]),textarea'))e.target.dataset.dirty='1';});
+document.addEventListener('input',e=>{if(e.target.closest?.('[data-project-related-form]'))e.target.dataset.dirty='1';if(e.target.closest?.('#weekly-body') && e.target.matches('input:not([type=checkbox]),textarea'))e.target.dataset.dirty='1';});
 document.addEventListener('click',async e=>{
   const t=e.target,nav=t.closest('[data-week-nav]'),chat=t.closest('[data-weekly-chat]'),open=t.closest('[data-intent-chat]'),edit=t.closest('[data-intent-edit]'),remove=t.closest('[data-intent-remove]'),cancel=t.closest('[data-intent-cancel]');
   try {
@@ -969,6 +970,15 @@ document.addEventListener('change',async e=>{
   if(e.target.matches('#weekly-body input[name=project]'))e.target.dataset.dirty='1';
 });
 document.addEventListener('submit',async e=>{
+  if(e.target.matches?.('[data-project-related-form]')) {
+    e.preventDefault();const form=e.target,button=form.querySelector('button[type=submit]'),data=Object.fromEntries(new FormData(form));button.disabled=true;
+    try {
+      await post('/api/projects/related',{project_id:form.dataset.projectRelatedForm,...data});
+      if(JSON.stringify(Object.fromEntries(new FormData(form)))===JSON.stringify(data)){form.reset();form.querySelectorAll('[data-dirty]').forEach(el=>delete el.dataset.dirty);}
+      await load();
+    } catch(err) {error(err.message);} finally {button.disabled=false;}
+    return;
+  }
   const form=e.target;if(!form.closest?.('#weekly-body'))return;
   e.preventDefault();const data=new FormData(form),submitted=JSON.stringify([...data]);
   try {
@@ -990,8 +1000,10 @@ function renderUsage() {
   const quotaBody=(windows,extra='')=>windows.map((w,i)=>`<div class="quota-window"><div><span>${esc(w.label)} · 剩余</span><strong>${w.remaining}%</strong></div><div class="meter"><i class="${tone(w.remaining)}" style="width:${w.remaining}%"></i></div>${w.resetsAt||extra ? `<small>重置：${w.resetsAt?when(w.resetsAt):'未记录'}${i===0?extra:''}</small>` : ''}</div>`).join('');
   const claude=claudeWindows().map(w=>({label:w.label,remaining:w.remaining_percent,resetsAt:w.resets_at}));
   $('quota-cards').innerHTML=`<article class="quota-card"><h2>Codex</h2><p class="muted">官方账号额度</p>${codex.length ? quotaBody(codex,renderExtraResets(q.extra_resets)) : `<div class="unknown-quota">尚未读取</div><p class="muted">点右上角更新额度。</p><small>重置：未记录${renderExtraResets(q.extra_resets)}</small>`}<footer><span>${esc(q.codex?.error || q.codex?.automatic_reset?.error || (state.agent?.config?.automatic_codex_reset_credit ? '额度用尽时自动用卡 · 无模型调用' : '额度查询 · 无模型调用'))}</span><span>${when(q.codex?.checked_at)}</span></footer></article><article class="quota-card"><h2>Claude Code</h2><p class="muted">Claude Code 返回的账号额度</p>${claude.length ? quotaBody(claude) : '<div class="unknown-quota">暂无有效额度窗口</div><p class="muted">窗口已重置或尚未调用；点右上角更新额度。</p>'}<footer><span>${q.claude?.error ? esc(q.claude.error) : '随每次调用自动记录'}</span><a href="https://claude.ai/settings/usage" target="_blank" rel="noreferrer">官方 Usage ↗</a><span>${when(q.claude?.checked_at)}</span></footer></article>${q.deepseek_provider==='commandcode' ? commandCodeCard(q.commandcode) : ''}`;
-  const days=7,cutoff=Date.now()-days*86400000;
-  const runs=state.usage.runs.filter(r=>Date.parse(r.at)>=cutoff);
+  const days=7;
+  const buckets=Array.from({length:days},(_,i)=>{const d=new Date();d.setDate(d.getDate()-days+1+i);return {date:d.toLocaleDateString('en-CA'),label:(d.getMonth()+1)+'/'+d.getDate(),input:0,output:0,cache:0,calls:0};});
+  // One start point for the chart, the totals and the table: the first calendar day on screen.
+  const runs=state.usage.runs.filter(r=>Date.parse(r.at)>=Date.parse(buckets[0].date+'T00:00:00'));
   const sum=key=>runs.filter(observed).reduce((s,r)=>s+(r[key] || 0),0);
   const input=sum('input_tokens'),cached=sum('cached_input_tokens'),output=sum('output_tokens'),metric=runs.reduce((s,r)=>s+billed(r),0);
   const failed=runs.filter(r=>r.status!=='completed').length,measured=runs.filter(observed).length,partial=runs.filter(r=>r.usage_partial===true).length;
@@ -1003,7 +1015,6 @@ function renderUsage() {
     ['每次平均指标',measured ? big(metric/measured) : '—','按有用量记录的调用算',measured ? num(metric/measured)+' token' : ''],
     ['缓存输入占比',input ? (100*cached/input).toFixed(1)+'%' : '—',`缓存 ${big(cached)} · 输出 ${big(output)}`,'']
   ].map(([label,value,sub,tip])=>`<div class="stat"${tip ? ` title="${esc(tip)}"` : ''}><span>${label}</span><strong>${value}</strong><small class="muted">${esc(sub)}</small></div>`).join('');
-  const buckets=Array.from({length:days},(_,i)=>{const d=new Date();d.setDate(d.getDate()-days+1+i);return {date:d.toLocaleDateString('en-CA'),label:(d.getMonth()+1)+'/'+d.getDate(),input:0,output:0,cache:0,calls:0};});
   for(const r of runs){const d=new Date(r.at).toLocaleDateString('en-CA');const b=buckets.find(b=>b.date===d);if(b){b.calls++;if(observed(r)){b.input+=Math.max(0,(r.input_tokens || 0)-(r.cached_input_tokens || 0));b.output+=r.output_tokens || 0;b.cache+=r.cached_input_tokens || 0;}}}
   // Bar height is the metric (uncached input + output). Cache hits are ~95% of raw input and would flatten every day to the same bar.
   const max=Math.max(1,...buckets.map(b=>b.input+b.output));
@@ -1324,7 +1335,7 @@ $('history-search').addEventListener('input',()=>{
   else void searchHistory();
 });
 $('open-search').onclick=()=>{show('history');$('history-search').focus();$('history-search').select();};
-document.addEventListener('keydown',e=>{if(e.key==='n' && !['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)){selectSession();}});
+document.addEventListener('keydown',e=>{if(e.key!=='n' || e.ctrlKey || e.metaKey || e.altKey || ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName) || e.target.isContentEditable || document.querySelector('dialog[open]'))return;selectSession();});
 bindFramework({post,load,workItem:id=>state?.work.items.find(i=>i.id===id)});
 bindProjectEditor({post,load});
 bindProjectDrag({post,load,error});

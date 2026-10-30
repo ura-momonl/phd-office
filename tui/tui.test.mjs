@@ -3,8 +3,21 @@ import assert from 'node:assert/strict';
 import { width, wrap, clip, strip } from './text.mjs';
 import { createKeyParser } from './keys.mjs';
 import { createApp, applyState, drawFrame, mentionAt, onKey, listItems, paletteItems } from './app.mjs';
+import { base } from './api.mjs';
 
 process.env.PHD_TUI_NO_PREFS = '1';
+test('TUI defaults to the Workbench port and honors an explicit override', () => {
+  const previous = process.env.PHD_DASHBOARD_PORT;
+  try {
+    delete process.env.PHD_DASHBOARD_PORT;
+    assert.equal(base(), 'http://127.0.0.1:18787');
+    process.env.PHD_DASHBOARD_PORT = '23456';
+    assert.equal(base(), 'http://127.0.0.1:23456');
+  } finally {
+    if (previous === undefined) delete process.env.PHD_DASHBOARD_PORT;
+    else process.env.PHD_DASHBOARD_PORT = previous;
+  }
+});
 const keys = input => { const out = []; const feed = createKeyParser(k => out.push(k)); [].concat(input).forEach(feed); return out; };
 
 test('CJK counts two cells; wrap and clip respect it', () => {

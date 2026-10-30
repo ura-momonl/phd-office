@@ -1,0 +1,8 @@
+{
+  "title": "输运数据分析：<样品/文件名>",
+  "kind": "data",
+  "actor": "codex",
+  "goal": "用 Transport Workbench MCP（software show transport-workbench）分析 <数据文件绝对路径>：先读懂列和单位，再按问题提取 Qn/Kn/R/σ、分温区拟合或机制拟合（PRX 2026 Table I，见软件 README“机制拟合”）。要回答的问题：<一句话>。结果、图和请求文件放在项目目录 workspace/projects/<项目id>/。",
+  "project_ids": [],
+  "status": "queued"
+}

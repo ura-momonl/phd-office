@@ -91,9 +91,9 @@ export function autonomyHoldReason(item,items,now=Date.now()) {
   } catch(error) {return error.message;}
 }
 export const autonomousCanStart=(item,items,now)=>autonomyHoldReason(item,items,now)===null;
-// Only actual user-owned project steps can supply a fresh real-world event. Chat turns cannot.
+// Finished project steps of any owner can supply a fresh event (the planner still waits for the whole log topic). Chat turns and steps born from planning cannot.
 export function progressEvent(item,previous,now) {
-  if(!['done','failed'].includes(item.status) || item.actor!=='user' || item.executor || !item.project_ids?.length ||
+  if(!['done','failed'].includes(item.status) || item.autonomy || item.executor || !item.project_ids?.length ||
     (item.kind!=='experiment' && !item.plan_node_id))return null;
   if(item.status==='failed') {
     // Failure is itself a result; unlike completion it need not have data files.

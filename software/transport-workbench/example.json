@@ -1,0 +1,8 @@
+[
+  {
+    "tool": "load_data",
+    "arguments": {"path": "D:/Main/transport-workbench-mcp/engine/examples/ppms_header.dat"}
+  },
+  {"tool": "describe_dataset", "arguments": {"handle": "ds1"}},
+  {"tool": "get_rows", "arguments": {"handle": "ds1", "count": 3}}
+]

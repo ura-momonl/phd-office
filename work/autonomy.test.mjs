@@ -341,3 +341,18 @@ test('a user cancellation is preserved when the native reply arrives later',()=>
   assert.equal(history[0].outcome_status,'cancelled');
   await drain(async()=>{throw Error('a cancelled operation must not restart');});
 }));
+
+test('the last finished step of a log topic triggers the planner whoever owns it; planner-born steps do not',()=>isolated(async()=>{
+  setPolicy({debounce_seconds:0});
+  const step=extra=>enqueue({title:'synthetic assistant step',kind:'data',actor:'codex',status:'queued',project_ids:[project],plan_node_id:'topic-y',require_outputs:false,...extra});
+  const a=step(),b=step();
+  const doneA=setStepStatus({id:a.id,status:'done',handoff:'Synthetic result A',outputs:[]});
+  assert.ok(doneA.progress_event,'assistant step finishing yields an event');
+  assert.deepEqual(planProgress(Date.parse(doneA.progress_event.at)+1000),[],'topic still has an unfinished step');
+  const doneB=setStepStatus({id:b.id,status:'done',handoff:'Synthetic result B',outputs:[]});
+  const [plan]=planProgress(Date.parse(doneB.progress_event.at)+1000);
+  assert.ok(plan,'the last step of the topic fires the planner');assert.equal(plan.autonomy.events.length,2);
+  const born=enqueue(child({status:'open',plan_node_id:'topic-z'}),{autonomous:true});
+  const doneBorn=setStepStatus({id:born.id,status:'done',handoff:'Synthetic planner-born result',outputs:[]});
+  assert.equal(doneBorn.progress_event,undefined,'steps born from planning do not chain');
+}));

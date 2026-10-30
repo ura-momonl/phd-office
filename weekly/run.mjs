@@ -395,7 +395,7 @@ function weekFacts(w,s) {
 }
 // As of now, whichever week is on screen: what is stuck, and what waits for the user.
 function currentState(s,now) {
-  const blocked=[...new Map(s.work.filter(i=>!isChatTurn(i) && (i.status==='waiting_user' || i.status==='failed' || (i.review?.state==='pending' && i.review.kind==='acceptance'))).map(i=>[i.title,i])).values()];
+  const blocked=[...new Map(s.work.filter(i=>!isChatTurn(i) && (i.status==='waiting_user' || i.status==='failed' || (i.review?.state==='pending' && i.review.kind==='acceptance'))).map(i=>[i.id,i])).values()];
   return {as_of:now.toISOString(),blocked:blocked.map(i=>({id:i.id,title:i.title,next:text(i.handoff || i.goal),project_ids:i.project_ids})),
     awaiting_decision:s.work.filter(i=>i.status==='done' && i.review?.state==='pending' && i.review.kind==='decision').length,
     awaiting_acceptance:s.work.filter(i=>i.review?.state==='pending' && i.review.kind==='acceptance').length};

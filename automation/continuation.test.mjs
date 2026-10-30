@@ -10,7 +10,8 @@ import {syncBuiltinESMExports} from 'node:module';
 import {EventEmitter} from 'node:events';
 import {PassThrough,Writable} from 'node:stream';
 import {startCodexTurn,usageDelta,codexUsageFields,continuationSignature,codexLaunch} from '../agent/codex.mjs';
-import {submit,execute as executeAgent,sendChat,editMessage,answerQuestion,stop} from '../agent/run.mjs';
+import {submit,execute as executeAgent,sendChat,editMessage,answerQuestion,stop,startReadyWork} from '../agent/run.mjs';
+import {enqueue,update,repeatOperation} from '../work/run.mjs';
 import {executeWithoutTitle} from './titleless.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {randomUUID} from 'node:crypto';
@@ -22,6 +23,96 @@ const gate=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve:()
 const sessionOf=id=>read(file).sessions.find(s=>s.id===id);
 const params={sandbox:'workspace-write',approvalPolicy:'on-request',approvalsReviewer:'auto_review'};
 const thread=id=>({thread:{id},sandbox:{type:'workspaceWrite'},model:'test'});
+
+test('operation continuations send only additions; fresh threads retain context and material changes',async()=>{
+  const paths=['work/queue.json','work/turns.json',file,'agent/config.json'];
+  const saved=new Map(paths.map(p=>[p,read(p)]));
+  const occurrences=(text,value)=>text.split(value).length-1;
+  try {
+    write('agent/config.json',{...saved.get('agent/config.json'),enabled:true,memory_v2:{enabled:false},codex_resume_sessions:['*'],claude_resume_sessions:['*']});
+    for(const provider of ['codex','claude']) {
+      const dependency=enqueue({title:'Operation input fixture',kind:'framework',actor:provider,require_outputs:false});
+      update({id:dependency.id,status:'done',handoff:'DEPENDENCY_CONTEXT_V1',outputs:[]});
+      const original='UNCHANGED_OPERATION_OBJECTIVE_'+provider,changed='REVISED_OPERATION_OBJECTIVE_'+provider;
+      const op=enqueue({title:'Continuation envelope fixture',goal:original,kind:'framework',actor:provider,status:'queued',require_outputs:false,dependencies:[dependency.id]});
+      const key=provider+'_continuation',threadId='operation-envelope-'+provider;
+      let sessionId;
+      const run=async(job,check,resumed=true)=>{
+        const started=startReadyWork().find(j=>j.task_id===job.id);assert.ok(started);
+        sessionId=started.session_id;
+        let called=false;
+        await execute(job.id,async(_,prompt,opts)=>{
+          called=true;check(prompt,opts);
+          assert.equal(opts.inputParts.map(p=>p.text).join('\n'),prompt);
+          assert.equal(opts.resumeInputParts.map(p=>p.text).join('\n'),opts.resumePrompt);
+          opts.onContinuation({threadId,signature:'fixture'},{phase:'start',resumed});
+          update({id:op.id,status:'done',handoff:'Fixture delivered.',outputs:[]});
+          return {result:'Fixture response, without a model call.'};
+        });
+        assert.ok(called);
+      };
+      await run(op,(prompt)=>assert.equal(occurrences(prompt,original),1),false);
+      for(const direction of ['SECOND_EXECUTION_DELTA','THIRD_EXECUTION_DELTA']) {
+        const job=repeatOperation({id:op.id,input:direction});
+        await run(job,(prompt,opts)=>{
+          assert.equal(occurrences(prompt,original),1,'fresh fallback has one full objective, not one per old run');
+          assert.ok(opts.resumePrompt.includes(direction));
+          assert.ok(!opts.resumePrompt.includes(original));
+          assert.ok(!opts.resumePrompt.includes('DEPENDENCY_CONTEXT_V1'));
+          assert.ok(opts.resumePrompt.includes(job.id));assert.ok(opts.resumePrompt.includes(op.id));
+        });
+      }
+      const stored=sessionOf(sessionId).messages.filter(m=>m.operation_prompt);
+      assert.equal(stored.length,3);assert.ok(stored.every(m=>m.text.includes(original)),'saved full operation messages are not rewritten');
+      const queue=read('work/queue.json');queue.items.find(i=>i.id===op.id).goal=changed;write('work/queue.json',queue);
+      await run(repeatOperation({id:op.id,input:'CHANGED_GOAL_DELTA'}),(_,opts)=>{
+        assert.ok(opts.resumePrompt.includes(changed),'changed instructions are sent in full');
+        assert.ok(opts.resumePrompt.includes('DEPENDENCY_CONTEXT_V1'));
+      });
+      update({id:dependency.id,handoff:'DEPENDENCY_CONTEXT_V2'});
+      await run(repeatOperation({id:op.id,input:'CHANGED_EVIDENCE_DELTA'}),(_,opts)=>{
+        assert.ok(opts.resumePrompt.includes(changed));assert.ok(opts.resumePrompt.includes('DEPENDENCY_CONTEXT_V2'),'changed predecessor evidence is not hidden');
+      });
+      const state=read(file);delete state.sessions.find(s=>s.id===sessionId)[key];write(file,state);
+      await run(repeatOperation({id:op.id,input:'REBUILT_THREAD_DELTA'}),(prompt)=>{
+        for(const value of [original,changed,'DEPENDENCY_CONTEXT_V1','DEPENDENCY_CONTEXT_V2','SECOND_EXECUTION_DELTA','THIRD_EXECUTION_DELTA','REBUILT_THREAD_DELTA'])assert.ok(prompt.includes(value),'fresh thread retains '+value);
+        assert.equal(occurrences(prompt,original),1);
+      },false);
+    }
+  } finally {for(const [p,value] of saved)write(p,value);}
+});
+
+test('return inputs do not repeat identical handoffs but retain distinct execution explanations',async()=>{
+  const paths=['work/queue.json','work/turns.json',file,'agent/config.json'];
+  const saved=new Map(paths.map(p=>[p,read(p)]));
+  try {
+    write('agent/config.json',{...saved.get('agent/config.json'),enabled:true,memory_v2:{enabled:false}});
+    const source=enqueue({title:'Returned fixture',kind:'framework',actor:'codex',require_outputs:false});
+    update({id:source.id,status:'done',handoff:'RETURNED_RESULT_ONCE',outputs:[]});
+    const parent=enqueue({title:'Consume fixture return',kind:'framework',actor:'codex',require_outputs:false});
+    const job=repeatOperation({id:parent.id,input:'Consume both result and explanation.',after:[source.id]});
+    startReadyWork();
+    let called=false;
+    await execute(job.id,async(_,prompt)=>{
+      called=true;assert.equal(prompt.split('RETURNED_RESULT_ONCE').length-1,1);
+      assert.ok(prompt.includes('本轮结果状态：done'));
+      return {result:'No model called.'};
+    });
+    assert.ok(called);
+    const resultRun=repeatOperation({id:source.id,input:'Return a distinct explanation.'});
+    startReadyWork();
+    await execute(resultRun.id,async()=>{
+      update({id:source.id,status:'done',handoff:'NEW_REGISTERED_RESULT',outputs:[]});
+      return {result:'DISTINCT_EXECUTION_EXPLANATION'};
+    });
+    const next=repeatOperation({id:parent.id,input:'Consume the distinct explanation.',after:[resultRun.id]});
+    startReadyWork();
+    await execute(next.id,async(_,prompt)=>{
+      assert.ok(prompt.includes('NEW_REGISTERED_RESULT'));assert.ok(prompt.includes('DISTINCT_EXECUTION_EXPLANATION'));
+      return {result:'No model called.'};
+    });
+  } finally {for(const [p,value] of saved)write(p,value);}
+});
 
 test('unbound conversations give both providers progressive project entry points and update old native threads once',async()=>{
   const saved={queue:read('work/queue.json'),sessions:read(file),cfg:read('agent/config.json')};

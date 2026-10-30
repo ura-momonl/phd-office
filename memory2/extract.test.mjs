@@ -96,6 +96,7 @@ test('ingestOwner writes episodes then facts, is idempotent, and a bad cell fail
     session('s-ok', [msg('user', '正常内容', at(1)), msg('assistant', '好', at(1, 2), 'claude')]),
     session('s-bad', [msg('user', '会失败的内容BAD', at(2)), msg('assistant', '好', at(2, 2), 'claude')]),
     session('s-task', [msg('user', 'x', at(3)), msg('assistant', 'y', at(3, 1), 'claude')], { origin: 'task' }),
+    session('s-delegated', [{ role: 'handoff', provider: 'codex', text: '交给你', ms: Date.parse(at(3)) }, msg('assistant', 'y', at(3, 1), 'claude')]),
   ];
   const llm = scriptedLlm({ failEpisodeFor: 'BAD' });
   // s-ok and s-bad are within 6 h of each other in one session list but are different sessions -> separate cells

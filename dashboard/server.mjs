@@ -21,7 +21,7 @@ import { sessionForCard } from './cards.mjs';
 import { focusProject, resolveLink, proposeLinks, renderAllStatus, setProjectArchived, resolveProjectFile, attachProjectFiles, projectNode, withFramework, setNodeStatus } from '../projects/run.mjs';
 import { judgePending, pickBareCards, automationToday, automationBudget } from '../agent/mail.mjs';
 import { taskHandler, taskEvidence } from '../mail-flow/flow.mjs';
-import {projectEditor,editProjectFramework} from '../projects/run.mjs';
+import {projectEditor,editProjectFramework,addRelated} from '../projects/run.mjs';
 import {upcoming,calendarData,addEvent,addEvents,updateEvent,removeEvent} from '../calendar/run.mjs';
 import {memory2Tick} from '../memory2/auto.mjs';
 import {memoryVersion} from '../memory2/telemetry.mjs';
@@ -84,7 +84,7 @@ export function buildSnapshot({page}={}) {
     ...(needs('inbox') ? {inbox_activity:inboxActivity(),automation:automationToday()} : {}),
     ...(!scoped ? {policy:read('work/policy.json')} : {}),
     ...(needs('procurement') ? {procurement:read('procurement/catalog.json')} : {}),
-    ...(needs('projects') ? {literature:projectLiterature()} : {}),
+    ...(needs('projects') ? {literature:projectLiterature(),project_events:read('calendar/events.json',{events:[]}).events} : {}),
     ...(needs('weekly','projects') ? {weekly:weeklySnapshot()} : {}),
     ...(needs('connections') ? {software:read('software/catalog.json'),
       connections:{claude_installed:fs.existsSync(process.env.WORKFLOW_CLAUDE_BIN || path.join(process.env.USERPROFILE,'.local/bin/claude.exe')),
@@ -339,13 +339,13 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
       if (req.method === 'GET' && url.pathname === '/api/settings') {
         res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(settingsView()));return;
       }
-      if (req.method === 'POST' && ['/api/settings','/api/avatars/upload','/api/chat/read','/api/instruments/save','/api/instruments/open','/api/instruments/run','/api/prompts/preview','/api/prompts/save','/api/prompts/new','/api/prompts/mv','/api/prompts/rm','/api/prompts/snapshot-accept','/api/companion/notes','/api/backend/restart','/api/work/add','/api/work/edit','/api/work/move','/api/tasks','/api/task-update','/api/chat','/api/chat/handoff','/api/chat/edit','/api/chat/answer','/api/chat/session','/api/chat/title','/api/chat/pin','/api/projects/archive','/api/projects/files','/api/projects/edit','/api/stop','/api/inbox/ack','/api/inbox/undo','/api/inbox/respond','/api/projects/focus','/api/projects/status','/api/weekly/intent/add','/api/weekly/intent/update','/api/weekly/intent/remove','/api/weekly/review','/api/weekly/start','/api/usage/refresh','/api/links/resolve','/api/calendar/add','/api/calendar/update','/api/calendar/remove'].includes(url.pathname)) {
+      if (req.method === 'POST' && ['/api/settings','/api/avatars/upload','/api/chat/read','/api/instruments/save','/api/instruments/open','/api/instruments/run','/api/prompts/preview','/api/prompts/save','/api/prompts/new','/api/prompts/mv','/api/prompts/rm','/api/prompts/snapshot-accept','/api/companion/notes','/api/backend/restart','/api/work/add','/api/work/edit','/api/work/move','/api/tasks','/api/task-update','/api/chat','/api/chat/handoff','/api/chat/edit','/api/chat/answer','/api/chat/session','/api/chat/title','/api/chat/pin','/api/projects/archive','/api/projects/related','/api/projects/files','/api/projects/edit','/api/stop','/api/inbox/ack','/api/inbox/undo','/api/inbox/respond','/api/projects/focus','/api/projects/status','/api/weekly/intent/add','/api/weekly/intent/update','/api/weekly/intent/remove','/api/weekly/review','/api/weekly/start','/api/usage/refresh','/api/links/resolve','/api/calendar/add','/api/calendar/update','/api/calendar/remove'].includes(url.pathname)) {
         if (!String(req.headers['content-type']).startsWith('application/json')) throw new Error('JSON required');
         const origin = req.headers.origin;
         if (origin && new URL(origin).host !== req.headers.host) throw new Error('Origin mismatch');
         // The user chat entry takes what the user says in the interface (and the Discord relay, which sends its own Origin); an assistant opens a new conversation with `agent handoff`.
         if(url.pathname==='/api/chat' && !origin && req.headers['x-phd-client']!=='tui'){res.statusCode=403;throw new Error('用户聊天入口只接界面和 Discord 里的用户发言。助手要另开对话请用 node automation/run.mjs agent handoff <UTF-8请求JSON路径>。');}
-        const limit=url.pathname==='/api/avatars/upload' ? 9*1024*1024 : url.pathname==='/api/instruments/save' ? 3*1024*1024 : url.pathname==='/api/projects/edit' ? 512000 : url.pathname.startsWith('/api/prompts/') ? 512000 : url.pathname==='/api/weekly/review' ? 64000 : ['/api/chat','/api/chat/handoff'].includes(url.pathname) ? Math.ceil((FILE_LIMITS.total+IMAGE_LIMITS.total)*4/3)+1024*1024 : url.pathname==='/api/projects/files' ? Math.ceil(FILE_LIMITS.total*4/3)+1024*1024 : 16000;
+        const limit=url.pathname==='/api/avatars/upload' ? 9*1024*1024 : url.pathname==='/api/instruments/save' ? 3*1024*1024 : url.pathname==='/api/projects/edit' ? 512000 : url.pathname==='/api/projects/related' ? 80000 : url.pathname.startsWith('/api/prompts/') ? 512000 : url.pathname==='/api/weekly/review' ? 64000 : ['/api/chat','/api/chat/handoff'].includes(url.pathname) ? Math.ceil((FILE_LIMITS.total+IMAGE_LIMITS.total)*4/3)+1024*1024 : url.pathname==='/api/projects/files' ? Math.ceil(FILE_LIMITS.total*4/3)+1024*1024 : 16000;
         const chunks=[];let size=0;for await (const chunk of req) {size+=chunk.length;if(size>limit)throw new Error('Task request too large');chunks.push(chunk);}
         const request=JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');let item;
         if(server.restartPending){res.statusCode=503;throw new Error('后端正在重启，暂不接受新操作。');}
@@ -391,6 +391,7 @@ export function createServer({restartBackend,noteRunner,noteRandom,openCode,runC
         else if(url.pathname==='/api/instruments/save')item=saveInstrument(request);
         else if(url.pathname==='/api/instruments/open')item=await openInstrumentCode(request.id,request.index,openCode);
         else if(url.pathname==='/api/instruments/run')item=await runInstrumentCode(request.id,request.index,runCode);
+        else if(url.pathname==='/api/projects/related')item=addRelated(request);
         else if(url.pathname==='/api/projects/files')item=attachProjectFiles(request.project_id,request.node_id,request.files);
         else if(url.pathname==='/api/projects/archive')item=setProjectArchived(String(request.project_id),request.archived!==false);
         else if(url.pathname==='/api/stop') {stop(request.task_id);item={stopped:true};}

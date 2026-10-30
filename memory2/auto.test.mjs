@@ -59,6 +59,23 @@ test('a failing step is logged with its error and not retried before its interva
   wipe();
 });
 
+test('a group cut short by a restart is retried an hour later, once finished it waits its interval again', async () => {
+  wipe();
+  const a = mk();
+  a.deps.steps.account = async () => { throw new Error('x'); }; // a failing step still finishes the group
+  await memory2Tick({ now: T, deps: a.deps, config: cfg });
+  assert.equal(JSON.parse(fs.readFileSync(`${root}/.runtime/memory2/auto.json`, 'utf8')).owners.claude.ingest_at_open, undefined);
+  // simulate a process killed during ingest: the marker stays set
+  const f = `${root}/.runtime/memory2/auto.json`, st = JSON.parse(fs.readFileSync(f, 'utf8'));
+  st.owners.claude.ingest_at = new Date(T + 25 * H).toISOString(); st.owners.claude.ingest_at_open = true; fs.writeFileSync(f, JSON.stringify(st));
+  assert.equal((await memory2Tick({ now: T + 25.5 * H, deps: mk().deps, config: cfg })).state, 'nothing-due');
+  const b = mk();
+  assert.equal((await memory2Tick({ now: T + 26.5 * H, deps: b.deps, config: cfg })).state, 'ran');
+  assert.deepEqual(b.log.filter(x => x !== 'llm'), ['ingest', 'account']);
+  assert.equal((await memory2Tick({ now: T + 28 * H, deps: mk().deps, config: cfg })).state, 'nothing-due');
+  wipe();
+});
+
 test('metered counts calls, sizes and failures', async () => {
   const { fn, m } = metered(async p => p === 'bad' ? Promise.reject(new Error('x')) : 'abc');
   await fn('hello'); await assert.rejects(fn('bad'));

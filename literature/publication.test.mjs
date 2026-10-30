@@ -7,6 +7,7 @@ import {root,read,write} from '../automation/files.mjs';
 import {record} from './run.mjs';
 import {validatePDF} from './fetch.mjs';
 import {registerDownload} from './register-download.mjs';
+import {spawnSync} from 'node:child_process';
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw Error('Use the isolated literature test runner');
 const doi='10.5555/publication-fixture',title='Quantum sample transport under controlled strain';
 const baseline=read('literature/catalog.json');
@@ -39,6 +40,14 @@ test('publisher end sheet requires its own title and exact DOI field; cached reu
   registerDownload(doi,input);assert.equal(read('literature/catalog.json').papers[0].identity_verification.printed_identifier_verified,true);
   assert.equal(validatePDF(input,doi,r.sha256,r.identity).sha256,r.sha256);
   fs.appendFileSync(input,'changed');assert.throws(()=>validatePDF(input,doi,r.sha256,r.identity),/hash differs/);
+});
+test('macro CLI rejects an orphan with the incident identity failure without replacing it or linking it',()=>{
+  fs.writeFileSync(out,pdf(['Different research paper\n10.5555/unrelated']));
+  const before=hash(out);
+  const r=spawnSync(process.execPath,[path.join(root,'literature/mouse-download.mjs'),'local',doi],{encoding:'utf8',windowsHide:true,timeout:30000});
+  assert.equal(r.status,1,r.stderr);
+  const result=JSON.parse(r.stdout);assert.equal(result.status,'validation_failed');assert.match(result.message,/Requested DOI is not verified/);
+  assert.equal(hash(out),before);assert.equal(read('literature/catalog.json').papers[0].fulltext_path,null);
 });
 test('a shared-page article can bind its title to its later Published online DOI block',()=>{
   save(['Another short article\n10.5555/other\n'+title+'\nAlice Kepler', 'Article ending\nPublished online: 12 March 2020\nhttps://doi.org/'+doi+'\nReferences\n1. A cited work']);

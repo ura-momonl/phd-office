@@ -47,11 +47,13 @@ export async function memory2Tick({ now = Date.now(), deps = null, config = auto
     for (const owner of config.owners) {
       const own = state.owners[owner] ||= {};
       const steps = [];
-      if (due(own.ingest_at, config.ingest_hours, now)) steps.push('ingest', 'account');
-      if (due(own.consolidate_at, config.consolidate_hours, now)) steps.push('reflect', 'profile', 'forget');
+      // A group still marked open was cut short (process restart mid-run): retry it an hour after the attempt instead of waiting a full interval; finished groups (even failed ones) wait their interval.
+      const dueGroup = (key, hours) => due(own[key], hours, now) || (own[`${key}_open`] && now - Date.parse(own[key]) >= 3600000);
+      if (dueGroup('ingest_at', config.ingest_hours)) steps.push('ingest', 'account');
+      if (dueGroup('consolidate_at', config.consolidate_hours)) steps.push('reflect', 'profile', 'forget');
       for (const step of steps) {
         const stamp = { ingest: 'ingest_at', reflect: 'consolidate_at' }[step];
-        if (stamp) own[stamp] = new Date(now).toISOString(); // stamped before running; the later steps of a group share the first step's stamp
+        if (stamp) { own[stamp] = new Date(now).toISOString(); own[`${stamp}_open`] = true; } // stamped before running; the later steps of a group share the first step's stamp
         writeState(state);
         const { fn, m } = metered(d.llm(owner)), t0 = Date.now();
         let result, error = null;
@@ -59,6 +61,7 @@ export async function memory2Tick({ now = Date.now(), deps = null, config = auto
         const line = { at: new Date().toISOString(), owner, step, ms: Date.now() - t0, ...m, ...(error ? { error } : {}), result: summarize(result) };
         logUsage(line);
         done.push(line);
+        if (['account', 'forget'].includes(step)) { delete own[{ account: 'ingest_at', forget: 'consolidate_at' }[step] + '_open']; writeState(state); }
       }
     }
     return { state: done.length ? 'ran' : 'nothing-due', done };

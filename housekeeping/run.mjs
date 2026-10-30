@@ -37,7 +37,7 @@ export const REPORT_ONLY = [
 // 两个只追加、每次读写都整份过一遍的存储。不归清理规则管（删了就是丢对话），plan 只报体积，超过 limit 时提示该做归档。
 const STORES = [
   { file: '.runtime/agent/sessions.json', limit: 40 * 1048576, note: '对话存储：每次流式事件整份读改写，dashboard 轮询整份发出' },
-  { file: 'work/turns.json', limit: 24 * 1048576, note: '对话轮日志：超过 24MB 时写入会把最老的轮次归档到 .runtime/work/archive' },
+  { file: 'work/turns.json', limit: 8 * 1048576, note: '对话轮日志：超过 8MB 时写入会把最老的轮次归档到 .runtime/work/archive' },
   { file: '.runtime/usage/runs.jsonl', limit: 16 * 1048576, note: '模型调用日志：超过 16MB 时丢弃最老的记录（页面只用最近一周）' },
   { file: '.runtime/memory2/claude/.index', limit: 200 * 1048576, note: '记忆向量索引：sync 每 6 小时合并一次并清掉旧版本，Markdown 是真源、可删后重建' },
   { file: '.runtime/memory2/deepseek/.index', limit: 200 * 1048576, note: '记忆向量索引：sync 每 6 小时合并一次并清掉旧版本，Markdown 是真源、可删后重建' },
@@ -122,6 +122,7 @@ export function plan({ now = Date.now(), rules = RULES } = {}) {
 function childSizes(rule) {
   const items = [];
   for (const name of fs.readdirSync(rule.base())) {
+    if (rule.skip?.test(name)) continue;
     const p = path.join(rule.base(), name);
     try {
       // An idle rule asks "how old is this" first: sizing a 20GB toolchain tree is only worth it for a candidate.

@@ -191,7 +191,7 @@ export async function ingestOwner({ owner, root, sessions, llm, sinceMs = 0, lim
   const cacheFile = path.join(root.root, 'boundaries.json'), cache = fs.existsSync(cacheFile) ? JSON.parse(fs.readFileSync(cacheFile, 'utf8')) : {};
   const todo = [];
   for (const s of sessions) {
-    if (s.origin === 'task') continue;
+    if (s.origin === 'task' || !s.messages.some(m => m.role === 'user')) continue; // background tasks and sessions opened only by another assistant's handoff (no user message) are delegated work, recorded by work handoffs and logs
     const gapMs = (cellOptions.gapHours ?? 6) * 3600000, cells = buildMemCells(s, owner, { sinceMs, ...cellOptions });
     if (cells.length && now - cells.at(-1).timestamp_ms < gapMs) { cells.pop(); report.deferred_open++; }
     for (const cell of cells) { report.cells_seen++; if (only && !only.has(cell.id)) continue; if (done.has(cell.id)) report.skipped++; else todo.push(cell); }

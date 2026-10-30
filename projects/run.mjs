@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
+import {randomUUID} from 'node:crypto';
 import { root, read, write, input, isTurnRecord } from '../automation/files.mjs';
 import { extractJSON } from '../dashboard/cards.mjs';
 import {decodeFiles} from '../agent/files.mjs';
@@ -57,6 +58,24 @@ function knownProject(id) {
   if(!read('projects/catalog.json').projects.some(p=>p.id===id))throw new Error('Unknown project');
   return id;
 }
+// Project correspondence and arrangements live outside the research framework.
+export function addRelated(request) {
+  const catalog=read('projects/catalog.json'),project=catalog.projects.find(p=>p.id===request.project_id);
+  if(!project)throw new Error('Unknown project');
+  const text=(key,max,required=false)=>{
+    const value=request[key];
+    if(value!=null && typeof value!=='string')throw new Error('Invalid '+key);
+    const trimmed=(value || '').trim();
+    if((required && !trimmed) || trimmed.length>max)throw new Error('Invalid '+key);
+    return trimmed;
+  };
+  const kind=request.kind || 'misc';
+  if(!['mail','meeting','material','misc'].includes(kind))throw new Error('Invalid kind');
+  const item={id:randomUUID(),kind,title:text('title',200,true),body:text('body',16000),date:text('date',80),source:text('source',2000),created_at:new Date().toISOString()};
+  project.related=[...(project.related || []),item];project.updated_at=item.created_at;
+  write('projects/catalog.json',catalog);
+  return {project_id:project.id,item};
+}
 // The dashboard chip and the node-status command share this one entry.
 export function setNodeStatus(projectId,id,status,options) {return setStatus(knownProject(projectId),id,status,options);}
 export const projectEditor = projectId => editorSnapshot(knownProject(projectId));
@@ -83,7 +102,7 @@ export function renderStatus(projectId) {
   const finished = work.filter(i => i.status === 'done' && i.review?.state !== 'pending').sort((a, b) => String(b.completed_at).localeCompare(String(a.completed_at)));
   const seenSummary = new Set(), done = finished.filter(i => { const s = summaryOf(i); if (!s || seenSummary.has(s)) return false; seenSummary.add(s); return true; }).slice(0, 3);
   // Open work lists operation steps only: a chat turn that ended as failed or still runs is not an undone task. A turn that left a summary still shows under finished.
-  const pending = work.filter(i => !isTurnRecord(i) && (['queued', 'active', 'waiting_user', 'failed'].includes(i.status) || i.review?.state === 'pending'));
+  const pending = work.filter(i => !isTurnRecord(i) && (['open', 'queued', 'active', 'waiting_user', 'failed'].includes(i.status) || i.review?.state === 'pending'));
   const open = pending.slice(0, 5);
   const lines = ['# ' + project.name + ' · 状态', '', '> 由程序生成，不要手改。事实来源：projects/catalog.json、work/queue.json、邮箱账本。研究内容看 projects outline。'];
   if (node) lines.push('', '当前步骤：' + node.title);
@@ -172,6 +191,8 @@ export async function run(action = 'list', id) {
     console.log(JSON.stringify(impactReport(knownProject(projectId), nodeId || undefined), null, 2)); return;
   }
   if (action === 'list') { console.log(JSON.stringify(catalog.projects.map(({id,name,kind,scope,archived_at})=>({id,name,kind,scope,...(archived_at ? {archived:true} : {})})), null, 2)); return; }
+  if (action === 'related') {console.log(JSON.stringify({project_id:knownProject(id),items:catalog.projects.find(p=>p.id===id).related || []},null,2));return;}
+  if (action === 'related-add') {console.log(JSON.stringify(addRelated(input(id)),null,2));return;}
   if (action === 'archive' || action === 'restore') { console.log(JSON.stringify(setProjectArchived(id, action === 'archive'))); return; }
   if (action === 'scaffold') {
     const selected = id ? catalog.projects.filter(p=>p.id===id) : catalog.projects;
@@ -197,7 +218,7 @@ export async function run(action = 'list', id) {
     'entry-add':a=>addEntry(knownProject(a.project_id),a),
     'node-add':a=>addNode(knownProject(a.project_id),a)};
   if (edits[action]) { console.log(JSON.stringify(edits[action](input(id)), null, 2)); return; }
-  if (action !== 'context') throw new Error('Projects actions: list, outline <id>, context <id>, archive <id>, restore <id>, scaffold [id], framework <id>, impact <id>[#node], search [id#]<query>, node-status|node-link|node-set|entry-add|node-add <json file>');
+  if (action !== 'context') throw new Error('Projects actions: list, outline <id>, context <id>, related <id>, related-add <json file>, archive <id>, restore <id>, scaffold [id], framework <id>, impact <id>[#node], search [id#]<query>, node-status|node-link|node-set|entry-add|node-add <json file>');
   const project = catalog.projects.find(p => p.id === id);
   if (!project && id !== 'unassigned') throw new Error('Unknown project');
   const links = catalog.links.filter(l => id === 'unassigned' ? !l.project_ids.length : l.project_ids.includes(id));
@@ -211,7 +232,8 @@ export async function run(action = 'list', id) {
     const procurement = read('procurement/catalog.json',{requests:[]}).requests.filter(r =>
       links.some(l=>l.item_id===r.mail_task_id) || catalog.links.some(l=>l.module==='procurement' && l.item_id===r.id && (id==='unassigned' ? !l.project_ids.length : l.project_ids.includes(id))));
     console.log(JSON.stringify({ project: project || { id: 'unassigned', name: '待关联事项' },
-      source: catalog.source, items,
+      source: catalog.source, items, related:project?.related || [],
+      calendar:read('calendar/events.json',{events:[]}).events.filter(e=>e.project_id===id),
       workspace: id === 'unassigned' ? 'workspace/shared' : 'workspace/projects/'+id,
       procurement, literature:read('literature/catalog.json',{papers:[]}).papers.filter(match),
       work:read('work/queue.json',{items:[]}).items.filter(match),

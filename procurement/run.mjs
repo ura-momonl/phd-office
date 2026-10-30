@@ -81,6 +81,8 @@ export async function run(action, argument) {
       if (checked.errors.length) throw new Error(checked.errors.join('; '));
     }
     const index = catalog.requests.findIndex(i => i.id === request.id);
+    // purchase_request is written by ece-submit (application id, receipt path, approval); a later record must not erase it.
+    if (index >= 0 && request.purchase_request === undefined && catalog.requests[index].purchase_request) request.purchase_request = catalog.requests[index].purchase_request;
     if (index < 0) catalog.requests.push(request); else catalog.requests[index] = request;
     write('procurement/catalog.json', catalog); console.log(JSON.stringify({saved:request.id}));
   } else throw new Error('procurement: list, check <id>, compare <id>, record <json>');

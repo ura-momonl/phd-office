@@ -45,6 +45,13 @@ function target(e) {
     const zone=row ? zoneOf(e,row,true) : 'into',plan=stepPlan(drag.el,box,zone);
     return plan ? {box,zone,plan,node} : null;
   }
+  // The bottom of an expanded column is a sibling target, not an instruction
+  // to nest inside it. This also lets a descendant leave its parent in one drag.
+  const end=e.target.closest('[data-drop-after]');
+  if(end) {
+    const node=dropEl(end),plan=node && nodePlan(drag.el,node,'after');
+    return plan ? {box:end,zone:'after',plan,node} : null;
+  }
   const summary=e.target.closest('summary'),node=summary && summary.parentElement;
   if(!node?.matches('[data-drop-node]'))return null;
   const zone=zoneOf(e,summary),plan=nodePlan(drag.el,node,zone);

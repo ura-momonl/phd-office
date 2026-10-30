@@ -144,7 +144,7 @@ export async function judgePending({ directory = mailDirectory, invoke = invokeN
 export function pickBareCards(inbox, { limit = 2, triedFile = '.runtime/inbox/auto-prepared.json', busy = false } = {}) {
   if (busy) return [];
   const tried = read(triedFile, {});
-  const picked = inbox.filter(card => card.source === 'mail' && card.actions?.[0]?.id === 'agent-check' && tried[card.id]?.fingerprint !== card.fingerprint).slice(0, limit);
+  const picked = inbox.filter(card => card.source === 'mail' && (card.actions?.[0]?.id === 'agent-handle' || card.actions?.[0]?.id === 'agent-check') && tried[card.id]?.fingerprint !== card.fingerprint).slice(0, limit);
   for (const card of picked) tried[card.id] = { fingerprint: card.fingerprint, at: new Date().toISOString() };
   if (picked.length) write(triedFile, tried);
   return picked;

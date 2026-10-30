@@ -5,6 +5,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { root, read, write, input, checkProjects, isTurnRecord } from '../automation/files.mjs';
 import { frameworkFile, parseFramework } from '../projects/framework.mjs';
 import { fragment } from '../prompts/compose.mjs';
+import {reviewPolicy,resultReviewPending,resultReviewLabel,invalidateResultReview,submitResultForReview,submitReviewVerdict,restartResultReview} from './result-review.mjs';
 import { autonomyPolicy, autonomousChild, assertAutonomousState, autonomousCanStart, autonomyHoldReason, progressEvent, eventHash, taskContext, directChatTask, authorizedProjectStep } from './autonomy.mjs';
 // Readiness is derived, not another persisted status. Missing/failed/cancelled predecessors never release work.
 // auto_start is retired: the status (open / queued) is the only switch. Refuse the old field loudly so no caller thinks it still works.
@@ -94,7 +95,10 @@ function pendingBranch(id, items) {
   return pending;
 }
 export function readiness(item, items) {
-  const blocked_by = [...new Set([...(item.dependencies || []).filter(id => items.find(i => i.id === id)?.status !== 'done'),
+  const blocked_by = [...new Set([...(item.dependencies || []).filter(id => {
+    const source=items.find(i=>i.id===id && !i.deleted_at);
+    return source?.status!=='done' || (item.review_target?.id!==id && resultReviewPending(source));
+  }),
     ...(item.after || []).flatMap(id=>[...(!['done','failed','cancelled'].includes(returnResult(id,items)?.status) ? [id] : []),
       ...(items.some(i=>i.id===id && !i.operation_id && !i.deleted_at) ? pendingBranch(id,items) : [])])])];
   const hold=item.status==='queued' ? autonomyHoldReason(item,items) : null;
@@ -113,7 +117,7 @@ export const workSnapshot = () => {
   }
   return { ...queue, items: queue.items.filter(i=>!i.deleted_at).map(i => {
     const execution_history=histories.get(i.id) || [];
-    return { ...i, ...readiness(i, queue.items), turn: isChatTurn(i),...(!isChatTurn(i) ? {execution_history,...(execution_history.length ? {last_execution:execution_history.at(-1)} : {})} : {}) };
+    return { ...i, ...readiness(i, queue.items), turn: isChatTurn(i),...(resultReviewLabel(i) ? {result_review_label:resultReviewLabel(i)} : {}),...(!isChatTurn(i) ? {execution_history,...(execution_history.length ? {last_execution:execution_history.at(-1)} : {})} : {}) };
   }) };
 };
 // Keep task details and the complete history in the owning queue. The default CLI
@@ -124,10 +128,10 @@ export function workDigest(snapshot=workSnapshot(), pick=null) {
     ...(i.parent_id ? {parent_id:i.parent_id} : {}),...(i.last_execution ? {last_execution:i.last_execution} : {}),
     ...(i.autonomy ? {autonomy:{type:i.autonomy.type,depth:i.autonomy.depth,event_hash:i.autonomy.event_hash,parent_id:i.autonomy.parent_id,blocked_reason:i.autonomy_blocked || null}} : {}),
     ...(i.due_at ? {due_at:i.due_at} : {}),ready:i.ready,blocked_by:i.blocked_by,
-    ...(i.review?.state ? {review:i.review.state} : {}),updated_at:i.updated_at || i.created_at});
+    ...(i.review?.state ? {review:i.review.state} : {}),...(i.result_review ? {result_review:i.result_review,result_review_label:resultReviewLabel(i)} : {}),updated_at:i.updated_at || i.created_at});
   for(const i of snapshot.items) {
     counts[i.status]=(counts[i.status] || 0)+1;
-    const finished=['done','cancelled'].includes(i.status) && !(i.status==='done' && i.review?.state==='pending');
+    const finished=['done','cancelled'].includes(i.status) && !(i.status==='done' && (i.review?.state==='pending' || resultReviewPending(i)));
     if(finished) recent.push(i); else if(!pick || pick(i)) unfinished.push(i);
   }
   return {total_items:snapshot.items.length,counts,unfinished:unfinished.map(index),
@@ -140,11 +144,11 @@ const OVERVIEW_ATTENTION=12,OVERVIEW_CHAINS=6;
 const short=id=>String(id).slice(0,8),oneLine=t=>String(t||'').replace(/\s+/g,' ');
 export function workOverview(snapshot=workSnapshot()) {
   const byId=new Map(snapshot.items.map(i=>[i.id,i])),counts={};
-  const finished=i=>['done','cancelled'].includes(i.status) && !(i.status==='done' && i.review?.state==='pending');
+  const finished=i=>['done','cancelled'].includes(i.status) && !(i.status==='done' && (i.review?.state==='pending' || resultReviewPending(i)));
   const unfinishedAll=snapshot.items.filter(i=>!finished(i)),isTurn=isChatTurn,open=unfinishedAll.filter(i=>!isTurn(i)),turns=unfinishedAll.filter(isTurn),turnCounts={};
   for(const i of turns) turnCounts[i.status]=(turnCounts[i.status]||0)+1;
   const dead=id=>{const seen=new Set(),walk=x=>{if(seen.has(x))return false;seen.add(x);const t=byId.get(x);if(!t)return false;if(t.status==='failed'||t.status==='cancelled')return true;return (t.dependencies||[]).some(walk);};return walk(id);};
-  const category=i=>i.status==='done' ? '待验收' : i.status==='active' ? '进行中' : i.status==='waiting_user' ? '等你' : i.status==='failed' ? '失败'
+  const category=i=>i.status==='done' ? resultReviewLabel(i) || '待验收' : i.status==='active' ? '进行中' : i.status==='waiting_user' ? '等你' : i.status==='failed' ? '失败'
     : i.status==='open' && i.last_execution?.outcome_status==='open' ? '上一轮已结束，未提交完成'
     : i.ready ? '可立即做' : (i.blocked_by||[]).some(dead) ? '前置已失败或取消' : (i.blocked_by||[]).length ? '等前置' : i.status==='queued' ? '待办' : '未开始';
   const groups={},lines=[],children=new Map();
@@ -152,7 +156,7 @@ export function workOverview(snapshot=workSnapshot()) {
   for(const i of open) {
     const c=category(i),p=(i.project_ids||[])[0]||'(无项目)';
     (groups[p]??={})[c]=(groups[p][c]||0)+1;
-    if(['待验收','进行中','等你','可立即做','上一轮已结束，未提交完成'].includes(c)) lines.push(short(i.id)+' '+c+' '+p+' '+oneLine(i.title)+' → work handoff '+short(i.id));
+    if(['待验收','待提交成果审查','待独立审查','待父级整合','待父级返工','进行中','等你','失败','可立即做','上一轮已结束，未提交完成'].includes(c)) lines.push(short(i.id)+' '+c+' '+p+' '+oneLine(i.title)+' → work handoff '+short(i.id));
     for(const d of i.dependencies||[]) (children.get(d)||children.set(d,[]).get(d)).push(i.id);
   }
   const chains=[];
@@ -173,9 +177,9 @@ export function workOverview(snapshot=workSnapshot()) {
 export function workDetail(argument,snapshot=workSnapshot()) {
   const STATUS=['open','queued','active','waiting_user','failed','review'];
   if(argument!=='turns' && !STATUS.includes(argument)) checkProjects([argument]);
-  const isTurn=isChatTurn,match=i=>argument==='turns' ? isTurn(i) : !isTurn(i) && (argument==='review' ? i.review?.state==='pending' : STATUS.includes(argument) ? i.status===argument : (i.project_ids||[]).includes(argument));
+  const isTurn=isChatTurn,match=i=>argument==='turns' ? isTurn(i) : !isTurn(i) && (argument==='review' ? i.review?.state==='pending' || resultReviewPending(i) : STATUS.includes(argument) ? i.status===argument : (i.project_ids||[]).includes(argument));
   const d=workDigest(snapshot,match),total=workDigest(snapshot).unfinished.length;
-  const slim=x=>({id:x.id,status:x.status,project:(x.project_ids||[])[0]||null,title:x.title,...(x.parent_id?{parent_id:x.parent_id}:{}),...(x.last_execution?{last_execution:x.last_execution}:{}),...(x.blocked_by?.length?{blocked_by:x.blocked_by.map(short)}:{}),...(x.review?{review:x.review}:{}),...(x.due_at?{due_at:x.due_at}:{}),next:'work handoff '+short(x.id)});
+  const slim=x=>({id:x.id,status:x.status,project:(x.project_ids||[])[0]||null,title:x.title,...(x.parent_id?{parent_id:x.parent_id}:{}),...(x.last_execution?{last_execution:x.last_execution}:{}),...(x.blocked_by?.length?{blocked_by:x.blocked_by.map(short)}:{}),...(x.review?{review:x.review}:{}),...(x.result_review?{result_review:x.result_review,result_review_label:x.result_review_label}:{}),...(x.due_at?{due_at:x.due_at}:{}),next:'work handoff '+short(x.id)});
   return {coverage:'筛选 '+argument+'：未结束 '+d.unfinished.length+' 条（'+(argument==='turns'?'对话轮':'不含对话轮')+'；全部未结束含对话轮 '+total+' 条）。每行一条，末尾 end 为读完标志。',unfinished:d.unfinished.map(slim),end:'work list 明细结束'};
 }
 // Items print one per line so a head/tail read of the detail view still shows whole tasks.
@@ -228,6 +232,7 @@ export function validateOutcome(item) {
 }
 export function enqueue(request,{autonomous=false,background=false,provenance,internalId,modelDefaults=true,conversationTurn=false}={}) {
   if(request.autonomy!==undefined || request.progress_event!==undefined || request.delegated_by!==undefined)throw new Error('自主来源由程序记录，不能由请求设置');
+  if(request.review_target!==undefined || request.review_verdict!==undefined)throw new Error('成果审查身份和结论由对应操作记录，不能在创建请求中设置');
   if (typeof request.title !== 'string' || !request.title.trim()) throw new Error('A task title is required');
   const policy = read('work/policy.json');
   const route = policy.defaults.find(p => p.kind === request.kind);
@@ -275,6 +280,8 @@ export function enqueue(request,{autonomous=false,background=false,provenance,in
   if(item.autonomy) {
     assertAutonomousState(item,queue.items);
   }
+  const resultReview=reviewPolicy(request.result_review,item);
+  if(resultReview)item.result_review=resultReview;
   queue.items.push(item); writeQueueWithAdmission(queue, item, conversationTurn ? null : parent); return item;
 }
 // Reuse drain's beat. The queue owns both source events and their one-shot planning receipt;
@@ -288,9 +295,9 @@ export function planProgress(now=Date.now()) {
   for(const project of projects) {
     if(project.archived_at || items.some(i=>i.autonomy?.type==='plan' && i.project_ids.includes(project.id) && ['queued','active'].includes(i.status)))continue;
     // A step in a log topic waits until every step in that topic is finished (done/cancelled/failed); steps outside any topic fire alone.
-    const unfinished=j=>!j.deleted_at && ['open','queued','active','waiting_user'].includes(j.status);
+    const unfinished=j=>!j.deleted_at && (['open','queued','active','waiting_user'].includes(j.status) || (j.status==='done' && resultReviewPending(j)));
     const blockPending=i=>i.plan_node_id && items.some(j=>j.id!==i.id && j.plan_node_id===i.plan_node_id && j.project_ids.includes(project.id) && unfinished(j));
-    const fresh=items.filter(i=>!i.deleted_at && ['done','failed'].includes(i.status) && i.actor==='user' && i.project_ids.includes(project.id) && i.progress_event && !consumed.has(project.id+':'+i.progress_event.id) && !blockPending(i));
+    const fresh=items.filter(i=>!i.deleted_at && ['done','failed'].includes(i.status) && !i.autonomy && !i.review_target && !resultReviewPending(i) && i.project_ids.includes(project.id) && i.progress_event && !consumed.has(project.id+':'+i.progress_event.id) && !blockPending(i));
     if(!fresh.length || fresh.some(i=>now-Date.parse(i.progress_event.at)<policy.debounce_seconds*1000))continue;
     const events=fresh.map(i=>({task_id:i.id,event_id:i.progress_event.id})).sort((a,b)=>a.event_id.localeCompare(b.event_id));
     const hash=eventHash([project.id,events]),id='progress-'+hash;
@@ -323,6 +330,7 @@ export function parseHandoff(text) {
 // explorationRound / explorationPatch are executor-only options (never request fields): a round may only write back while the card is still that
 // round's active run, so a user's stop, edit or re-open during the round is not overwritten by the old round's ending.
 export function update(request,{executionOwner,userApproved=false,explorationRound,explorationPatch}={}) {
+  if(request.result_review!==undefined || request.review_target!==undefined)throw new Error('成果审查在 work add 用 result_review 启用，审查状态和版本由程序记录');
   if(request.autonomy!==undefined || request.progress_event!==undefined || request.delegated_by!==undefined || request.exploration!==undefined)throw new Error('自主来源由程序记录，不能由请求设置');
   const queue = read('work/queue.json'); const index = queue.items.findIndex(i => i.id === request.id);
   if (index < 0) throw new Error('Unknown work item');
@@ -355,6 +363,9 @@ export function update(request,{executionOwner,userApproved=false,explorationRou
   for (const field of ['goal', 'plan_node_id']) if (request[field] !== undefined) item[field] = String(request[field]);
   if (request.log_requirement !== undefined) { item.log_requirement = request.log_requirement; logContext(item); }
   const parent=taskContext(queue.items);
+  const contextOperation=parent && queue.items.find(i=>i.id===(parent.operation_id || parent.id));
+  if(contextOperation?.review_target?.id===item.id)throw new Error('审查者向自己的审查操作提交结果，由父级负责人整合父级成果');
+  if(item.result_review && (item.parent_id || item.actor==='user'))throw new Error('已启用成果审查的操作保持为外层助手数据父级');
   const chatApproval=parent?.id!==item.id && request.status!==undefined && !!queuedUserRound(parent,queue.items);
   const explicitApproval=userApproved || chatApproval;
   if(!item.autonomy && parent?.autonomy && item.id!==parent.id && ['queued','active','done'].includes(request.status))
@@ -376,13 +387,20 @@ export function update(request,{executionOwner,userApproved=false,explorationRou
   }
   if (request.status === 'done' && !item.executor) validateOutcome(item);
   item.updated_at = new Date().toISOString();
+  invalidateResultReview(item,previous);
+  if(request.status==='done' && item.result_review) {
+    const pending=pendingBranch(item.id,queue.items);
+    if(pending.length)throw new Error('请在仍执行或排队的子操作返回后提交父级整合成果：'+pending.join(', '));
+    submitResultForReview(item,previous,queue.items,item.updated_at);
+  }
+  submitReviewVerdict(item,request,queue.items,item.updated_at);
   if (item.status !== previous.status || request.status==='done') {
     item.history = [...(previous.history || []), { at:item.updated_at, from:previous.status, to:item.status, reason:String(request.reason || ''), ...(item.actor !== previous.actor ? { actor_from:previous.actor } : {}) }];
     if (item.status !== 'done') delete item.completed_at;
   }
   if(item.status === 'done' && (!item.completed_at || request.status==='done')) item.completed_at = item.updated_at;
   const event=progressEvent(item,previous,item.updated_at);
-  if(event)item.progress_event=event;
+  if(event && !resultReviewPending(item) && !item.review_target)item.progress_event=event;
   queue.items[index] = item;
   // A failed operation invalidates its remaining dependent operations, not unrelated
   // siblings. Save the whole chain with its source in one queue write, before drain
@@ -426,6 +444,7 @@ export function repeatOperation(request) {
   const run={id:randomUUID(),operation_id:operation.id,title:operation.title,kind:operation.kind,actor:operation.actor,executor:operation.actor,
     project_ids:operation.project_ids,dependencies:[],goal:String(request.input || ''),status:'queued',created_at:now,updated_at:now,handoff:'',outputs:[],session_id:null,
     ...(after.length ? {after} : {}),...(operation.model ? {model:operation.model} : {}),...(operation.effort ? {effort:operation.effort} : {}),...(parent ? {delegated_by:parent.id} : {})};
+  restartResultReview(operation,queue.items);
   queue.items.push(run);writeQueueWithAdmission(queue,run,parent);return run;
 }
 // Project-page edits keep execution identity, state and dispatch policy under work's ownership.
@@ -508,6 +527,7 @@ export function editStep(request) {
     }
     if(item.status==='done')validateOutcome(item);
   } else throw new Error('未知步骤编辑动作');
+  invalidateResultReview(item,previous);
   if(JSON.stringify(item)===JSON.stringify(previous))return item;
   item.updated_at=now;
   backupQueue();

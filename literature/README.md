@@ -13,7 +13,7 @@
 | 补完整摘要 | 现有 `enrichAbstracts`：Crossref / OpenAlex / Semantic Scholar，Nature 系可补 Springer Meta，见「补完整摘要」 |
 | **Web of Science 检索、核对题录和被引次数** | **`wos "<WoS查询>"`**：机构成员档已用真实 DOI 实测；只查单页，不自动入库，不提供摘要或全文 |
 | 取得全文 | **`fetch <doi>`**：现有 Zotero / OA / OpenAlex 托管路线，详见「获取全文」 |
-| **Wiley 订阅全文 TDM** | **token 已保存，尚未 API 实测、未接入 `fetch` 或独立 CLI**；不是已经可用的下载路线，接入资料见下文 |
+| **Wiley 全文 TDM** | **本机 token 已实测；用户另授权全量 Wiley 补漏队列（不限 OA），12 秒一篇，与四路仓储共用进程**；尚未接入通用 `fetch`，批次入口见下文 |
 
 ### Web of Science Starter API
 
@@ -30,11 +30,13 @@ node automation/run.mjs literature wos "SO=(Nature Nanotechnology) AND PY=2025" 
 - 凭据：优先环境变量 `WOS_API_KEY`，否则 `.runtime/literature/wos.credentials.local.json` 的 `api_key`。程序用 `X-ApiKey` 请求头发送，不输出密钥或原始错误正文。机构成员档本机已实测为 5,000 次/天、5 次/秒；输出的 `quota` 给出本次响应头的上限与余量，缺失时为 null。
 - Starter 用于题录与被引核对，不代替摘要来源、全文下载或内容判断。WoS 与 OpenAlex 的被引统计来源不同，不直接混作同一口径覆盖已有被引值。
 
-### Wiley TDM：已有凭据，尚未接入
+### Wiley TDM：显式授权的全量补漏队列
 
 - token 位于 `.runtime/literature/wiley.credentials.local.json` 的 `api_token`；只登记其位置，不在说明或命令中放密钥。
+- 2026-10-29 14:07 实测单篇已知 OA 的 Advanced Materials 文献 `10.1002/adma.202418557`：官方 API 返回 302 至 `alm.wiley.com`，二进制服务返回 200、`application/pdf`，响应前缀为 `%PDF-`。只读取前缀并取消后续传输，未保存／核验完整 PDF、未入库、未启动 API 批量，也未测试订阅文章权限。证据 `.runtime/tmp/wiley-api-probe-20261029.json`，无密钥或签名 URL。
 - [Wiley 官方用法](https://onlinelibrary.wiley.com/library-info/resources/text-and-datamining)：`GET https://api.wiley.com/onlinelibrary/tdm/v1/articles/<URL编码后的DOI>`，请求头 `Wiley-TDM-Client-Token`。当前服务返回 PDF，不含补充材料；订阅内容还需相应机构权限及机构网络，token 本身不代表所有文章都可下载。
-- 官方目前列出每 10 分钟最多 60 次请求，批量获取按至少 10 秒间隔；已保存 token 不等于已验证这些条件。后续接入可从这个官方端点与现有 PDF 身份／哈希核验接续；当前 `fetch` 路线保持不变。
+- 官方目前列出每 10 分钟最多 60 次请求，批量获取按至少 10 秒间隔；单篇探测不代表已验证持续批量限额或订阅权限。当前批次按更慢的 12 秒间隔接入，通用 `fetch` 与原仓储获取路线保持不变。
+- 用户已授权以每 12 秒最多发起一篇，与仓储并行补齐全部缺全文 Wiley 文献，不限 OA。实现 `literature/wiley-tdm.mjs`，当前唯一批次入口 `output/literature-known-oa-20261029/run.mjs`；与四路仓储在同一进程共享 DOI 互斥，不另开写主库进程。进度、Wiley 冻结范围、逐篇回执与速率记录见批次 README；STOP 同时暂停两条路线，续跑不重试已有最终结果。通用 `fetch` 未改，其他出版社不在这次 API 授权范围。
 
 ## 收录规则不在这里
 
@@ -88,7 +90,13 @@ node automation/run.mjs literature record <paper.json>
 
 程序入口 `fetch_paper(doi)`（`literature/fetch.mjs`；托管平台 `hosted.mjs`；匿名 OA 页面共用 `automation/browser-launch.mjs`）。
 
-**鼠标宏仅作显式特殊手段：** `.runtime/mouse-fetch/macro.ps1` 复用已打开的 Edge 工作标签，占用真实键鼠，不能与用户／另一位助手同时控制。除原有 Nature／APS／ACS／Science 外，2026-10-20 已实测 Wiley 的“文章页 PDF → 阅读器 Download PDF”正常产出并通过本地核验；旧阅读器错误不能当下载成功。每次动作核对目标前台，切窗即停，不反复抢回焦点；`.runtime/mouse-fetch/STOP` 可请求停止，恢复需明确交还键鼠。下载后由同目录 `register.mjs` 调用既有 PDF 身份／哈希核验登记，不调用取文接口／OpenAlex、不替代日常 Zotero 路线。出现拒绝／验证停下，已有全文不覆盖。
+**显式 PMC 批量取文（无需鼠标）：** `node literature/pmc-batch.mjs <配置JSON>`，配置 `{directory:"批次目录",targets_file:"[{doi,title,source}]的JSON文件",concurrency:3,max:20000}`。只用 PMC DOI 转换 API（每次不超过100条）及新版 `pmc-oa-opendata` 官方云端数据集，不访问出版社、不用 Zotero／OpenAlex、不登录、不调用模型。按官方 metadata 的 DOI、版本、开放许可与 PDF 链接取文，MD5及现有 PDF 身份／SHA-256 核验后入库，保留来源、许可、PMCID及出版版本；优先出版社版，不把 XML 算作 PDF。已有全文不覆盖。`progress.json`／`progress.log` 为进度，`attempts.jsonl` 为断点，`id-map.json` 缓存转换结果；续跑同一配置跳过已尝试文章，`max`只限本次新增尝试数。写批次 `STOP` 停止新派发，待在途文章收尾；显式恢复先移存 STOP。单篇身份／网络失败记录后继续，不自动重试网络；PMC拒绝访问、限流、服务端故障、核验器故障或其他共享读写异常则停止并保留未完成项，不换站。登记主库遇 EPERM／EACCES／EBUSY 时不退出：保留已核验PDF及批次 `pending-registration/` 的登记资料，首次等2秒、之后每10秒重新读取当前主库补登记，不重复下载、不更改权限或删除主库。进度显示 `waiting_registration` 和对应文章／错误码，等待段每250毫秒检查STOP；停止或宿主中断后，原批次恢复会重新核对PDF哈希及身份，再沿用原来源、许可和版本完成登记。状态 `paused` 表示达到本次max、`complete`表示清单已全部尝试，不代表全部取得。原始清单保持不变。本次双刊批次在 `output/literature-pmc-20261028/`，默认 fetch 路线未改。新版云端结构见 [PMC 官方说明](https://pmc.ncbi.nlm.nih.gov/tools/pmcaws/) 和 [数据集 README](https://pmc-oa-opendata.s3.amazonaws.com/README.txt)。
+
+**鼠标宏仅作显式特殊手段：** 正式执行代码 `literature/mouse-download.ps1`，本地登记／状态入口 `literature/mouse-download.mjs`；旧 `.runtime/mouse-fetch/macro.ps1` 只转到正式代码。复用已有 Edge 和选定下载标签，启动时最大化并检查真实显示器边界，统一物理像素处理 Windows 缩放，不新开浏览器小窗。占用真实键鼠，不与用户／其他助手同时操作。按用户2026-10-28的无人值守要求：失焦立即暂停文章输入，记录窗口标题和句柄、窗口类及进程身份；连续失焦满180秒后自动激活指定 Edge，并重开同一 DOI 接续。恢复前若前台确认为系统快速设置（ControlCenterWindow，且为Windows目录内的ShellHost／ShellExperienceHost），先用Win+A收起整个面板，包括Wi-Fi／蓝牙子页；不点击网络开关或连接，不关闭普通应用或保存框。发键前再次核对前台身份，收起结果实际核验并写quick_settings_dismiss_*事件，失败不假报恢复。提前手动返回则立即继续，取消本次等待；切换其他前台应用不重置180秒计时。自动激活后会核对实际前台，失败则保持等待、记录原因，每隔3分钟再尝试一次，不修改系统焦点设置；锁屏／安全桌面不发送激活按键。用户要使用鼠标时用 stop 停止整个宏，STOP 优先于到点切回及收起面板，不会自动重启。浏览器关闭时保留进程和 waiting_browser，每30秒检查一次；将原配置 window_handle 更新为已确认的新Edge窗口后，在同一进程接续，不另开浏览器窗口。
+
+配置为 UTF-8 JSON：`{list_file:"一行一个DOI的文件",directory:"本批次目录",window_handle:132138,pace_seconds:3,reuse_tab:true}`。从办公室根目录执行 `powershell -NoProfile -File literature/mouse-download.ps1 -RequestFile <配置JSON路径>`；后台启动用隐藏窗口并重定向输出，不另开进度小窗。查看 `node literature/mouse-download.mjs status <批次目录>`；停止同入口 `stop <批次目录>`，写本批次 STOP。模块也接受 `literature macro <JSON路径>`，内容 `{action:"status"|"stop",directory:"批次目录"}`。明确恢复时移走 STOP 后执行相同配置，读取 `attempts.jsonl`：成功和最终失败不重复派发，未完成文章继续；已落盘文件先本地补核验。补下最终失败文章可配置 `retry_failed:true`。页面／下载失败最多尝试两次，篇间额外等待3秒；身份不符（包括已有／孤立本地PDF）记 failed 后继续下一篇，不重试、不入库、不替换文件。校验器／主库／日志／状态写入等共享资源故障保留同一进程，waiting_error 中每30秒检查恢复，不把整批记成结束；本地子进程有90秒上限和STOP响应。未知运行异常及恢复处理异常也留在进程保活循环中。验证码／拒绝访问仅观察最多10秒，不点击验证、不刷新；页面仍未恢复则记 failed、跳过该篇继续。不明确的保存框暂停输入并等待处理；已知、属于目标Edge窗口的另存为框自动保存到Downloads，不覆盖已有文件，不碰其他窗口的保存框。下载标签被关闭时在原窗口补建专用标签。
+
+`progress.json` 区分 running、retrying、waiting_focus、waiting_browser、waiting_error、waiting_access、stopped、complete，含当前 DOI／阶段／计数／心跳、focus_return_seconds=180 和失焦期间的 focus_return_in_seconds 倒计时。自动切回的请求、成功／失败及恢复均写 attempts.jsonl。CLI 还识别进程消失的 interrupted 和心跳超时的 stalled。暂停、需处理及结束时发托盘提醒，不创建抢焦点的弹窗；通知失败不影响下载。无模型轮询、无定时自启。运行中的业务故障不会主动退出进程；主动STOP及队列全部处理完成会退出。宿主被系统终止、关机或断电后仍需显式启动，从原游标接续，不设自动重启服务。新版实机验证 Nature Communications／Science Advances 的连续取文和失焦恢复；原有 APS／ACS／Wiley 分支保留，本次未重跑这些出版社。沿用 `register-download.mjs` 的 PDF 身份／SHA-256 核验，不覆盖已有全文，不调用 fetch／OpenAlex、不自动登录，也不自动恢复会并发写主库的旧无宏批次。
 
 **只尝试 Zotero：** `fetch <DOI> --zotero-only`（程序参数 `zoteroOnly:true`）只复用缓存、读取本地 Zotero PDF 或调用已安装插件的原生查找；没有文件就返回 `needs_attention`，不查询 OpenAlex 元数据、额度或托管 PDF，也不启动 OA 浏览器／UW／鼠标宏。arXiv 作者稿仍按原有官方关联／固定版本核验接受。该模式需要 DOI，不与 `--source`／`--hosted-only`／`--spend-prepaid`／`--login` 混用；不改变默认 fetch 路线。原生 Zotero 自己的内部网络仍归 Zotero 管理。
 
@@ -104,6 +112,7 @@ node automation/run.mjs literature record <paper.json>
 - 原站只有明确 404／410 或落地页没有正文 PDF 链接时才换下一个独立来源；已请求 URL 不重试。原站 401／403／429、验证码或返回 HTML 时，停止该原站及其余 OA 镜像，不切 UW、不绕过；仍可试已登记的 OpenAlex 独立托管副本。未知异常、已取得 PDF 的身份校验失败、缓存被改立即整篇停止。
 - 所有 OA 候选失效不等于闭源，不能因此走 UW。页面上优先 `citation_pdf_url`，其次明确正文 PDF 链接，排除补充材料；不猜出版社下载端点。
 - 所有路线共用 PDF 完整性、论文身份和 SHA-256 核验。首页没有 DOI 时，必须先匹配目标题名，再核对文末同题名出版信息页的精确 `DOI:` 字段，或参考文献之前的 `Published online` DOI 出版块；不因参考文献里出现 DOI 就放行。一页文还可用“首页题名＋完全一致的 PDF Title＋PDF Subject 中唯一的 DOI 标识”核验，并单独记录证据种类。托管副本没有可靠版本证据时，版本／许可证记 null。
+- PDF 题名匹配识别旧 Adobe Symbol 字体提取的希腊字母（例如 `U+F062` 对应 β），不把普通拉丁字母 b 当成 β，也不把不同希腊字母混为一类；原有完整题名＋文章号／出版 DOI 证据和 SHA-256 要求不变。此修复不改变取文来源或下载权限。
 
 **浏览器下载登记：** 宏的 `register.mjs` 委托 `literature/register-download.mjs`，复用已经核验的登记文件；规范目标路径已存在但账本未登记时，核验后回填，不再因“文件已存在”一律失败，也不覆盖任何已有文件。失败输出一行 JSON `validation_failed` 和实际原因，不再只留 Node 调用栈首行。PDF 元数据回退使用同一便携 Poppler 的 `pdfinfo`（可用 `PDFINFO` 覆盖路径）。
 - CORE 已于 2026-10-19 移除（下载地址对程序返回 Cloudflare 挑战，不绕过）；本机凭据文件已于 2026-10-22 按用户决定删除。

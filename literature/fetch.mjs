@@ -19,6 +19,14 @@ function rateLimit(doi, message, headers) {
   return { ...failure(doi, 'rate_limited', message), retry_after_ms: retryAfterMs(headers) };
 }
 const norm = value => String(value || '').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+// Legacy Symbol fonts can extract Greek as U+F000 + the encoded byte (the
+// Europe PMC PDF incident uses F062 for beta). Decode letters, not arbitrary
+// PUA or ordinary Latin: keep alpha/beta distinct and retain title+locator rules.
+// Letter mapping: https://www.unicode.org/Public/MAPPINGS/VENDORS/ADOBE/symbol.txt
+const symbolGreekUpper = 'ΑΒΧΔΕΦΓΗΙϑΚΛΜΝΟΠΘΡΣΤΥςΩΞΨΖ';
+const symbolGreekLower = 'αβχδεφγηιϕκλμνοπθρστυϖωξψζ';
+const pdfTitleNorm = value => norm(String(value || '').replace(/[\uf041-\uf05a\uf061-\uf07a]/g,
+  c => c.charCodeAt(0) < 0xf061 ? symbolGreekUpper[c.charCodeAt(0)-0xf041] : symbolGreekLower[c.charCodeAt(0)-0xf061]));
 const surnames = names => [...new Set(names.map(name => norm(String(name).trim().split(/\s+/).at(-1))).filter(n => n.length >= 3))];
 const sharedAuthors = (left, right) => {
   const expected = new Set(right.map(norm));
@@ -171,7 +179,7 @@ export function selectPDF(snapshot) {
 // A later DOI must belong to a publication-information block, not merely to
 // a cited reference. Every fallback also requires the expected title on page 1.
 function publicationIdentity(file, doi, title, firstPage, sha256) {
-  if (!title || norm(title).length < 20 || !norm(firstPage).includes(norm(title))) return null;
+  if (!title || norm(title).length < 20 || !pdfTitleNorm(firstPage).includes(norm(title))) return null;
   const escaped = doi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const full = spawnSync(pdfTextExecutable(), [file, '-'], {
     encoding:'utf8', timeout:20000, maxBuffer:8*1024*1024, windowsHide:true
@@ -181,7 +189,7 @@ function publicationIdentity(file, doi, title, firstPage, sha256) {
   for (let i = Math.max(0, pages.length - 2); i < pages.length; i++) {
     const page = pages[i];
     const field = page.slice(0,3000).match(new RegExp('\\bDOI\\s*:\\s*' + escaped + '(?=$|[\\s,;])','i'));
-    const ownHeader = field && norm(page).startsWith(norm(title)) && !/\breferences\b/i.test(page.slice(0,field.index));
+    const ownHeader = field && pdfTitleNorm(page).startsWith(norm(title)) && !/\breferences\b/i.test(page.slice(0,field.index));
     const publication = page.match(new RegExp('Published\\s+online\\s*:[\\s\\S]{0,180}?https?://(?:dx\\.)?doi\\.org/' + escaped + '(?=$|[\\s,;])','i'));
     const ownFooter = publication && !/\breferences\b/i.test(page.slice(0,publication.index));
     if (ownHeader || ownFooter) return {kind:'publisher-title-doi-block',journal_doi:doi,title,doi_page:i+1,
@@ -259,7 +267,7 @@ export function validatePDF(file, doi, expectedHash, identity, hostedTitle) {
   const title = ['hosted-title-locator','publisher-title-doi-block','pdf-title-doi-metadata'].includes(identity?.kind)
     && identity.journal_doi === doi ? identity.title : hostedTitle;
   const locator = norm(doi.split('/').pop().split(/[^A-Za-z0-9]+/).filter(Boolean).pop() || '');
-  if (title && norm(title).length >= 20 && locator.length >= 5 && norm(parsed.stdout).includes(norm(title))
+  if (title && norm(title).length >= 20 && locator.length >= 5 && pdfTitleNorm(parsed.stdout).includes(norm(title))
       && (parsed.stdout.match(/[\p{L}\p{N}]+/gu) || []).some(token => norm(token).endsWith(locator)))
     return { sha256, bytes: bytes.length, identity: { kind: 'hosted-title-locator', journal_doi: doi, title, locator,
       rule: 'first-page title and DOI article locator; full DOI not printed', verified_sha256: sha256 } };
@@ -269,14 +277,15 @@ export function validatePDF(file, doi, expectedHash, identity, hostedTitle) {
 }
 
 /** One DOI: local cache, Zotero's already-saved PDF, original OA, then permitted hosted PDF. Never uses UW.
- * An explicit observed public PDF source uses the same identity/registration boundary, without other routes. */
-export async function fetch_paper(value, { login = false, source, hostedOnly = false, zoteroOnly = false, spendPrepaid = false, launch = launchEdge, backoff = new FetchBackoff() } = {}) {
+ * An explicit observed public PDF or article-page source uses the same identity/registration boundary, without other routes. */
+export async function fetch_paper(value, { login = false, source, sourceType = 'pdf', hostedOnly = false, zoteroOnly = false, spendPrepaid = false, launch = launchEdge, backoff = new FetchBackoff() } = {}) {
   let doi;
   try { doi = normalizeDOI(value); } catch { return failure(String(value ?? ''), 'invalid_doi', 'Provide a DOI or doi.org URL'); }
   if (login) return failure(doi, 'needs_attention', 'fetch --login is retired: use the official Zotero Connector for subscription articles; no UW request attempted');
   const previous = read('literature/catalog.json').papers.find(p => p.doi === doi);
   if (source !== undefined) {
-    try { source = openURL(source).href; } catch { return failure(doi, 'failed', 'Source must be an observed public HTTPS PDF URL, not a campus or content API URL'); }
+    if (!['pdf','page'].includes(sourceType)) return failure(doi, 'failed', 'Explicit sourceType must be pdf or page');
+    try { source = openURL(source).href; } catch { return failure(doi, 'failed', 'Source must be an observed public HTTPS PDF or article-page URL, not a campus or content API URL'); }
     if (!previous) return failure(doi, 'needs_attention', 'Register DOI metadata before supplying an open PDF source');
   }
   const output = path.join(root, 'literature/fulltext', 'doi-' + digest(doi).slice(0, 16) + '.pdf');
@@ -327,7 +336,7 @@ export async function fetch_paper(value, { login = false, source, hostedOnly = f
     try {
       found = source ? { work: { title: previous.title, publication_year: previous.year,
         authorships: (previous.authors || []).map(display_name => ({ author: { display_name } })) },
-        locations: [{ is_oa: true, pdf_url: source }] } : await openAccess(doi, backoff);
+        locations: [{ is_oa: true, ...(sourceType === 'page' ? {landing_page_url: source} : {pdf_url: source}) }] } : await openAccess(doi, backoff);
     } catch { found = { error: failure(doi, 'needs_attention', 'OpenAlex lookup failed; access unknown') }; }
     if (found.error?.status === 'validation_failed') return found.error;
     const work = found?.work;

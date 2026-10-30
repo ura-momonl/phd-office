@@ -198,6 +198,30 @@ test('hosted-only without spend-prepaid refuses a funded account and tries no ot
   assert.equal(log.hosted,undefined);assert.equal(log.downloads,0);assert.equal(log.launched,0);
   assert.deepEqual(r.provider_notes,[{provider:'openalex',status:'free_budget_unavailable'}]);
 });
+
+test('legacy Symbol Greek title text matches Unicode metadata without collapsing different letters',t=>{
+  // Natural incident: PMC6954054 extracts Symbol beta as F062. Keep the
+  // synthetic PDF private-data-free; the real downloaded PDF is checked separately.
+  fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,pdf('Synthetic text stream'));
+  let text;
+  const mocked=t.mock.method(childProcess,'spawnSync',()=>({status:0,stdout:text,stderr:''}));syncBuiltinESMExports();
+  t.after(()=>{mocked.mock.restore();syncBuiltinESMExports();});
+  for(const [pua,greek] of [['\uf061','α'],['\uf062','β'],['\uf067','γ'],['\uf044','Δ']]){
+    const title=`Quantum ${greek} relaxation under controlled strain`;
+    text=`Quantum ${pua} relaxation under controlled strain\nJournal 2026 efetch`;
+    const checked=validatePDF(output,doi,undefined,undefined,title);
+    assert.equal(checked.identity.kind,'hosted-title-locator');
+    assert.equal(checked.identity.title,title);
+    assert.equal(validatePDF(output,doi,checked.sha256,checked.identity).sha256,checked.sha256);
+  }
+  text='Quantum \uf062 relaxation under controlled strain\nJournal 2026 efetch';
+  assert.throws(()=>validatePDF(output,doi,undefined,undefined,'Quantum α relaxation under controlled strain'),/Requested DOI/);
+  assert.throws(()=>validatePDF(output,doi,undefined,undefined,'Unrelated β relaxation in a different material'),/Requested DOI/);
+  text='Quantum \uf062 relaxation under controlled strain\nJournal 2026 eother';
+  assert.throws(()=>validatePDF(output,doi,undefined,undefined,'Quantum β relaxation under controlled strain'),/Requested DOI/);
+  text='Quantum b relaxation under controlled strain\nJournal 2026 efetch';
+  assert.throws(()=>validatePDF(output,doi,undefined,undefined,'Quantum β relaxation under controlled strain'),/Requested DOI/);
+});
 test('spend-prepaid still refuses when free and prepaid room together are below one download',async t=>{
   const {launch,log}=hostedFixture(t,{quota:{...funded,prepaid_remaining_usd:0.005},oaWork:hostedWork()});
   const r=await fetch_paper(doi,{launch,hostedOnly:true,spendPrepaid:true});assert.equal(r.status,'needs_attention');assert.equal(log.hosted,undefined);
@@ -306,6 +330,23 @@ test('an explicit source requires registered DOI metadata and never guesses a ca
   const {launch,log}=fixture(t);
   const r=await fetch_paper(doi,{launch,source:'https://author.example.org/observed.pdf'});
   assert.equal(r.status,'needs_attention');assert.equal(log.metadata,0);assert.equal(log.downloads,0);assert.equal(log.launched,0);
+});
+
+test('an observed OA landing page resolves its main PDF with the shared validator, without Zotero, metadata lookup or hosted spending',async t=>{
+  write('literature/catalog.json',{...baseline,papers:[{id:'doi-'+createHash('sha256').update(doi).digest('hex').slice(0,16),doi,title:'Fictional article',authors:['Fictional Author'],year:2026}]});
+  const {launch,log}=fixture(t);
+  const r=await fetch_paper(doi,{launch,source:'https://journals.example.org/article/42',sourceType:'page'});
+  assert.equal(r.status,'available',r.message);assert.equal(log.metadata,0);assert.equal(log.quota,undefined);
+  assert.equal(log.zotero.length,0);assert.equal(log.resolved,0);assert.equal(log.launched,1);assert.equal(log.headless,true);
+  assert.equal(log.downloads,1);assert.equal(read('literature/catalog.json').papers[0].fulltext_sha256,r.sha256);
+});
+
+test('a refused explicit OA landing page does not fetch a PDF, change source or use hosted credit',async t=>{
+  write('literature/catalog.json',{...baseline,papers:[{id:'doi-'+createHash('sha256').update(doi).digest('hex').slice(0,16),doi,title:'Fictional article'}]});
+  const {launch,log}=fixture(t,{status:403});
+  const r=await fetch_paper(doi,{launch,source:'https://journals.example.org/article/42',sourceType:'page'});
+  assert.equal(r.status,'access_denied');assert.equal(log.downloads,0);assert.equal(log.metadata,0);assert.equal(log.quota,undefined);
+  assert.equal(log.launched,1);assert.equal(log.closed,1);assert.equal(log.zotero.length,0);
 });
 
 for(const source of ['http://author.example.org/p.pdf','https://127.0.0.1/p.pdf','https://content.openalex.org/works/W123.pdf','https://ezproxy.library.wisc.edu/login','https://user:secret@author.example.org/p.pdf'])

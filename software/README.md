@@ -43,6 +43,10 @@ node automation/run.mjs software list full
 
 目录路由按请求里出现的软件名匹配，不是精确的任务语义判定。各软件当前是否可用以 `software list` 的 `verification` 为准，不以本文或旧 `status` 为准。测试：`node scripts/run-tests.mjs --software`（不检查真实应用在线，不启动软件或模型）。
 
+## Transport Workbench
+
+大师兄的输运分析程序由 Codex 操作与维护，软件本体保留在 `D:/Main/transport-workbench-mcp/`。`software show transport-workbench` 查看登记；[调用入口和示例](transport-workbench/README.md) 使用官方 MCP SDK 按需启动原服务，不要求修改助手个人配置。
+
 ## 操作底线
 
 先检查当前工具与应用，再核对活动文档，保留未保存修改；没有打开或文档不匹配就说明条件，不悄悄新建空白工程替代。前台鼠标键盘先告知用户且同一时刻只一位助手控制。COMSOL MPh 为独立后端，不接管桌面模型；Origin 外部 Python 版本需匹配；LabVIEW 必须先核对实际 VI、设备和参数。输出留在项目交付目录或原工程明确的输出位置。

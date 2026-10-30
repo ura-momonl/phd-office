@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID, createHash } from 'node:crypto';
-import { root, read, write, input, checkProjects } from '../automation/files.mjs';
+import { root, read, write, input, checkProjects, sharedReads } from '../automation/files.mjs';
 import { workingFolder } from '../automation/workdir.mjs';
 import { searchTerms, nearMatches } from '../automation/text-match.mjs';
 import { enqueue, update, parseHandoff, readiness, returnResult, logRequirementOf, planProgress } from '../work/run.mjs';
@@ -19,7 +19,7 @@ import {mailBrief} from '../mail-flow/guide.mjs';
 import {decodeImages,saveImages} from './images.mjs';
 import {decodeFiles,saveFiles,attachmentContext} from './files.mjs';
 import {memoryContextV2,prefetchMemoryV2} from '../memory2/inject.mjs';
-import {taskPrompt,cardPrompt,titlePrompt,turn as say} from '../prompts/templates.mjs';
+import {taskPrompt,dataAnalysisMode,cardPrompt,titlePrompt,turn as say} from '../prompts/templates.mjs';
 import {traceFragments,joinPrompt,promptSource,promptMap} from '../prompts/compose.mjs';
 import {memoryVersion,tokenEstimate} from '../memory2/telemetry.mjs';
 import {callsReport} from './calls.mjs';
@@ -127,12 +127,14 @@ const lastSpeaker=session=>[...session.messages].reverse().find(m=>m.role==='ass
 // Every session records its creation origin: 'task' (card button or auto-started step) or 'chat'. Older sessions predate the field and are stamped once
 // from what their first message shows (card entry, or the auto-start prompt startReadyWork writes) — never from the task's current, editable state.
 const autoStartPrompt=/^@(Claude|Codex) 执行已获授权的项目步骤：/;
+// The card button that asks the agent to handle it: cards.mjs writes 'agent-handle', replies stored before the rename say 'agent-check'.
+const cardAction=id=>id==='agent-handle' || id==='agent-check';
 export function markCardTasks() {
   const state=readState({sessions:[]}),queue=read('work/queue.json');let changed=0,stamped=0;
   for(const s of state.sessions) {
     const said=(s.messages || []).filter(m=>m.role==='user');
-    if(!s.origin){s.origin=said[0] && (said[0].inbox_reply?.action_id==='agent-check' || autoStartPrompt.test(said[0].text || '')) ? 'task' : 'chat';stamped++;}
-    if(!said.length || !said.every(m=>m.inbox_reply?.action_id==='agent-check'))continue;
+    if(!s.origin){s.origin=said[0] && (cardAction(said[0].inbox_reply?.action_id) || autoStartPrompt.test(said[0].text || '')) ? 'task' : 'chat';stamped++;}
+    if(!said.length || !said.every(m=>cardAction(m.inbox_reply?.action_id)))continue;
     for(const id of s.task_ids) {const item=queue.items.find(i=>i.id===id);if(item && item.mode!=='card'){item.mode='card';changed++;}}
   }
   if(changed)write('work/queue.json',queue);
@@ -191,7 +193,7 @@ export function submit({text='',images=[],files=[],session_id,project_id,plan_no
   session.messages.push({role:source ? 'handoff' : 'user',...(source ? {provider:source.provider,handoff:source} : {}),text:text.trim(),at:new Date().toISOString(),task_id:item.id,...(attachments.length ? {attachments} : {}),...(inbox_reply ? {inbox_reply} : {})});session.task_ids.push(item.id);
   write(stateFile,state);
   // Provider selection belongs to the controller, never a required user form field.
-  const q=read('work/queue.json');{const queued=q.items.find(i=>i.id===item.id);queued.executor=job.provider;if(job.speakers?.length>1)queued.speakers=job.speakers;if(model)queued.model=model;if(effort)queued.effort=effort;if(inbox_reply?.action_id==='agent-check')queued.mode='card';}write('work/queue.json',q);
+  const q=read('work/queue.json');{const queued=q.items.find(i=>i.id===item.id);queued.executor=job.provider;if(job.speakers?.length>1)queued.speakers=job.speakers;if(model)queued.model=model;if(effort)queued.effort=effort;if(cardAction(inbox_reply?.action_id))queued.mode='card';}write('work/queue.json',q);
   return {session_id:session.id,task_id:item.id,provider:job.provider};
 }
 // The message that starts the current run. An exploration card keeps one conversation across rounds; each round appends its own
@@ -214,6 +216,9 @@ function saveOperationTurn(operation,item,{status,outcome_status,outcome_handoff
     title:item.title,kind:item.kind,project_ids:item.project_ids,dependencies:[],goal:item.goal,created_at:new Date(started).toISOString()
   };
   Object.assign(run,{status,outcome_status,outcome_handoff,handoff,outputs:[...outputs],session_id,updated_at:now,completed_at:now});
+  const verdict=queue.items.find(i=>i.id===operation.id)?.review_verdict;
+  if(status==='done' && outcome_status==='done' && verdict)run.review_verdict=verdict;
+  else delete run.review_verdict;
   if(!item.operation_id)queue.items.push(run);
   write('work/queue.json',queue);
 }
@@ -483,7 +488,22 @@ function promptFor(item,session,{me,turn=0,previous='',continuation,pilot=false,
     queue.find(i=>i.id===m.task_id)?.merged_into===item.id ||
     (session.task_ids.indexOf(m.task_id)<=current && (queue.find(i=>i.id===m.task_id)?.status!=='queued' || queue.find(i=>i.id===m.task_id)?.handoff_resume)));
   const selected=eligible.filter(({m,index})=>(previous || m!==request) && (continuation ? !seen.has(index) : true));
-  const record=conversationRecord(selected.map(x=>x.m));
+  // Only generated operation envelopes have a stable-context identity. Never
+  // deduplicate user prose. Reuse the native seen set, also while rebuilding a
+  // fresh thread's chronological history; saved messages remain verbatim.
+  const known=new Set(seen);
+  const operationMessage=(m,index)=>{
+    const context=m?.operation_prompt;
+    let prior;
+    if(context)for(let i=index-1;i>=0;i--) {
+      const candidate=session.messages[i].operation_prompt;
+      if(known.has(i) && candidate?.id===context.id){prior=candidate;break;}
+    }
+    known.add(index);
+    return context && prior?.context_hash===context.context_hash ? {...m,text:context.update_text} : m;
+  };
+  const record=conversationRecord(selected.map(({m,index})=>operationMessage(m,index)));
+  const currentRequest=operationMessage(request,session.messages.indexOf(request));
   const focus=focusMail(item,session,{complete:true});
   // Keep source chronology and exact normalized text. Folder labels identify prior
   // correspondence, not a new user instruction or authorization for this turn.
@@ -529,8 +549,9 @@ function promptFor(item,session,{me,turn=0,previous='',continuation,pilot=false,
     origins.length && say.cardOrigin(origins[0]),
     (!continuation || continuation.focusHash!==focusHash) && (focusText ? say.focusEvidence(source(focusText,'邮件证据','mail-flow/flow.mjs')) : continuation?.focusHash && say.focusNone()),
     (item.kind==='mail' || focus) && source(mailBrief(),'邮件简报','mail-flow/MAIL-BRIEF.md'),
+    dataAnalysisMode(context),
   ].filter(Boolean))},
-    {kind:'current_request',content:!previous && say.request(requestText(request))}
+    {kind:'current_request',content:!previous && say.request(requestText(currentRequest))}
   ].filter(s=>s.content);
   const prompt=joinPrompt(sections.map(s=>s.content));
   const inputParts=sections.map(s=>({kind:s.kind,text:String(s.content)}));
@@ -555,6 +576,10 @@ export async function invokeNative(provider,prompt,options={}) {
 }
 const controllers=new Map();
 const liveTurns=new Map();
+const openExecutionError=()=>Object.assign(new Error('事项已退回 open，执行已停止；未启动后续交接'),{code:'EXECUTION_OPEN'});
+function assertExecutionAllowed(taskId) {
+  if(read('work/queue.json').items.find(i=>i.id===taskId)?.status==='open')throw openExecutionError();
+}
 // The agent's own questions (Claude AskUserQuestion / Codex request_user_input). The turn waits on a promise; the workbench shows the record kept on the
 // session (s.questions) and answers it through answerQuestion. Stopping the turn cancels it. The record keeps what was asked and answered, in place by `after`.
 const waitingQuestions=new Map();
@@ -711,16 +736,22 @@ export async function execute(taskId,runner=invokeNative) {
       const owner=operation.parent_id && queue.items.find(i=>i.id===operation.parent_id);
       const returned=(item.after || []).map(id=>{
         const result=returnResult(id,queue.items),source=queue.items.find(i=>i.id===id);
-        return `返回步骤：${source.title}（${id}）\n本轮结果状态：${result.outcome_status || result.status}\n已登记结果：${result.outcome_handoff ?? (result.operation_id ? '' : result.handoff) ?? ''}\n本轮说明：${result.handoff || ''}\n数据/产出位置：\n${(result.outputs || []).join('\n')}`;
+        const handoff=result.outcome_handoff ?? (result.operation_id ? '' : result.handoff) ?? '';
+        const explanation=result.handoff && result.handoff!==handoff ? '\n本轮说明：'+result.handoff : '';
+        return `返回步骤：${source.title}（${id}）\n本轮结果状态：${result.outcome_status || result.status}\n${result.review_verdict ? '本版审查判定：'+result.review_verdict+'\n' : ''}已登记结果：${handoff}${explanation}\n数据/产出位置：\n${(result.outputs || []).join('\n')}`;
       });
       const inputs=[owner ? `所属操作：${owner.title}（${owner.id}）\n父操作目标：${owner.goal}\n父操作资料入口：\n${(owner.sources || []).join('\n')}\n父操作已有结果：${owner.handoff || ''}\n父操作成果位置：\n${(owner.outputs || []).join('\n')}` : '',
-        ...returned,operation.sources?.length ? '资料入口：\n'+operation.sources.join('\n') : '',...(operation.dependencies || []).map(id=>{
+        operation.sources?.length ? '资料入口：\n'+operation.sources.join('\n') : '',...(operation.dependencies || []).filter(id=>id!==operation.review_target?.id).map(id=>{
         const p=queue.items.find(i=>i.id===id);
         return `前置步骤：${p.title}\n留言/结果：${p.handoff || ''}\n数据/产出位置：\n${p.outputs.length ? p.outputs.join('\n') : '（没有单独填写，位置在上面的留言里；先确认它真实存在再处理）'}`;
       })].filter(Boolean).join('\n\n');
-      goal=`本操作 ID：${operation.id}\n本次执行 ID：${item.id}\n`+taskPrompt(operation,inputs,logRequirementOf(operation))+(item.operation_id && item.goal ? '\n本次新增输入／方向：\n'+item.goal : '');
-      requestOf(session,item).text=goal;
-      modifySession(session.id,s=>{requestOf(s,item).text=goal;});
+      const context=String(taskPrompt(operation,inputs,logRequirementOf(operation)));
+      const header=`本操作 ID：${operation.id}\n本次执行 ID：${item.id}\n`;
+      const additions=[...returned,item.operation_id && item.goal ? '本次新增输入／方向：\n'+item.goal : ''].filter(Boolean).join('\n\n');
+      goal=header+context+(additions ? '\n\n'+additions : '');
+      const message={text:goal,operation_prompt:{id:operation.id,context_hash:createHash('sha256').update(context).digest('hex'),update_text:header+additions}};
+      Object.assign(requestOf(session,item),message);
+      modifySession(session.id,s=>{Object.assign(requestOf(s,item),message);});
     }
     const origins=replyChain(session,taskId);
     if(item.executor==='program') {
@@ -734,6 +765,9 @@ export async function execute(taskId,runner=invokeNative) {
       let waiting=asked.slice(1),previous=item.handoff_resume ? session.messages.findLast(m=>m.role==='assistant' && !m.interim && m.task_id===item.id)?.text || '' : '',
         turn=item.handoff_resume?.turn || 0,handed=false,defaultProvider=item.handoff_resume ? lastSpeaker(session) || asked[0] : asked[0];speaker=asked[0];
       for(;;) {
+        // Admission can be withdrawn while another provider is still running.
+        // Every colleague handoff is a new native execution, not the old admission.
+        assertExecutionAllowed(taskId);
         const mode=turnMode(item);
         let ready;
         const live={taskId,provider:speaker,defaultProvider,sent:false,controller,followups,deliveries:Promise.resolve(),ready:new Promise(resolve=>{ready=resolve;})};
@@ -772,6 +806,7 @@ export async function execute(taskId,runner=invokeNative) {
           response=await runner(speaker,full.prompt,{directory:turnDirectory,signal:controller.signal,purpose:purposeOf(item,session),workdir:workingFolder(session.workdir,root),
             inputParts:full.inputParts,
             beforeSubmit:()=>{
+              assertExecutionAllowed(taskId);
               if((turn>0 || item.handoff_resume) && queuedUserInput(readState().sessions.find(s=>s.id===session.id),read('work/queue.json').items)){
                 const error=new Error('用户新消息先处理，交接输入尚未发送');error.code='USER_INPUT_PRIORITY';throw error;
               }
@@ -874,6 +909,10 @@ export async function execute(taskId,runner=invokeNative) {
           modifySession(session.id,s=>{for(const e of s.activity || [])if(e.task_id===taskId && e.provider===live.provider && e.status==='running')e.status='unknown';});
           await live.deliveries;
         }
+        if(read('work/queue.json').items.find(i=>i.id===taskId)?.status==='open') {
+          appendReply(session.id,{role:'assistant',text:parseHandoff(response.result).text,provider:speaker,at:new Date().toISOString(),task_id:taskId},replyThreadId);
+          throw openExecutionError();
+        }
         const open=item.mode!=='card' && turn+1<MAX_TURNS;
         const replyNext=open && turn+waiting.length+1<MAX_TURNS ? summoned(response.result,speaker,waiting) : null;
         if(replyNext)waiting.push(replyNext);
@@ -931,8 +970,9 @@ export async function execute(taskId,runner=invokeNative) {
     answered=true;
     try {sendReceipt(session.id,taskId,result,speaker,runner);} catch(e) {console.error('回执：'+e.message);}
   } catch(error) {
-    update({id:taskId,status:controller.signal.aborted ? 'cancelled' : 'failed',handoff:error.message,reason:error.message});
-    if(operation)saveOperationTurn(operation,item,{status:controller.signal.aborted ? 'cancelled' : 'failed',outcome_status:'failed',handoff:error.message,outputs:[],session_id:session.id,started:roundStartedAt});
+    const paused=read('work/queue.json').items.find(i=>i.id===taskId)?.status==='open';
+    if(!paused)update({id:taskId,status:controller.signal.aborted ? 'cancelled' : 'failed',handoff:error.message,reason:error.message});
+    if(operation)saveOperationTurn(operation,item,{status:paused || controller.signal.aborted ? 'cancelled' : 'failed',outcome_status:paused ? 'open' : 'failed',handoff:error.message,outputs:[],session_id:session.id,started:roundStartedAt});
     for(const id of followups)update({id,status:controller.signal.aborted ? 'cancelled' : 'failed',handoff:error.message,reason:error.message});
     modifySession(session.id,s=>s.messages.push({role:'error',text:error.message,at:new Date().toISOString(),task_id:taskId}));
   } finally {
@@ -978,22 +1018,36 @@ export function recoverInterruptedWork() {
   return lost.map(i=>i.id);
 }
 export async function drain(runner=invokeNative) {
-  if(!read('agent/config.json').enabled)return;
-  try {planProgress();} catch(error) {console.error('自主规划：'+error.message);}
-  startReadyWork();
-  const sessions=readState({sessions:[]}).sessions;
-  // Historical conversations cannot dispatch anything. Avoid rereading both whole
-  // stores once per old session on every background beat (and every chat receipt).
-  // Include blocked queued work: another session may finish its dependency here.
-  const queued=new Set(read('work/queue.json').items.filter(i=>i.status==='queued').map(i=>i.id));
-  await Promise.all(sessions.filter(s=>s.task_ids.some(id=>queued.has(id))).map(async({id})=>{
+  // Reuse the existing dispatch beat, including changes written by another CLI.
+  // No extra timer or model call; an open operation cannot retain a live runner.
+  // Both whole stores (queue+turns, sessions) are ~10 MB each and this runs on every 10 s beat inside the dashboard process, so each synchronous
+  // stretch below shares one parse per file (sharedReads; a write inside it drops the cached copy). Nothing awaits inside a stretch.
+  const beat=sharedReads(()=>{
+    const current=read('work/queue.json').items;
+    for(const [id,controller] of controllers)if(current.find(i=>i.id===id)?.status==='open' && !controller.signal.aborted)controller.abort(openExecutionError());
+    if(!read('agent/config.json').enabled)return null;
+    try {planProgress();} catch(error) {console.error('自主规划：'+error.message);}
+    startReadyWork();
+    const sessions=readState({sessions:[]}).sessions;
+    // Historical conversations cannot dispatch anything. Avoid rereading both whole
+    // stores once per old session on every background beat (and every chat receipt).
+    // Include blocked queued work: another session may finish its dependency here.
+    const queued=new Set(read('work/queue.json').items.filter(i=>i.status==='queued').map(i=>i.id));
+    return sessions.filter(s=>s.task_ids.some(id=>queued.has(id))).map(s=>s.id);
+  });
+  if(!beat)return;
+  await Promise.all(beat.map(async id=>{
     while(read('agent/config.json').enabled) {
-      const session=readState({sessions:[]}).sessions.find(s=>s.id===id);
-      if(!session || session.task_ids.some(taskId=>controllers.has(taskId)))return;
-      const queue=read('work/queue.json');
-      const item=queuedUserInput(session,queue.items) || queue.items.find(i=>readiness(i,queue.items).ready && session.task_ids.includes(i.id) && autonomousCanStart(i,queue.items));
-      if(!item || controllers.size>=(read('agent/config.json').max_active_agents ?? 10))return; // at the cap the task stays queued; the next drain picks it up
-      await execute(item.id,runner);
+      const itemId=sharedReads(()=>{
+        const session=readState({sessions:[]}).sessions.find(s=>s.id===id);
+        if(!session || session.task_ids.some(taskId=>controllers.has(taskId)))return null;
+        const queue=read('work/queue.json');
+        const item=queuedUserInput(session,queue.items) || queue.items.find(i=>readiness(i,queue.items).ready && session.task_ids.includes(i.id) && autonomousCanStart(i,queue.items));
+        if(!item || controllers.size>=(read('agent/config.json').max_active_agents ?? 10))return null; // at the cap the task stays queued; the next drain picks it up
+        return item.id;
+      });
+      if(!itemId)return;
+      await execute(itemId,runner);
     }
   }));
 }

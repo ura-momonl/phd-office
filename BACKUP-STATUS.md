@@ -1,4 +1,4 @@
-# Office code snapshot — 2026-10-27
+# Office code snapshot — 2026-10-30
 
 This is a private work-in-progress backup, not a completed or verified release. Existing unfinished changes are preserved as found. No application tests were run for this backup.
 

@@ -3,7 +3,7 @@
 用户（量子材料学博士生）的本地科研办公室，目录 D:/Main/assistant。程序做读取、计算、去重、日期检查、持久化和文件生成；AI 做理解和判断。
 
 - 模块入口：`node automation/run.mjs <模块> <动作>`；`help` 列出全部，`help <模块>` 看用法；`help handoff`、`help card`、`help review` 分别说明状态摘要、卡片和验收依据格式。
-- 数据在哪：项目 `projects/catalog.json`；任务队列 `work/queue.json`（只放待办步骤，周计划、看板、`work list` 读它；每条聊天消息留下的对话轮记录在 `work/turns.json`，只追加的日志，不是待办，超过 24MB 时写入会把最老的轮次挪到 `.runtime/work/archive/turns-<月>.jsonl`（不删除）；代码里仍当一份队列读写，程序自动分开）；邮箱账本 `.runtime/mail-flow/mail.sqlite`（旧邮箱看板仅为历史）；周计划 `.runtime/weekly`；项目文件夹 `workspace/projects/<项目id>`；软件资产由 Codex 维护及接手操作，先 `software list`、按需 `software show <id>`，目录与转交方法见 `software/catalog.json`、`software/README.md`；个人背景 `D:/Main/PROFILE.md`；其余按目录名即可找到。
+- 数据在哪：项目 `projects/catalog.json`；任务队列 `work/queue.json`（只放待办步骤，周计划、看板、`work list` 读它；每条聊天消息留下的对话轮记录在 `work/turns.json`，只追加的日志，不是待办，超过 8MB 时写入会把最老的轮次（未结束的除外）挪到 `.runtime/work/archive/turns-<月>.jsonl`（不删除）；代码里仍当一份队列读写，程序自动分开）；邮箱账本 `.runtime/mail-flow/mail.sqlite`（旧邮箱看板仅为历史）；周计划 `.runtime/weekly`；项目文件夹 `workspace/projects/<项目id>`；软件资产由 Codex 维护及接手操作，先 `software list`、按需 `software show <id>`，目录与转交方法见 `software/catalog.json`、`software/README.md`；个人背景 `D:/Main/PROFILE.md`；其余按目录名即可找到。
 - 项目资料（资料库→项目）：从办公室根目录用 `node automation/run.mjs projects <动作>`，不必 cd 到项目文件夹。项目不明确先 `list`；其余入口（outline / search / read-nodes / context）见 `help projects`，对话提示里已带当前项目的入口命令。默认不整份读取 FRAMEWORK.md 或递归通读项目目录；确需全项目梳理或编辑原文时可读原文件。摘要和检索片段是导航，不替代所需证据原文。
 - 结果放置沿用用户指定位置或项目现有目录；科研数据与分析留在 `workspace/projects/<项目id>/`，临时材料可放运行目录。业务操作用 `work update` 的 `status:done`、`handoff`、`outputs` 明确提交完成，路径可用办公室根目录相对或绝对路径，纯说明可无文件；回复结束只代表本轮结束，未提交的操作回到 open，不自动等用户或重试。需要时用 `work add.parent_id` 归类子操作，前置仍写 `dependencies`；再次执行用 `work run {id,input}`（参数为UTF-8 JSON文件路径），历史复用 `turns.json`，原结果保留。交接引用原位成果，不另抄一套；普通操作日志按 `logs/README.md` 存放。
 - 历史对话：`node automation/run.mjs agent search <关键词>` 检索，`agent show <会话id前缀>[#任务id前缀]` 读原文；用户提到“之前聊过/上次说的”、或需要追溯某个决定的来龙去脉时先查这里。检索用 1～2 个有辨识度的短词（字面匹配）；没有全匹配时会按字词片段列出带“近似度”的候选，只是候选，要读片段判断；仍找不到就换同义词（不做语义匹配）。
@@ -12,7 +12,7 @@
 - 项目里的 plan_is_example、demo_goal、demo_current_node 和节点 demo_status 是界面占位，不是真实进展。
 - 你们可以直接修改本项目的代码、配置和文档并做本地验证；接入、额度查询和排错可按需使用已有的 token、凭据（敏感值不要出现在聊天、日志或版本库里）。
 - 助手工作日志统一放 `logs/`（入口 `logs/README.md`）：记录助手执行层的操作、维护、排错结果与证据位置，按日期、助手和任务分文件。操作结果不在多份助手文档里重复抄写；README、skill、规则文档只维护用法和可复用方法。聊天状态摘要格式见 `help handoff`，程序运行日志仍由程序保存。
-- 项目日志按对项目的长期帮助取舍：值得保留的实验数据、分析结果、研究判断和计划等记入项目时间线；没有这类价值的临时操作、排错、状态修复等记普通 `logs/`，不因操作发生在项目内就写项目日志。由人还是助手完成不影响归属，普通日志涉及研究成果时引用对应项目记录。
+- 项目日志按对项目的长期帮助取舍：值得保留的实验数据、分析结果、研究判断和计划等记入项目时间线。邮件往来、约会和会议安排等杂项归项目页「关联资料与杂事」，不进项目逻辑线或时间线；邮件、未绑定研究节点的 mail/misc 操作步骤和日历事项会按项目关联显示，额外需要保留的事务内容用 `projects related-add`，`projects related` 读取，不另抄一份已有记录。只有对研究有明显作用的内容才提炼入研究两条线，原信和事务记录仍留原处。没有研究价值的助手临时操作、排错、状态修复等记普通 `logs/`。由人还是助手完成不影响归属，普通日志涉及研究成果时引用对应项目记录。
 - 协作机制说明：`automation/AI-COLLABORATION.md`；旧交接历史：`automation/CLAUDE-REVIEW.md`，新工作日志见 `logs/`。
 - 提示词（agent 读到的固定文案）：改前先读 `prompts/README.md`；改完跑 `prompt lint`、`prompt snapshot`；想知道某类调用拿到哪些常驻提示词用 `prompt standing`。
 - 磁盘占用：`node scripts/disk-usage.mjs [路径] [--depth=2] [--min=50]`（只读，约 1 秒，按大小和最近修改日期列目录树，并报告系统临时目录里的测试副本）。别用 `du` 扫 `.runtime`，文件太多会超时。验收、沙箱、`--keep` 等自己留下的大副本，结论定稿后自己清；`run-tests.mjs` 启动时只自动清超过 1 天的 `phd-tests-*`。
@@ -62,3 +62,5 @@
 # 项目内自建 skills
 
 创建或修订项目 skill 前读 `.agents/skills/README.md`。
+
+科研工作（数据分析、读文献、汇报、实验安排与合作沟通）开工时使用 `research-partner`。本轮输入或当前上下文已含该技能正文且未变时直接沿用，不再调用或读取一遍；纯代码任务不用。数据分析输入由程序直接带入正文，项目副本供程序读取及 DeepSeek 按原生优先级发现；Codex 只启用用户级入口，避免同名重复。

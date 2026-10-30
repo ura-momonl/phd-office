@@ -69,6 +69,13 @@
       "scope": "连接器、脚本、维护和必要验证",
       "mode": "出现功能需求或实际故障时",
       "second_opinion": false
+    },
+    {
+      "kind": "misc",
+      "actor": "codex",
+      "scope": "邮件与会议之外的项目事务、安排及跟进；按事项指定实际执行者",
+      "mode": "按明确交办事项处理",
+      "second_opinion": false
     }
   ],
   "background_ai": false

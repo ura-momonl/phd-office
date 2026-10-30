@@ -1,4 +1,4 @@
-import { taskPrompt, cardPrompt, titlePrompt, turn, memoryTextV2, companionText, mailJudgePrompt, noticeText, literatureGoal, overloadResumePrompt } from './templates.mjs';
+import { taskPrompt, dataAnalysisMode, cardPrompt, titlePrompt, turn, memoryTextV2, companionText, mailJudgePrompt, noticeText, literatureGoal, overloadResumePrompt } from './templates.mjs';
 import { fragment } from './compose.mjs';
 
 // Fixed, fictional inputs. prompts/golden.json holds what they render to; the test fails when a fragment edit changes any of it,
@@ -9,10 +9,12 @@ const log = { kind: 'processing', parent: 'example-project' };
 export const taskArgs = {
   'task-plan': [{ ...base, actor: 'claude', autonomy: { type: 'plan', source: 'example' } }, inputs, null],
   'task-authorized': [base, inputs, null],
+  'task-authorized-result-review': [{...base,result_review:{actor:'codex',state:'pending'}},inputs,null],
   'task-authorized-outputs-log': [{ ...base, require_outputs: true, autonomy: { type: 'follow', source: 'example' } }, inputs, log],
 };
 export const cases = [
   ...Object.entries(taskArgs).map(([name, args]) => ({ name, render: () => taskPrompt(...args) })),
+  { name: 'data-analysis-mode', render: () => dataAnalysisMode({kind:'data'}) },
   { name: 'card', render: () => cardPrompt('示例事项（虚构）', JSON.stringify({ source_messages: [] })) },
   { name: 'title', render: () => titlePrompt('用户：示例问题\nCodex：示例回答') },
   // Fixed sentences of a conversation turn (promptFor); the order and conditions are decided in agent/run.mjs.
@@ -36,6 +38,9 @@ export const cases = [
   { name: 'literature-daily-goal', render: () => literatureGoal.daily({ date: '2030-01-02', rules: '（此处是 lines.reading 与 lines.picks，虚构占位）', file: 'D:/office/literature/recommendations/2030-01-02.json' }) },
   // Texts that code outside templates.mjs fills in (work/run.mjs, projects/framework.mjs); the fragments are the single owner of their wording.
   { name: 'task-progress-goal', render: () => fragment('task/progress-goal', { sources: 't-1、t-2' }) },
+  { name: 'task-result-review', render: () => fragment('task/result-review',{id:'example-parent',revision:'example-version',goal:'用户要用示例数据比较两种解释',direction:'接续比较，不新增测量',origin:'work handoff example-request',handoff:'示例结果，待核实',outputs:'example/report.html  SHA256=example-hash'}) },
+  { name: 'task-result-review-changes', render: () => fragment('task/result-review-changes',{id:'example-previous-review',revision:'example-previous-version',verdict:'revise',evidence:'example/review.md',fields:'handoff',added:'example/new-result.csv',changed:'example/report.html',removed:'example/old-appendix.csv',unchanged:1}) },
+  { name: 'task-result-review-return', render: () => fragment('task/result-review-return',{id:'example-review',revision:'example-version'}) },
   { name: 'framework-digest-header', render: () => fragment('framework/digest-header', { file: 'D:/office/workspace/projects/demo/FRAMEWORK.md', project: 'demo' }) },
   // Notices appended to a turn: attachments, file-state and running-code reminders.
   { name: 'notice-attachments', render: () => [noticeText.images('{"name":"p.png","file":"D:/x/p.png"}'), noticeText.files('{"name":"a.csv","file":"D:/x/a.csv","size":3}')].join('\n') },

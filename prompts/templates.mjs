@@ -1,5 +1,6 @@
 import { fragment, joinPrompt, promptSource } from './compose.mjs';
 import { requiresOutputs } from '../work/run.mjs';
+import fs from 'node:fs';
 
 // The model-facing texts agent/run.mjs used to carry inline. Each function only fills values into a fragment; wording lives in prompts/fragments.
 const who = actor => ({claude:'Claude',codex:'Codex',deepseek:'DeepSeek'}[actor] || actor);
@@ -10,7 +11,22 @@ export function taskPrompt(item, inputs, logRequirement) {
   const provenance = item.autonomy ? block('task/provenance', { autonomy: JSON.stringify(item.autonomy) }) : '';
   const common = { who: who(item.actor), title: item.title, goal: item.goal, inputs, log, provenance };
   if (item.autonomy?.type === 'plan') return fragment('task/plan', common);
-  return fragment('task/authorized', { ...common, require_outputs: requiresOutputs(item) ? fragment('task/require-outputs') : '' });
+  const authorized=fragment('task/authorized', { ...common, require_outputs: requiresOutputs(item) ? fragment('task/require-outputs') : '' });
+  return item.result_review ? joinPrompt([authorized,fragment('task/result-review-owner',{state:item.result_review.state})],'\n\n') : authorized;
+}
+
+// The shared work-turn entry calls this for both operations and routed chats.
+// Read originals each turn, without a native selection decision or prompt copy.
+export function dataAnalysisMode(item) {
+  // Outer result review has its own demanding PI brief, not the analyst's raw-data workflow.
+  if (item.kind !== 'data' || item.autonomy?.type === 'plan' || item.review_target) return '';
+  const modes = ['research-partner', 'data-analysis'].map(name => {
+    const file = `.agents/skills/${name}/SKILL.md`;
+    const body = fs.readFileSync(new URL('../' + file, import.meta.url), 'utf8')
+      .replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/^---\n[\s\S]*?\n---(?:\n|$)/, '').trim();
+    return promptSource(body, { path: file, label: name });
+  });
+  return joinPrompt(modes, '\n\n');
 }
 
 export const cardPrompt = (title, evidence) => fragment('card', { title, evidence });

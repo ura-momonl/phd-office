@@ -7,7 +7,7 @@ const options=[['done','完成'],['doing','正在进行'],['failed','失败'],['
 // Operating steps (work-queue items) use the same menu with their own four lamps. The server (work.update) owns every rule: predecessors,
 // a note and, where the step asks for it, an existing output path before "done". Reopening notes are optional.
 const stepOptions=[['open','未开始／待定义','open'],['queued','待办','todo'],['active','正在进行','doing'],['done','完成','done'],['failed','失败','failed']];
-const operators=[['user','你'],['codex','Codex'],['claude','Claude']];
+const operators=[['user','你'],['codex','Codex'],['claude','Claude'],['deepseek','DeepSeek']];
 
 export function bindFramework({post,load,workItem}) {
   let menu=null,target=null,step=null;

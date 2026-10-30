@@ -36,15 +36,32 @@ function strings(value, out) {
   else if (value && typeof value === 'object') for (const v of Object.values(value)) strings(v, out);
   return out;
 }
-// What the assistant said and did in one turn: text blocks and tool calls of `assistant` events (thinking is not included).
+// What the assistant said and did in one turn. Every provider writes its own shape into the same events.jsonl — Claude
+// stream-json `{type:'assistant'}`, Codex app-server `item/completed` items and the DeepSeek harness `session.event`
+// notifications — so all three are read here. Thinking is not included.
 export function assistantOutput(eventsText) {
   const out = [];
   for (const line of String(eventsText).split('\n')) {
-    if (!line.startsWith('{"type":"assistant"')) continue;
+    if (!line) continue;
     let j; try { j = JSON.parse(line); } catch { continue; }
-    for (const b of j.message?.content || []) {
-      if (b.type === 'text') out.push(b.text);
-      else if (b.type === 'tool_use') strings(b.input, out);
+    if (j.type === 'assistant' && Array.isArray(j.message?.content)) {
+      for (const b of j.message.content) {
+        if (b.type === 'text') out.push(b.text);
+        else if (b.type === 'tool_use') strings(b.input, out);
+      }
+      continue;
+    }
+    const item = j.params?.item;
+    if (j.method === 'item/completed' && item) {
+      if (item.type === 'agentMessage') { if (item.text) out.push(item.text); }
+      else if (item.type === 'commandExecution') strings(item.aggregatedOutput, out);
+      else if (item.type !== 'reasoning' && item.type !== 'userMessage') strings(item.arguments ?? item.command ?? item.path, out);
+      continue;
+    }
+    const native = j.payload?.event;
+    if (j.method === 'session.event' && native) {
+      if (native.type === 'assistant/message') { for (const b of native.data?.message?.content || []) if (b.type === 'text') out.push(b.text); }
+      else if (native.type === 'tool/call') strings(native.data?.arguments, out);
     }
   }
   return out.join('\n');
@@ -64,8 +81,16 @@ export function judgeUse(group, promptText, output, p = POLICY) {
 export function accountRuns({ root, owner, runsDir, now = Date.now(), p = POLICY, detail = null }) {
   const ledger = readLedger(root);
   let turns = 0, injected = 0, used = 0, maxMs = ledger.watermark_ms;
+  // A run keeps turn 1 in its own folder and every later turn (handoff, @all, resumed execution) in a numbered subfolder.
+  const turnDirs = [];
   if (fs.existsSync(runsDir)) for (const d of fs.readdirSync(runsDir)) {
-    const dir = path.join(runsDir, d), mcFile = path.join(dir, 'memory-context.json');
+    const dir = path.join(runsDir, d);
+    if (fs.existsSync(path.join(dir, 'memory-context.json'))) turnDirs.push([d, dir]);
+    let names = []; try { names = fs.readdirSync(dir); } catch { continue; }
+    for (const n of names) if (/^\d+$/.test(n) && fs.existsSync(path.join(dir, n, 'memory-context.json'))) turnDirs.push([d + '/' + n, path.join(dir, n)]);
+  }
+  for (const [d, dir] of turnDirs) {
+    const mcFile = path.join(dir, 'memory-context.json');
     let st; try { st = fs.statSync(mcFile); } catch { continue; }
     if (st.mtimeMs <= ledger.watermark_ms) continue;
     const eventsFile = path.join(dir, 'events.jsonl');

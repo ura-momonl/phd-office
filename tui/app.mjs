@@ -46,7 +46,7 @@ export function createApp({ cols, rows, prefs = {}, launchDir = null }) {
     launchDir,
     cols, rows, prefs, themeKey: THEMES[prefs.theme] ? prefs.theme : 'clay', panel: !!prefs.panel, crt: prefs.crt !== false, crtBoot: null, sixelOff: prefs.sixel === false, img: null, hero: null, target: '', defaultProvider: '', mouseCapture: true,
     screen: 'home', sessions: [], projects: [], readAt: {}, active: [], sessionId: prefs.session || null, detail: null,
-    input: '', cursor: 0, history: [], histIdx: -1, scroll: 0, error: '', notice: '', tick: 0, now: Date.now(),
+    input: '', cursor: 0, history: [], histIdx: -1, scroll: 0, error: '', notice: '', tick: 0, now: Date.now(), sending: false, navigation: 0,
     pal: 0, helpOpen: false, projectId: null, hits: [], cursorXY: [1, 1], selection: null, frame: [],
     executions: [], inbox: [], work: [], usage: null, seen: new Map(), reveal: null, bell: false, osc: '',
     undo: [], redo: [], lastKind: '', lastEditAt: 0, calls: null, callsRaw: [], callView: null, callCache: new Map(),
@@ -161,7 +161,7 @@ function inputBlock(app, w, m = 0) {
     offset += ch.length;
   }
   all.push({ text, start, end: offset });
-  const row = all.findLastIndex(l => l.start <= app.cursor), firstRow = Math.max(0, Math.min(all.length - 5, row));
+  const row = all.findLastIndex(l => l.start <= app.cursor), firstRow = Math.max(0, Math.min(all.length - 5, row - 4));
   const visible = all.slice(firstRow, firstRow + 5), col = m + 4 + width(app.input.slice(all[row].start, app.cursor));
   const content = app.input ? visible.map((l, i) => rowLine(mentions(l.text, th), i))
     : [rowLine(color(th, 'dim', clip(live ? '追加一句给正在回复的助手…' : '写点什么…（@ 指定谁来回答）', textW)))];
@@ -396,7 +396,12 @@ function drawSessions(app) {
 
 // ---- Actions -------------------------------------------------------------------------------------------------------
 export async function refresh(app) {
-  try { applyState(app, await api.getState(app.sessionId)); app.error = ''; } catch (e) { app.error = '读取失败：' + e.message; return; }
+  const { sessionId, navigation } = app;
+  try {
+    const data = await api.getState(sessionId);
+    if (app.sessionId !== sessionId || app.navigation !== navigation) return;
+    applyState(app, data); app.error = '';
+  } catch (e) { app.error = '读取失败：' + e.message; return; }
   await refreshCalls(app);
 }
 
@@ -409,30 +414,43 @@ export async function refreshCalls(app, force = false) {
 }
 
 export async function openSession(app, id) {
+  app.navigation++;
   app.sessionId = id; app.detail = null; app.scroll = 0; app.screen = 'chat'; app.sw = null;
   await refresh(app);
   api.markRead({ [id]: Date.now() }).then(r => Object.assign(app.readAt, r)).catch(() => {});
   savePrefs(app);
 }
 
-const newConversation = app => { app.sessionId = null; app.detail = null; app.scroll = 0; app.screen = 'home'; app.sw = null; };
+const newConversation = app => { app.navigation++; app.sessionId = null; app.detail = null; app.scroll = 0; app.screen = 'home'; app.sw = null; };
 
 // What the backend did with a message sent while an assistant is replying.
 const DELIVERY = { steered: '已追加给正在回复的助手', pending: '已追加给正在回复的助手', queued: '已排队，当前回合结束后处理' };
 
 export async function submit(app) {
   let text = app.input.trim(); if (!text) return;
+  const isCommand = text.startsWith('/');
+  if (!isCommand && app.sending) { app.notice = '上一条仍在发送，草稿已保留'; return; }
   snap(app, 'send', true); // Ctrl+Z brings the sent text back into the box
   app.history.push(text); app.histIdx = -1; app.input = ''; app.cursor = 0;
-  if (text.startsWith('/')) return command(app, text);
+  if (isCommand) return command(app, text);
+  const draft = text, { sessionId, screen, navigation, target } = app;
+  const sameView = () => app.sessionId === sessionId && app.screen === screen && app.navigation === navigation;
   if (app.target && !/@(claude|codex|deepseek|all)\b/i.test(text)) text = `@${app.target} ${text}`;
+  app.sending = true; app.scroll = 0; app.notice = '发送中…'; app.error = ''; app.dirty?.();
   try {
-    const fresh = app.screen === 'home' || !app.sessionId;
-    const job = await api.sendChat({ text, session_id: fresh ? null : app.sessionId, project_id: app.projectId, workdir: fresh ? app.launchDir : undefined });
-    app.target = ''; // next sends follow the actual last speaker
-    app.sessionId = job.session_id; app.scroll = 0; app.screen = 'chat'; app.notice = DELIVERY[job.delivery] || '已发送'; app.error = '';
-    await refresh(app); savePrefs(app);
-  } catch (e) { app.error = '发送失败：' + e.message; app.input = app.history.pop(); app.cursor = app.input.length; }
+    const fresh = screen === 'home' || !sessionId;
+    const job = await api.sendChat({ text, session_id: fresh ? null : sessionId, project_id: app.projectId, workdir: fresh ? app.launchDir : undefined });
+    app.notice = DELIVERY[job.delivery] || '已发送'; app.error = '';
+    if (sameView()) {
+      if (app.target === target) app.target = ''; // do not erase a new next-message override
+      app.sessionId = job.session_id; app.screen = 'chat'; app.dirty?.();
+      await refresh(app); savePrefs(app);
+    }
+  } catch (e) {
+    app.notice = ''; app.error = '发送失败：' + e.message;
+    if (sameView() && !app.input) { snap(app, 'restore', true); app.input = draft; app.cursor = draft.length; }
+    else app.error += '（原文可用 Ctrl+P 从历史取回）';
+  } finally { app.sending = false; app.dirty?.(); }
 }
 
 async function command(app, text) {
@@ -644,7 +662,10 @@ export async function onKey(app, k) {
     case 'enter':
       if (k.alt) { insert(app, '\n'); return; }
       if (pal.length && app.input !== pal[app.pal].name) { const c = pal[app.pal]; app.input = c.name + (c.arg ? ' ' : ''); app.cursor = app.input.length; if (c.arg) return; }
-      await submit(app); return;
+      // Slash commands retain their sequencing; chat transport must not hold typing or scrolling.
+      if (app.input.trim().startsWith('/')) await submit(app);
+      else void submit(app);
+      return;
     case 'char':
       if (k.ch === '?' && !app.input) { app.helpOpen = true; return; }
       insert(app, k.ch); return;

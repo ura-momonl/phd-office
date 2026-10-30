@@ -32,7 +32,11 @@ export function access(doi) {
     instructions:'先在浏览器通过图书馆/官方书签工具访问全文，正常 NetID/Duo 登录后保存到 Zotero；当前没有尝试校园登录或声称已经取得全文。' };
 }
 export async function run(action, argument) {
-  if (action === 'reconcile-work') {
+  if (action === 'macro') {
+    const {macroCommand}=await import('./mouse-download.mjs');
+    console.log(JSON.stringify(macroCommand(input(argument)),null,2));
+  }
+  else if (action === 'reconcile-work') {
     const flags=process.argv.slice(5);
     if(!argument || flags.some(f=>f!=='--apply'))throw Error('reconcile-work <package-id|all> [--apply]');
     const {reconcileRebuildWork}=await import('./rebuild-work.mjs');

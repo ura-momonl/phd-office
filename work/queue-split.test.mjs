@@ -45,3 +45,23 @@ test('an id present in both files is read once, the step copy winning',()=>{
   assert.equal(items.length,1);assert.equal(items[0].title,'s2');
 });
 
+
+test('past the cap the oldest finished rounds are archived by month, unfinished ones stay however old',()=>{
+  const pad='x'.repeat(40000),day=n=>`2026-09-${String(n).padStart(2,'0')}T00:00:00Z`;
+  const old=Array.from({length:230},(_,n)=>turn('o'+n,day(1+n%27),{handoff:pad}));
+  old.push(turn('live-old','2026-08-01T00:00:00Z',{status:'queued',handoff:pad}));
+  const fresh=turn('fresh','2026-10-20T00:00:00Z');
+  const queue=read('work/queue.json');queue.items=[...queue.items.filter(i=>!isChatTurn(i)),...old,fresh];
+  write('work/queue.json',queue);                      // the file is over 8 MB after this write; the cap runs on the next one
+  write('work/queue.json',read('work/queue.json'));
+  const kept=ids('work/turns.json');
+  assert.ok(kept.includes('live-old'),'an unfinished round is never archived');
+  assert.ok(kept.includes('fresh'));
+  assert.ok(!kept.includes('o0'),'the oldest finished rounds left the log');
+  assert.ok(fs.statSync(path.join(root,'work/turns.json')).size<8*1048576);
+  const archived=fs.readdirSync(path.join(root,'.runtime/work/archive')).filter(n=>/^turns-2026-\d\d\.jsonl$/.test(n));
+  assert.ok(archived.length>0);
+  const lines=archived.flatMap(n=>fs.readFileSync(path.join(root,'.runtime/work/archive',n),'utf8').trim().split('\n')).map(l=>JSON.parse(l).id);
+  assert.ok(lines.includes('o0'),'archived rounds are kept in the archive, not dropped');
+  assert.ok(!lines.includes('live-old'));
+});

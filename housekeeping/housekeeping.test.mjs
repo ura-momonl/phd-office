@@ -116,7 +116,7 @@ test('the growing stores are reported by size and never on the removal list', ()
   assert.equal(byFile['.runtime/agent/sessions.json'].over, true, 'a store past its limit is flagged');
   assert.equal(byFile['.runtime/agent/sessions.json'].limit, '40.0 MB');
   assert.equal(byFile['work/turns.json'].over, false, 'a store inside its limit is reported without a warning');
-  assert.equal(byFile['work/turns.json'].limit, '24.0 MB');
+  assert.equal(byFile['work/turns.json'].limit, '8.0 MB');
   assert.equal(byFile['.runtime/usage/runs.jsonl'], undefined, 'a store with no file yet is skipped');
   assert.deepEqual(stores().map(s => s.file), ['.runtime/agent/sessions.json', 'work/turns.json']);
   assert.equal(plan({ now }).some(a => [sessions, turns].includes(a.path)), false, 'stores never appear as removals');

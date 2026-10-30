@@ -54,6 +54,31 @@ test('assistantOutput keeps text and tool inputs, drops thinking', () => {
   assert.ok(!out.includes('秘密想法') && !out.includes('用户的话'));
 });
 
+test('assistantOutput reads the Codex and DeepSeek event shapes too', () => {
+  const events = [
+    JSON.stringify({ method: 'item/completed', params: { item: { type: 'agentMessage', id: 'm1', text: 'codex 说了这句' } } }),
+    JSON.stringify({ method: 'item/completed', params: { item: { type: 'commandExecution', id: 'c1', aggregatedOutput: 'shell 输出里有 ep_20261024_00000006' } } }),
+    JSON.stringify({ method: 'item/completed', params: { item: { type: 'reasoning', id: 'r1', text: '不该出现' } } }),
+    JSON.stringify({ method: 'session.event', payload: { event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'deepseek 说了这句' }, { type: 'reasoning', text: '也不该出现' }] } } } } }),
+    JSON.stringify({ method: 'session.event', payload: { event: { type: 'tool/call', data: { callId: 't1', name: 'shell', arguments: '{"command":"grep 铷原子钟"}' } } } }),
+  ].join('\n');
+  const out = assistantOutput(events);
+  for (const want of ['codex 说了这句', 'ep_20261024_00000006', 'deepseek 说了这句', '铷原子钟']) assert.ok(out.includes(want), want);
+  for (const no of ['不该出现', '也不该出现']) assert.ok(!out.includes(no), no);
+});
+
+test('accountRuns counts later turns kept in numbered subfolders', () => {
+  const root = new MemoryRoot(tmp()), runsDir = tmp();
+  fakeRun(runsDir, 'r1', { recalled: ['ep_20261024_00000006'], prompt: PROMPT, answer: '按铷原子钟校准，夜间采样间隔十分钟继续' });
+  const sub = path.join(runsDir, 'r1', '2'); fs.mkdirSync(sub, { recursive: true });
+  fs.writeFileSync(path.join(sub, 'memory-context.json'), JSON.stringify({ owner: 'claude', recalled_ids: ['ep_20261023_00000009'] }));
+  fs.writeFileSync(path.join(sub, 'prompt.txt'), PROMPT);
+  fs.writeFileSync(path.join(sub, 'events.jsonl'), JSON.stringify({ method: 'item/completed', params: { item: { type: 'agentMessage', text: '用到了 ep_20261023_00000009' } } }) + '\n');
+  const t = new Date(NOW - 60 * 60000); for (const f of fs.readdirSync(sub)) fs.utimesSync(path.join(sub, f), t, t);
+  const a = accountRuns({ root, owner: 'claude', runsDir, now: NOW });
+  assert.deepEqual([a.turns, a.used], [2, 2]);
+});
+
 test('judgeUse: id mention counts; words only in the memory count; words that are also in the rest of the prompt do not', () => {
   const [g1, g2] = parseInjected(PROMPT);
   assert.equal(judgeUse(g1, PROMPT, '看过 ep_20261024_00000006 了').used, true);

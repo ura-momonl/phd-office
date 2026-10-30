@@ -198,6 +198,25 @@
       "owner": "codex",
       "operator": "codex",
       "verified_at": null
+    },
+    {
+      "id": "transport-workbench",
+      "name": "Transport Workbench 0.2.22 MCP",
+      "executable": "D:/Main/transport-workbench-mcp/.venv/Scripts/python.exe",
+      "working_directory": "D:/Main/assistant",
+      "connector": "D:/Main/transport-workbench-mcp/.venv/Scripts/python.exe -B -I D:/Main/assistant/software/transport-workbench/client.py <request.json>",
+      "requires_running": false,
+      "operator": "codex",
+      "owner": "codex",
+      "route": "官方 MCP SDK 按需启动 D:/Main/transport-workbench-mcp/server.py；一个请求文件内依次调用工具，保持同一会话的 ds/sc 句柄。不是当前聊天原生挂载，不改其他助手配置。默认沙箱无法访问该 venv 依赖的用户目录 Python 3.12，需正常授权。入口及示例见 software/transport-workbench/README.md。",
+      "status": "Codex takeover; stdio discovery and bundled synthetic PPMS example read passed on authorized host; real experimental data and mathematical fitting not exercised in this takeover",
+      "verified_at": "2026-10-28T22:22:16.240Z",
+      "verification": {
+        "checked_at": "2026-10-28T22:22:16.240Z",
+        "result": "passed_mcp_example_read",
+        "scope": "Official SDK via local client: 13 tools discovered; bundled synthetic PPMS example loaded as ds1, 50 rows/15 columns; describe_dataset and get_rows succeeded. Default sandbox Python access failed; authorized host succeeded. No native assistant configuration, real data or mechanism fitting tested.",
+        "source": "logs/2026-10-28/codex-77d5f88f.md"
+      }
     }
   ]
 }

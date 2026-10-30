@@ -275,6 +275,26 @@
       "path": ".agents/skills/literature-backfill/SKILL.md"
     },
     {
+        "id": "skill-dcg-orchestrator",
+        "kind": "skill",
+        "path": ".agents/skills/dcg-orchestrator/SKILL.md",
+        "note": "父级设计或调整动态子 DCG 时按需加载；三位助手共享同一本体，office-system 给出调用入口，不给普通执行者和外层 PI 审查注入全文"
+      },
+      {
+        "id": "skill-research-partner",
+      "kind": "skill",
+      "path": ".agents/skills/research-partner/SKILL.md",
+      "purposes": ["chat", "auto"],
+      "note": "kind:data 的 work 操作和已路由为 data 的普通聊天，由共用 promptFor 入口自动带入正文；不靠原生选择 skill"
+    },
+    {
+      "id": "skill-data-analysis",
+      "kind": "skill",
+      "path": ".agents/skills/data-analysis/SKILL.md",
+      "purposes": ["chat", "auto"],
+      "note": "kind:data 的 work 操作和普通聊天由共用 promptFor 入口自动带入正文；首次、续接及换助手共用 dataAnalysisMode，不给规划或非 data 操作追加"
+    },
+    {
       "id": "skill-weekly",
       "kind": "skill",
       "path": ".agents/skills/weekly-planning/SKILL.md"
@@ -283,6 +303,10 @@
   "template_exports": {
     "_": "prompts/templates.mjs 里哪些导出用于哪些调用用途。仅在导入它的文件同时承担多个用途时需要登记（目前是 agent/run.mjs）；其余由导入它的文件所登记的面推出。界面据此显示片段会抵达哪些场景。",
     "taskPrompt": [
+      "chat",
+      "auto"
+    ],
+    "dataAnalysisMode": [
       "chat",
       "auto"
     ],

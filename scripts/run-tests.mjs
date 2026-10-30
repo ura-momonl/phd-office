@@ -55,7 +55,7 @@ try {
   const queue = rj('work/queue.json'); queue.items = []; wj('work/queue.json', queue);
   wj('work/turns.json', { version: queue.version, items: [] }); // tests run on the split queue the live office uses
   const catalog = rj('projects/catalog.json'); catalog.links = [];
-  const clearFiles=owner=>{delete owner.files;for(const node of owner.plan || owner.children || [])clearFiles(node);};
+  const clearFiles=owner=>{delete owner.files;delete owner.related;for(const node of owner.plan || owner.children || [])clearFiles(node);};
   for(const project of catalog.projects)clearFiles(project);
   wj('projects/catalog.json', catalog);
   fs.rmSync(path.join(copy, 'calendar/events.json'), { force: true });

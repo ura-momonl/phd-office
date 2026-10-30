@@ -283,11 +283,13 @@ export async function skillsView() {
     const link=path.join(links,dir);let claude='missing';
     if(!localLinks)claude='unknown';
     else try{fs.lstatSync(link);claude=fs.existsSync(link) && fs.realpathSync(link)===fs.realpathSync(path.join(base,dir)) ? 'ok' : 'broken';}catch{/* no link */}
-    if(claude==='missing')issues.push('.claude/skills 里没有同名链接，Claude 原生发现入口未就绪');
+    const userClaude=path.join(process.env.OFFICE_BASE_HOME || os.homedir(),'.claude/skills',dir,'SKILL.md');
+    const hasUserClaude=claude==='missing' && fs.existsSync(userClaude);
+    if(claude==='missing' && !hasUserClaude)issues.push('.claude/skills 里没有同名链接，项目发现入口未就绪；也未找到同名用户级文件');
     if(claude==='broken')issues.push('.claude/skills 里的链接失效，或没有指向本体');
     const bodyTokens=estimateTokens(body);
     return {dir,name:name || dir,description,content:text,always_tokens:estimateTokens(name+' '+description),body_tokens:bodyTokens,body_bytes:Buffer.byteLength(body),claude,issues,
-      notes:skillNotes({body,bodyTokens,extraFiles:files.length-1})};
+      notes:[...skillNotes({body,bodyTokens,extraFiles:files.length-1}),...(hasUserClaude ? ['项目链接缺省；已有 Claude 用户级同名文件，不表示技能不可发现（当前会话是否已发现或读取需另核对）'] : [])]};
   });
   if(localLinks && fs.existsSync(links))problems.push(...fs.readdirSync(links).filter(n=>!n.startsWith('.') && !dirs.includes(n)).map(n=>`.claude/skills/${n} 没有对应的 .agents/skills 本体`));
   return {location:SKILLS,claude_location:CLAUDE_SKILLS,skills,problems};
@@ -351,7 +353,7 @@ export async function run(action,argument) {
       for(const s of a.skills)console.log(`  ${s.name}  [${s.source}] 名称与描述 ${s.always_tokens} token，正文 ${s.body_tokens} token${s.issues.length ? '；问题：'+s.issues.join('；') : ''}`);
     }
     for(const s of base.shared)console.log(`两边同名：${s.name}，${s.same ? '内容相同' : '内容不同，请核对是否该一致'}`);
-    if(base.overlap_with_project.length)console.log('与项目 skill 同名：'+base.overlap_with_project.join('、')+'（确认是有意覆盖）');
+    if(base.overlap_with_project.length)console.log('与项目 skill 同名：'+base.overlap_with_project.join('、')+'（不代表自动覆盖或合并；各原生入口的选择和禁用配置需另核对）');
     console.log('底座盘点只看文件：助手内置、不以文件形式存在的技能不在其中；也不代表当前会话已加载。');
     console.log('仅核对项目目录与链接，不代表当前会话已加载；token 为文本估算，不是实际账单。');
     return;

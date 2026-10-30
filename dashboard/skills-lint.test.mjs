@@ -19,6 +19,27 @@ async function withSkills(make,check) {
 }
 const head=name=>`---\nname: ${name}\ndescription: 测试用\n---\n`;
 
+test('a user-level Claude entry is not reported as unavailable because its project link is absent',async()=>{
+  const home=fs.mkdtempSync(path.join(root,'tmp-skill-home-')),before=process.env.OFFICE_BASE_HOME;
+  try {
+    process.env.OFFICE_BASE_HOME=home;
+    const user=path.join(home,'.claude/skills/t-user-entry/SKILL.md');
+    fs.mkdirSync(path.dirname(user),{recursive:true});fs.writeFileSync(user,head('t-user-entry')+'依据适用。');
+    await withSkills(skill=>{
+      skill('t-user-entry',{'SKILL.md':head('t-user-entry')+'依据适用。'});
+      skill('t-no-entry',{'SKILL.md':head('t-no-entry')+'依据适用。'});
+    },async by=>{
+      assert.equal(by['t-user-entry'].claude,'missing','project link status remains a filesystem fact');
+      assert.ok(!by['t-user-entry'].issues.some(i=>i.includes('同名链接')));
+      assert.ok(by['t-user-entry'].notes.some(i=>i.includes('用户级同名文件')));
+      assert.ok(by['t-no-entry'].issues.some(i=>i.includes('未找到同名用户级文件')));
+    });
+  } finally {
+    if(before===undefined)delete process.env.OFFICE_BASE_HOME;else process.env.OFFICE_BASE_HOME=before;
+    fs.rmSync(home,{recursive:true,force:true});
+  }
+});
+
 test('advisory notes: a well-formed skill is quiet, and each soft rule fires only on its own trigger',()=>withSkills(skill=>{
   skill('t-lint-good',{'SKILL.md':head('t-lint-good')+'依据：2026-10-16 某任务实际走通。适用：整理样品账本。验证范围：一份账本。\n步骤略。\n'});
   skill('t-lint-nobasis',{'SKILL.md':head('t-lint-nobasis')+'直接写步骤，没有来历。\n'});

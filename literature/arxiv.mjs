@@ -14,7 +14,8 @@ export async function fetch_arxiv(value) {
   const output = path.join(root, 'literature/fulltext', `arxiv-${id}.pdf`);
   const previous = read('literature/catalog.json').papers.find(p => p.doi === doi);
   if (fs.existsSync(output) && previous?.fulltext_path) {
-    return { doi, status: 'available', path: output, reused: true, ...validatePDF(output, 'arxiv:' + id, previous.fulltext_sha256) };
+    try { return { doi, status: 'available', path: output, reused: true, ...validatePDF(output, 'arxiv:' + id, previous.fulltext_sha256) }; }
+    catch (error) { return { doi, status: 'validation_failed', message: error.message, path: output }; }
   }
   let staged;
   try {
@@ -32,7 +33,13 @@ export async function fetch_arxiv(value) {
     let checked;
     try { checked = validatePDF(staged, 'arxiv:' + id); }
     catch (error) { return { doi, status: 'validation_failed', message: error.message }; }
-    fs.copyFileSync(staged, output, fs.constants.COPYFILE_EXCL);
+    try { fs.copyFileSync(staged, output, fs.constants.COPYFILE_EXCL); }
+    catch (error) {
+      // The same PDF is already on disk (a second fetch or a record whose fulltext_path was never filled in): verify it instead of failing.
+      if (error.code !== 'EEXIST') throw error;
+      try { checked = validatePDF(output, 'arxiv:' + id); }
+      catch (bad) { return { doi, status: 'validation_failed', message: bad.message, path: output }; }
+    }
     const item = record({ doi, title, authors, year, fulltext_path: output, fulltext_sha256: checked.sha256,
       fulltext_source: 'https://arxiv.org/pdf/' + id, metadata_source: 'https://export.arxiv.org/api/query?id_list=' + id });
     return { doi, status: 'available', path: item.fulltext_path, reused: false, ...checked };

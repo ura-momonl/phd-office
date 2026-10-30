@@ -173,7 +173,7 @@ async function processCluster({ clusterId, root, store, embedder, llm, owner, di
   if (!episodes.length) return null;
   const merged = episodes.filter(e => e.parent_type === 'cluster'), mode = merged.length ? 'update' : 'init';
   const sources = mode === 'update' ? episodes.filter(e => e.parent_type !== 'cluster') : episodes;
-  if (mode === 'update' && !sources.length) return null;
+  if (mode === 'update' ? !sources.length : sources.length < 2) return null;
   const result = await reflectEpisodes(llm, sources, { oldEpisode: mode === 'update' ? merged[0] : null });
   const lastTs = Math.max(...episodes.map(e => e.timestamp_ms));
   // 1. write the merged episode (parent_type=cluster; no session_id: an aggregation product belongs to no session)

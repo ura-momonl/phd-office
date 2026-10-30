@@ -16,7 +16,10 @@ export function sharedReads(fn) {
 // awaiting acceptance). read() merges them (a step wins if an id is in both, which a crash between the two writes could leave); write() splits them again.
 // Without turns.json (before work/run.mjs splitQueue runs) nothing changes. A record is classified by what it is now, so one that gets accepted moves over.
 const QUEUE = 'work/queue.json', TURNS = 'work/turns.json';
-const TURNS_MAX_BYTES = 24 * 1048576, TURNS_KEEP_BYTES = 16 * 1048576;
+// Every queue read parses this whole file (and the dashboard's 10 s beat reads it several times), so it is kept to about ten days of rounds.
+const TURNS_MAX_BYTES = 8 * 1048576, TURNS_KEEP_BYTES = 6 * 1048576;
+// A round that has not finished is live state (a queued message, a running turn): it stays however old it is.
+const UNFINISHED = new Set(['queued', 'active', 'open', 'waiting_user']);
 export const isTurnRecord = i => !!i.operation_id || (!!i.executor && i.review?.state !== 'pending');
 const parse = file => JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
 // turns.json holds one record per chat round, is rewritten whole on every queue write and otherwise only grows
@@ -31,8 +34,8 @@ function capTurns(items) {
     if (bytes > TURNS_KEEP_BYTES) break;
     kept++;
   }
-  const byMonth = new Map();
-  for (const { item } of sized.slice(0, sized.length - kept)) {
+  const byMonth = new Map(), older = sized.slice(0, sized.length - kept), live = older.filter(x => UNFINISHED.has(x.item.status));
+  for (const { item } of older.filter(x => !UNFINISHED.has(x.item.status))) {
     const month = /^\d{4}-\d{2}/.test(String(item.created_at)) ? String(item.created_at).slice(0, 7) : 'undated';
     byMonth.set(month, [...(byMonth.get(month) || []), item]);
   }
@@ -41,7 +44,7 @@ function capTurns(items) {
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.appendFileSync(file, list.map(item => JSON.stringify(item)).join('\n') + '\n');
   }
-  return sized.slice(sized.length - kept).map(x => x.item);
+  return [...live, ...sized.slice(sized.length - kept)].map(x => x.item);
 }
 function mergeQueue(steps, turns) {
   const own = new Set(steps.items.map(i => i.id)), B = turns.items.filter(i => !own.has(i.id)), A = steps.items, items = [];

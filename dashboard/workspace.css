@@ -466,6 +466,9 @@ button.primary:hover{filter:brightness(1.08)}
 .drop-before,.drop-after,.drop-into{position:relative}
 .drop-before{box-shadow:0 -3px 0 #2c8f6a}.drop-after{box-shadow:0 3px 0 #2c8f6a}
 .drop-into{outline:2px solid #2c8f6a;outline-offset:-2px;background:#e4f4ec}
+.fw-drop-after{min-height:24px;padding:3px 10px;border:1px dashed transparent;border-radius:4px;color:transparent;font-size:11px}
+.is-dragging .fw-drop-after{border-color:#b9d3c6;color:#617c6f}
+.is-dragging .fw-drop-after.drop-after{background:#e4f4ec;color:#24694e}
 .fw-steps-head .fw-grip{padding-left:0}
 
 .message-edit-open{margin-left:auto;font-size:11px;opacity:.6}.message:hover .message-edit-open,.message-edit-open:focus-visible{opacity:1}
@@ -590,3 +593,5 @@ button.primary:hover{filter:brightness(1.08)}
 .avatar-crop{background:#fff;border-radius:14px;padding:20px 24px;display:grid;gap:10px;justify-items:center;box-shadow:0 12px 40px rgba(0,0,0,.3)}.avatar-crop h3{margin:0}
 .avatar-crop canvas{width:260px;height:260px;border-radius:50%;background:#e9ece9;cursor:grab;touch-action:none;box-shadow:0 0 0 3px #d5dcd7}.avatar-crop p{margin:0}.avatar-crop input{width:260px;margin:0}
 .avatar-crop-actions{display:flex;gap:12px}.avatar-crop-actions button{margin:0;width:auto;padding:4px 22px}
+
+.project-related-form{display:grid;gap:12px;margin-top:16px}.project-related-form label{display:grid;gap:6px}.project-related-form input,.project-related-form textarea,.project-related-form select{width:100%;box-sizing:border-box}.project-related-form button{justify-self:start}

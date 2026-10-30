@@ -7,6 +7,7 @@ import {root,read,write} from '../automation/files.mjs';
 import {enqueue,update,repeatOperation,workSnapshot,workOverview,readiness} from './run.mjs';
 import {drain} from '../agent/run.mjs';
 import {addEntry,parseFramework} from '../projects/framework.mjs';
+import {SYSTEM_PROMPT} from '../agent/native.mjs';
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Use scripts/run-tests.mjs');
 const item=id=>read('work/queue.json').items.find(i=>i.id===id);
 const step=(title,extra={})=>enqueue({title,kind:'framework',actor:'claude',...extra});
@@ -92,8 +93,9 @@ test('parent delegates, receives a failed branch in its own conversation, and fi
   };
   await drain(async(_provider,prompt,opts)=>{
     if(opts.purpose==='title')return {result:''};
-    assert.match(prompt,/本操作一旦调用子 DCG，父 agent 就以统筹为主/);
-    assert.match(prompt,/未调用子 DCG 的任务仍直接完成/);
+    assert.match(SYSTEM_PROMPT,/本操作一旦调用子 DCG，父 agent 就以统筹为主/);
+    assert.match(SYSTEM_PROMPT,/未调用子 DCG 的任务仍直接完成/);
+    assert.ok(!prompt.includes('本操作一旦调用子 DCG'));
     child=invoke('add',{title:'test evidence branch',kind:'framework',actor:'claude',parent_id:parent.id},parent.id);
     comparison=invoke('add',{title:'reference comparison',kind:'framework',actor:'codex',parent_id:parent.id},parent.id);
     assert.equal(child.status,'queued');assert.deepEqual(child.project_ids,['bi-devices']);assert.equal(child.plan_node_id,'graph-topic');
@@ -121,8 +123,9 @@ test('parent delegates, receives a failed branch in its own conversation, and fi
   await drain(async(_provider,prompt,opts)=>{
     if(opts.purpose==='title')return {result:''};
     assert.ok(prompt.includes('当前阶段：Current interpretation（graph-current）'));
-    assert.match(prompt,/父 agent 可以为判断读取证据、抽查结果和做少量衔接/);
-    assert.match(prompt,/持续的具体执行工作由子操作承接/);
+    assert.match(SYSTEM_PROMPT,/父 agent 可以为判断读取证据、抽查结果和做少量衔接/);
+    assert.match(SYSTEM_PROMPT,/持续的具体执行工作由子操作承接/);
+    assert.ok(!prompt.includes('持续的具体执行工作由子操作承接'));
     assert.ok(prompt.includes('current framework context marker'));
     assert.ok(prompt.includes('本轮结果状态：failed'));
     assert.ok(prompt.includes('disagrees with the reference measurement'));
@@ -204,6 +207,40 @@ test('explicit repeated execution preserves the operation result and appends tur
   assert.equal(view.execution_history.length,3);assert.equal(view.last_execution.outcome_status,'open');
   const turns=JSON.parse(fs.readFileSync(path.join(root,'work/turns.json'),'utf8')).items;
   assert.equal(turns.filter(r=>r.operation_id===a.id).length,3);assert.ok(turns.filter(r=>r.operation_id===a.id).every(r=>r.status==='done'));
+}));
+
+test('failed, retried and later operation requests retain evidence without replaying standing mechanics',()=>isolated(async()=>{
+  const source=step('existing observation');
+  update({id:source.id,status:'done',handoff:'evidence marker',outputs:[]});
+  const operation=step('retry fixture',{status:'queued',goal:'authorized objective marker',dependencies:[source.id]});
+  let calls=0;
+  const inspect=(prompt,opts)=>{
+    assert.ok(prompt.includes('本操作 ID：'+operation.id));
+    assert.ok(prompt.includes('authorized objective marker'));assert.ok(prompt.includes('evidence marker'));
+    assert.ok(!prompt.includes('本操作一旦调用子 DCG'));
+    assert.ok(!prompt.includes('用 work update <UTF-8 JSON文件路径> 一次提交'));
+    assert.ok(!prompt.includes('最终回复简要说明'));
+    assert.equal(opts.inputParts.map(p=>p.text).join('\n'),prompt);
+    calls++;
+  };
+  await drain(async(_provider,prompt,opts)=>{
+    if(opts.purpose==='title')return {result:''};
+    inspect(prompt,opts);throw new Error('capacity failure fixture');
+  });
+  assert.equal(item(operation.id).status,'failed');
+  for(const direction of ['retry direction marker','later direction marker']) {
+    const run=repeatOperation({id:operation.id,input:direction});
+    await drain(async(_provider,prompt,opts)=>{
+      if(opts.purpose==='title')return {result:''};
+      inspect(prompt,opts);
+      assert.ok(prompt.includes('本次执行 ID：'+run.id));assert.ok(prompt.includes(direction));
+      if(direction==='retry direction marker')assert.ok(prompt.includes('capacity failure fixture'),'failure evidence remains in history');
+      update({id:operation.id,status:'done',handoff:direction,outputs:[]});return {result:'Submitted fixture result.'};
+    });
+  }
+  assert.equal(calls,3);assert.equal(item(operation.id).status,'done');
+  const session=read('.runtime/agent/sessions.json').sessions.find(s=>s.task_ids.includes(operation.id));
+  assert.equal(session.messages.filter(m=>m.role==='user').length,3,'all original requests remain in history');
 }));
 
 test('a native child command can submit the repeated operation and add an authorized child under the same graph',()=>isolated(async()=>{
