@@ -69,8 +69,7 @@ function reviewChanges(item,items,snapshot) {
   const changed=snapshot.outputs.filter(o=>oldFiles.has(o.path) && oldFiles.get(o.path)!==o.sha256).map(o=>o.path);
   const removed=before.outputs.filter(o=>!newFiles.has(o.path)).map(o=>o.path);
   const unchanged=snapshot.outputs.length-added.length-changed.length;
-  return fragment('task/result-review-changes',{id:prior.id,revision:prior.review_target.revision,verdict:prior.review_verdict,
-    evidence:prior.outputs.join('\n') || '见该操作的 handoff',
+  return fragment('task/result-review-changes',{
     fields:['title','goal','sources','handoff','direction'].filter(k=>JSON.stringify(before[k])!==JSON.stringify(snapshot[k])).join('、') || '无',
     added:added.join('\n') || '无',changed:changed.join('\n') || '无',removed:removed.join('\n') || '无',unchanged});
 }
@@ -87,7 +86,7 @@ export function submitResultForReview(item,previous,items,now) {
       const live=items.some(i=>!i.deleted_at && (i.id===policy.review_id || i.operation_id===policy.review_id) && ['queued','active'].includes(i.status));
       if(live)throw new Error('本版成果的审查仍在执行，待实际返回后再整合');
       item.result_review={...policy,state:'accepted',accepted_at:now};
-    } else if(state==='revise')throw new Error('本版审查要求返工；请修订成果，或带具体证据接续原审查操作');
+    } else if(state==='revise')throw new Error('本版审查要求返工；请修订成果；如不认同意见，把具体证据写进 handoff 重新提交，程序会新开一轮审查');
     else if(state!=='configured')item.result_review={...policy,state}; // Repeated delivery does not create another reviewer.
     if(state!=='configured')return;
   }

@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-10-30T21:47:06.924Z",
+  "created_at": "2026-10-30T22:30:45.161Z",
   "source_head": "9672207a2bee00e78fa162da887e466fd52c38a7",
   "source_files": [
     {
@@ -9,8 +9,8 @@
     },
     {
       "path": ".agents/skills/data-analysis/SKILL.md",
-      "bytes": 7137,
-      "sha256": "30e2ede14962fe80036a9023ed58b09b8bff83dc9b740766f16bfc7d040aa7d0"
+      "bytes": 7139,
+      "sha256": "b1195064721a2620f30c16237c3a29fba883c5bddf606996bd04695a5c340142"
     },
     {
       "path": ".agents/skills/data-analysis/assets/grouped-signal-explorer.html",
@@ -44,13 +44,13 @@
     },
     {
       "path": ".agents/skills/edit-and-verify-office-code/SKILL.md",
-      "bytes": 2903,
-      "sha256": "b38f159e889d7bc49d5a31ea379914c48774f8207471cda9d7954ca09184d269"
+      "bytes": 2577,
+      "sha256": "c3f338f85eeef2743c588040e8c9d7bc89e51521ed116bc0e3ad8b38b29158ba"
     },
     {
       "path": ".agents/skills/literature-backfill/SKILL.md",
-      "bytes": 27144,
-      "sha256": "aa55bc8873aa222f910c016d5d014e9893a40780c108b81bfc0de05c8192afaf"
+      "bytes": 23907,
+      "sha256": "a8e25e7d7c770fb09b48bf0e0008df1f534c7e83c99dfdb6156fb032b5eb814b"
     },
     {
       "path": ".agents/skills/literature-backfill/references/continuation.md",
@@ -59,18 +59,8 @@
     },
     {
       "path": ".agents/skills/literature-backfill/references/coordinator.md",
-      "bytes": 4265,
-      "sha256": "8c386b2a7932c11611667882dd7967ed8ba15836b82c308e2ec805919726e3ab"
-    },
-    {
-      "path": ".agents/skills/literature-backfill/references/local-rules/claude.md",
-      "bytes": 60444,
-      "sha256": "da949dffd2ed6b638cb94848edcf24030702932a1b8ea83b31b333e95c350e16"
-    },
-    {
-      "path": ".agents/skills/literature-backfill/references/local-rules/codex.md",
-      "bytes": 4644,
-      "sha256": "7491bf99cf56381be8a60ff19307efd9208817bf1a230e9372d75fc577439355"
+      "bytes": 4259,
+      "sha256": "8ff51cbbd64d7ba659fff5d9fed4915cc833042ac25566e4108998fb2e1709cc"
     },
     {
       "path": ".agents/skills/literature-backfill/references/reader-card.md",
@@ -79,13 +69,13 @@
     },
     {
       "path": ".agents/skills/literature-backfill/references/reader-operations.md",
-      "bytes": 3478,
-      "sha256": "01096ef9f578009b8bd8a03f7f09404993ad1abd30c3e6e4bf44b2cb8f93a8ef"
+      "bytes": 3477,
+      "sha256": "f64c1c0938ed4fc5a29bf503d5c62ce627d7b343d3907ae1d4ad8fcad832bfaf"
     },
     {
       "path": ".agents/skills/literature-backfill/references/review-and-admit.md",
-      "bytes": 7296,
-      "sha256": "53db2a712a199be57a3d1d1ef7fb254a7106bc5c8afea8ed70a2bc294f65de42"
+      "bytes": 7270,
+      "sha256": "659c77acc4a9083956a7143e664b68edb3d53417d3157c0c125fc7344d14b433"
     },
     {
       "path": ".agents/skills/literature-backfill/scripts/admit-reviewed.mjs",
@@ -169,8 +159,8 @@
     },
     {
       "path": ".agents/skills/literature-dispatch/SKILL.md",
-      "bytes": 5524,
-      "sha256": "15382fc27aecbbb47f703dca8f63b6f4ed6a690ad33ffeed910ecfd310c7236c"
+      "bytes": 5537,
+      "sha256": "45d3852501a0d77eacfa0265f87a301772b9e3214bc94ce258dacfa678bb781b"
     },
     {
       "path": ".agents/skills/literature-dispatch/scripts/dispatch.mjs",
@@ -184,8 +174,8 @@
     },
     {
       "path": ".agents/skills/literature-rereview/SKILL.md",
-      "bytes": 3702,
-      "sha256": "576037fba2269d12565c3e2d2233271226145eb634b1805f67f68d5af9056c90"
+      "bytes": 3600,
+      "sha256": "f890c2a0472eebd8d5d23a55c55c96d5d0b03ac0c9f186b55ca0d5819d21bb2d"
     },
     {
       "path": ".agents/skills/literature-rereview/references/reader-prompt.md",
@@ -194,8 +184,8 @@
     },
     {
       "path": ".agents/skills/research-partner/SKILL.md",
-      "bytes": 5916,
-      "sha256": "e06a759a7dc2e2446f93a5bbe09d3767c77b0ac18adbdca1b85e50551fb3c3f7"
+      "bytes": 5902,
+      "sha256": "a563dad143666636d3b0a1f786c21fe1b59602c310b1156da397dfe0b214411c"
     },
     {
       "path": ".agents/skills/weekly-planning/SKILL.md",
@@ -204,8 +194,8 @@
     },
     {
       "path": ".agents/skills/weekly-planning/settings.md",
-      "bytes": 3716,
-      "sha256": "f5be8dbebec50908a38f5178947efbf2a10ad3448e8e19122da77e0d3300a0ab"
+      "bytes": 2596,
+      "sha256": "89209cbb8808ec1110e3a3ea1e95bd8ad1d60a3bda1cc835ff42933b43d39329"
     },
     {
       "path": ".agents/skills/windows-shell-habits/SKILL.md",
@@ -219,8 +209,8 @@
     },
     {
       "path": ".claude/skills/data-analysis/SKILL.md",
-      "bytes": 7137,
-      "sha256": "30e2ede14962fe80036a9023ed58b09b8bff83dc9b740766f16bfc7d040aa7d0"
+      "bytes": 7139,
+      "sha256": "b1195064721a2620f30c16237c3a29fba883c5bddf606996bd04695a5c340142"
     },
     {
       "path": ".claude/skills/data-analysis/assets/grouped-signal-explorer.html",
@@ -254,13 +244,13 @@
     },
     {
       "path": ".claude/skills/edit-and-verify-office-code/SKILL.md",
-      "bytes": 2903,
-      "sha256": "b38f159e889d7bc49d5a31ea379914c48774f8207471cda9d7954ca09184d269"
+      "bytes": 2577,
+      "sha256": "c3f338f85eeef2743c588040e8c9d7bc89e51521ed116bc0e3ad8b38b29158ba"
     },
     {
       "path": ".claude/skills/literature-backfill/SKILL.md",
-      "bytes": 27144,
-      "sha256": "aa55bc8873aa222f910c016d5d014e9893a40780c108b81bfc0de05c8192afaf"
+      "bytes": 23907,
+      "sha256": "a8e25e7d7c770fb09b48bf0e0008df1f534c7e83c99dfdb6156fb032b5eb814b"
     },
     {
       "path": ".claude/skills/literature-backfill/references/continuation.md",
@@ -269,18 +259,8 @@
     },
     {
       "path": ".claude/skills/literature-backfill/references/coordinator.md",
-      "bytes": 4265,
-      "sha256": "8c386b2a7932c11611667882dd7967ed8ba15836b82c308e2ec805919726e3ab"
-    },
-    {
-      "path": ".claude/skills/literature-backfill/references/local-rules/claude.md",
-      "bytes": 60444,
-      "sha256": "da949dffd2ed6b638cb94848edcf24030702932a1b8ea83b31b333e95c350e16"
-    },
-    {
-      "path": ".claude/skills/literature-backfill/references/local-rules/codex.md",
-      "bytes": 4644,
-      "sha256": "7491bf99cf56381be8a60ff19307efd9208817bf1a230e9372d75fc577439355"
+      "bytes": 4259,
+      "sha256": "8ff51cbbd64d7ba659fff5d9fed4915cc833042ac25566e4108998fb2e1709cc"
     },
     {
       "path": ".claude/skills/literature-backfill/references/reader-card.md",
@@ -289,13 +269,13 @@
     },
     {
       "path": ".claude/skills/literature-backfill/references/reader-operations.md",
-      "bytes": 3478,
-      "sha256": "01096ef9f578009b8bd8a03f7f09404993ad1abd30c3e6e4bf44b2cb8f93a8ef"
+      "bytes": 3477,
+      "sha256": "f64c1c0938ed4fc5a29bf503d5c62ce627d7b343d3907ae1d4ad8fcad832bfaf"
     },
     {
       "path": ".claude/skills/literature-backfill/references/review-and-admit.md",
-      "bytes": 7296,
-      "sha256": "53db2a712a199be57a3d1d1ef7fb254a7106bc5c8afea8ed70a2bc294f65de42"
+      "bytes": 7270,
+      "sha256": "659c77acc4a9083956a7143e664b68edb3d53417d3157c0c125fc7344d14b433"
     },
     {
       "path": ".claude/skills/literature-backfill/scripts/admit-reviewed.mjs",
@@ -379,8 +359,8 @@
     },
     {
       "path": ".claude/skills/literature-dispatch/SKILL.md",
-      "bytes": 5524,
-      "sha256": "15382fc27aecbbb47f703dca8f63b6f4ed6a690ad33ffeed910ecfd310c7236c"
+      "bytes": 5537,
+      "sha256": "45d3852501a0d77eacfa0265f87a301772b9e3214bc94ce258dacfa678bb781b"
     },
     {
       "path": ".claude/skills/literature-dispatch/scripts/dispatch.mjs",
@@ -394,8 +374,8 @@
     },
     {
       "path": ".claude/skills/literature-rereview/SKILL.md",
-      "bytes": 3702,
-      "sha256": "576037fba2269d12565c3e2d2233271226145eb634b1805f67f68d5af9056c90"
+      "bytes": 3600,
+      "sha256": "f890c2a0472eebd8d5d23a55c55c96d5d0b03ac0c9f186b55ca0d5819d21bb2d"
     },
     {
       "path": ".claude/skills/literature-rereview/references/reader-prompt.md",
@@ -409,8 +389,8 @@
     },
     {
       "path": ".claude/skills/weekly-planning/settings.md",
-      "bytes": 3716,
-      "sha256": "f5be8dbebec50908a38f5178947efbf2a10ad3448e8e19122da77e0d3300a0ab"
+      "bytes": 2596,
+      "sha256": "89209cbb8808ec1110e3a3ea1e95bd8ad1d60a3bda1cc835ff42933b43d39329"
     },
     {
       "path": ".claude/skills/windows-shell-habits/SKILL.md",
@@ -584,8 +564,8 @@
     },
     {
       "path": "agent/run.mjs",
-      "bytes": 91007,
-      "sha256": "2d6e71d6934272caa5f3ff5a18db9d7e08b0c60c96b7da6221ec859844371b38"
+      "bytes": 91191,
+      "sha256": "466b7c62f04465918e09792b773c77a73a3a88cd7899af9eb76f0e6d5a7df563"
     },
     {
       "path": "agent/shell-guard.mjs",
@@ -2120,12 +2100,12 @@
     {
       "path": "package-lock.json",
       "bytes": 82721,
-      "sha256": "c645f326ff72acbe348e4b235234abce1e3b62e0cf93a8dbc90b7894f98a8ebd"
+      "sha256": "be0c2439138123def37d9a4811b646b426c354a1dd1e27b9b4123c69a7ce2cce"
     },
     {
       "path": "package.json",
       "bytes": 552,
-      "sha256": "89845813ca9b48da3dcf4faf9e75f4c147516e921551eaef481aacde0fef2317"
+      "sha256": "57a61ccc55e18c4576b12af97004b7de44c0b789bdb9b7857c00db494a11d395"
     },
     {
       "path": "procurement/README.md",
@@ -2229,8 +2209,8 @@
     },
     {
       "path": "prompts/README.md",
-      "bytes": 15022,
-      "sha256": "04b278fb4880dd4532cdc922e2fa0a8ed4bdd531ee81f37ca4e2123cfc73a604"
+      "bytes": 15220,
+      "sha256": "7a555e896b3d60729bdf03ba4564e7c4847be191c47587e77a935b1c15b01501"
     },
     {
       "path": "prompts/compose.mjs",
@@ -2429,13 +2409,13 @@
     },
     {
       "path": "prompts/fragments/task/result-review-changes.md",
-      "bytes": 716,
-      "sha256": "6c574880280028e8886f8966fe2f0446e28f68df2a5d0e048b5ceee59a7f0dab"
+      "bytes": 606,
+      "sha256": "7c9f50aae21636aa991f0dc3c44b6615da537d564ba6c1b4bbd0cff866eb4a16"
     },
     {
       "path": "prompts/fragments/task/result-review-owner.md",
-      "bytes": 1143,
-      "sha256": "2203f500ba808246aa61b70221ac921aa9c29e1df832f768dfc6f5e8a592781d"
+      "bytes": 1201,
+      "sha256": "053f446b3a37bbebcebf7392119c01f9925419813745c0963461e20892ea0a04"
     },
     {
       "path": "prompts/fragments/task/result-review-return.md",
@@ -2444,8 +2424,8 @@
     },
     {
       "path": "prompts/fragments/task/result-review.md",
-      "bytes": 3596,
-      "sha256": "ca639986d28529a0723450fe9d39bd11009196f15aa6eb3be6203b56c5a6ed94"
+      "bytes": 4655,
+      "sha256": "cce6246ffc3287ff8fd00613872a375ca31966b0183d5bc0660e48bec04ca798"
     },
     {
       "path": "prompts/fragments/title.md",
@@ -2584,13 +2564,13 @@
     },
     {
       "path": "prompts/golden-cases.mjs",
-      "bytes": 7435,
-      "sha256": "b8f66dd9df451f6f6776ab19f57d640e3cc6a4a68a510859c7ca66847bcfa347"
+      "bytes": 7324,
+      "sha256": "dc432ce1cb8c6288e93cea31dbe8086fe0c4524d52391f19133302fc22c267b8"
     },
     {
       "path": "prompts/golden.json",
-      "bytes": 43313,
-      "sha256": "1904ab779b8301af22a7f977c5ee52c2b3567210edae4a56514015e76bddb011"
+      "bytes": 44924,
+      "sha256": "f0a6b44987b56dc17c473dc1156b9f6fd5272caea94d66af53f3c2e33a7def5e"
     },
     {
       "path": "prompts/office-system.md",
@@ -3319,8 +3299,8 @@
     },
     {
       "path": "work/RESULT-REVIEW.md",
-      "bytes": 5474,
-      "sha256": "d0235122b593536409b9ce7cc09e1304dc39be7daafc0207fbe7941bed5f33d5"
+      "bytes": 6003,
+      "sha256": "9b7d8e83391981d7c0ab0e18cf06b27cc0bcb22eacb7cf2eec44ccb91c54e7a1"
     },
     {
       "path": "work/autonomy.mjs",
@@ -3364,13 +3344,13 @@
     },
     {
       "path": "work/result-review.mjs",
-      "bytes": 9776,
-      "sha256": "b76c5a7b4905137c0b1845fad61f59ac81700cb3412ad27f8c810d2cbc183ad4"
+      "bytes": 9683,
+      "sha256": "d3f0d740cfab9f7e1460839466047f9f7a5c92835f4aca154751727ade7f0fd4"
     },
     {
       "path": "work/result-review.test.mjs",
-      "bytes": 21851,
-      "sha256": "cb100a36303437a9a4cb4fea3e8acd6d184a3947e79d924c4a1706ad3d449022"
+      "bytes": 22891,
+      "sha256": "297b2de70ad8fe905d33b027b4ece72733081b647bf32d01420ebae105d20d6a"
     },
     {
       "path": "work/run.mjs",

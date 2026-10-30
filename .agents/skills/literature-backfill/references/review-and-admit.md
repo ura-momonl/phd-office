@@ -39,7 +39,7 @@ DeepSeek 的独立包也使用本格式及 `admit-reviewed.mjs`，owner 为 `dee
 
 最终区分：原始目录记录数、去重后判读条数、完整摘要数、仅简介/缺源数、include/exclude/pending数、真正新增条数及当前库总数；入选数不等于新增数，读过简介不等于读过摘要。状态写在本批STATE/manifest/ledger/delivery而不是skill里反复记录篇数或分数。
 
-### 提交前的三个文件（2026-10-21 pkg-claude-002 实际用法）
+### 提交前的三个文件（实际用法）
 
 - 最终判断：整包`decisions`数组，条数和顺序与包`input`完全一致。把子任务合并结果按主助手的改判逐条覆盖，另存新文件（改判时同步改decision、scope、reason，必要时改direction，保留原evidence），再用`records.mjs`的`validate`逐条核对。不覆盖各work item的原输出。
 - 复核记录：`checked_*_ids`只放主助手实际读过完整摘要的ID（拟收、待核、改判及边界排除）。只看题名或理由的关键词筛查不放进`checked_exclude_ids`，写在audit的自由字段里并说明未读摘要；缺摘要的待核如实标注，不算读过摘要。

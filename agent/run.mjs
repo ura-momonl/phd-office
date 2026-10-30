@@ -231,7 +231,8 @@ export function startReadyWork() {
   for (const item of queue.items) {
     if (!assistants.includes(item.actor) || !readiness(item,queue.items).ready || state.sessions.some(s=>s.task_ids.includes(item.id))) continue;
     if(!autonomousCanStart(item,queue.items))continue;
-    const prior=item.operation_id && state.sessions.find(s=>s.task_ids.includes(item.operation_id) || s.task_ids.some(id=>queue.items.find(i=>i.id===id)?.operation_id===item.operation_id));
+    // An independent result review always opens a new conversation, including a re-run of the same review operation.
+    const prior=item.operation_id && !queue.items.find(i=>i.id===item.operation_id)?.review_target && state.sessions.find(s=>s.task_ids.includes(item.operation_id) || s.task_ids.some(id=>queue.items.find(i=>i.id===id)?.operation_id===item.operation_id));
     if(prior) {
       prior.messages.push({role:'user',text:item.goal,at:new Date().toISOString(),task_id:item.id});prior.task_ids.push(item.id);
       started.push({task_id:item.id,session_id:prior.id});

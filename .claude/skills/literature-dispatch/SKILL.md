@@ -12,7 +12,7 @@ description: 将文献重建主包独立切成不重叠的阅读子任务，生�
 DeepSeek 的独立包也使用本入口：`dispatch.mjs deepseek --package pkg-deepseek-NNN --children 1 --round r01`（可先加 `--dry-run`）。依据 2026-10-23 用户要求接入文献筛选。默认每块最多 100 篇；`--size` 可调，主包不足则按实际数量。生成后运行 `launch.mjs deepseek <包ID>` 看各块状态；她的首轮读法见 literature-backfill 的 DeepSeek 一节（`first-pass.mjs`），不执行下文 Codex／Claude 的模型指定。只有包已归她所有时才切；本入口不改 owner、不调用模型。
 
 1. 从`output/literature-rebuild-20261021/CONTINUE.json`或literature-backfill的只读定位入口取得本人包ID与manifest。先收拢已经在跑的子任务，不能对正在读但没落盘的范围重复分配。保留原owner、work item范围和输出文件。
-2. 在办公室根目录执行，`--package`明确选本人包；一般按十个子任务组织（1000篇包即每块约100篇；2026-10-22实测每块10篇的10×10方案吞吐只有约三分之一、token也没省，已改回），扣除本轮已用名额，原生槽位更少时取实际值。
+2. 在办公室根目录执行，`--package`明确选本人包；一般按十个子任务组织（千篇包即每块约100篇；每块10篇的十乘十方案实测吞吐只有约三分之一、token也没省，不要往小切），扣除本轮已用名额，原生槽位更少时取实际值。
 
 ```powershell
 node .agents/skills/literature-dispatch/scripts/dispatch.mjs codex --package pkg-codex-001 --children 10 --dry-run
@@ -21,7 +21,7 @@ node .agents/skills/literature-dispatch/scripts/dispatch.mjs codex --package pkg
 ```
 
 3. 交付plan路径及每个task/input/output/count清单；每块有独立结果路径，禁止多个子agent同写原大输出。程序跳过现有ID前缀，字段问题列为待主助手修正，不自动当验收通过。损坏JSON、乱序ID、重复round会停并保留现场。
-4. 主助手回literature-backfill领取这些task，按既定Luna/Haiku分工派读、逐页保存，随后机械合并及内容验收。题名粗判断（先看题名、挑出明显无关或能源／催化／电池／膜分离／生物学／生物医学为主的，按唯一选文标准及2026-10-22用户补充）也由这些被派出的子模型在各自task里完成，主助手不另做这一步。生成清单本身不占模型名额，也不代表已经派出或读过。
+4. 主助手回literature-backfill领取这些task，按本次任务指定的子 agent 模型派读、逐页保存，随后机械合并及内容验收。题名粗判断（先看题名、挑出明显无关或能源／催化／电池／膜分离／生物学／生物医学为主的，按唯一选文标准及2026-10-22用户补充）也由这些被派出的子模型在各自task里完成，主助手不另做这一步。生成清单本身不占模型名额，也不代表已经派出或读过。
 
 ## 切 DeepSeek 包并派给她
 

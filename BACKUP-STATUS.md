@@ -1,6 +1,6 @@
 # Office code snapshot — 2026-10-30
 
-This is a public work-in-progress snapshot of the office code, not a completed or verified release. Existing unfinished changes are preserved as found. No application tests were run for this snapshot.
+This is a public work-in-progress snapshot of the office code. A numbered release fixes a specific source version; it does not imply complete application acceptance. Existing unfinished changes are preserved as found. See the corresponding GitHub release notes for the checks actually run and any known failures.
 
 Included: source code, tests, necessary configuration and documentation, UI assets, and the literature module source. Every file's SHA-256 is listed in `BACKUP-MANIFEST.json`.
 

@@ -14,7 +14,7 @@
 | 邮件判断说明 | `mail-flow/REVIEW-PROMPT.md`、`SCREEN-PROMPT.md`（外壳在 `fragments/mail/`） |
 | 界面文字、写进文件的样板等非提示词文本 | 留在所属模块，不需要向提示词架构申请豁免 |
 
-`kind:data` 的 work 操作（包括 `work run` 再次执行）和被现有路由识别为 data 的普通聊天，由共用 `promptFor` 入口调用 `dataAnalysisMode`，直接读取 `.agents/skills/research-partner/SKILL.md` 和 `.agents/skills/data-analysis/SKILL.md` 的正文，随本次输入给三位助手；首次、续接、换助手都走这一个入口，不靠她们记得选择 skill，也不复制一份到任务说明。规划、card/ask 与非 data 输入不追加；带 `review_target` 的外层成果审查使用 `task/result-review` 的专用强推进 PI 角色，不追加分析者的原始数据工作模式，审查不读取原始数据。未被现有路由识别为 data 的泛指聊天仍走原生按需发现，不承诺自动带入。skill 正文每轮读磁盘，程序代码的改动要等后台安全重启后加载，不打断正在运行的任务。
+`kind:data` 的 work 操作（包括 `work run` 再次执行）和被现有路由识别为 data 的普通聊天，由共用 `promptFor` 入口调用 `dataAnalysisMode`，直接读取 `.agents/skills/research-partner/SKILL.md` 和 `.agents/skills/data-analysis/SKILL.md` 的正文，随本次输入给三位助手；首次、续接、换助手都走这一个入口，不靠她们记得选择 skill，也不复制一份到任务说明。规划、card/ask 与非 data 输入不追加；带 `review_target` 的外层成果审查使用 `task/result-review` 的专用激进功利主义 PI 角色（逐个目的量检查是否处理出来，读成果里最后一步的处理后数据，提出绕过卡点的路线），不追加分析者的原始数据工作模式，审查不读取仪器原始文件。未被现有路由识别为 data 的泛指聊天仍走原生按需发现，不承诺自动带入。skill 正文每轮读磁盘，程序代码的改动要等后台安全重启后加载，不打断正在运行的任务。
 
 `research-partner` 保留各助手用户级入口。项目副本仍供上述程序路径读取；Codex 通过用户配置中按路径的 `skills.config` 禁用该项目副本的原生发现，不禁用用户级技能，也不影响程序读取。DeepSeek 的原生注册表按同名优先级返回一份项目技能，不重复列出用户级副本。本轮输入或当前上下文已有未变正文时直接沿用，不再次读取；其他科研任务由 `AGENTS.md` 提示使用该技能。
 
@@ -34,7 +34,7 @@
 
 父级设计或调整子 DCG 时，常驻执行约定给出项目级 `dcg-orchestrator` 的按需加载入口：本体在 `.agents/skills/dcg-orchestrator/SKILL.md`，Claude 的同名目录链接指向该本体。它提供问题拆分、并行与依赖、子框架接口和返回后重规划的方法，不另建调度器，不把全文追加到每个 work 输入，也不替代外层成果审查。普通执行者仍按自身任务使用相应 skill。
 
-父级审查入口优先让关键解释在精装交付前接受研究判断。新版本复审由 `work/result-review.mjs` 从已有冻结提交生成 `task/result-review-changes` 导航，随原 `task/result-review` 的成果列表送达，附上最近已完成审查及文件/登记文字变化，不复制上一版全文或新增模型调用。复审独立检查变化证据及其影响，未受影响的依据原位复用，保留扩大审查与退回关键缺口的判断；哈希相同不表示本版通过。片段和 skill 随下次读取生效，新启动的 `work update` CLI 也读取新代码；后端内存中的旧模块须空闲后重启载入，不改已生成的任务输入。
+父级审查入口优先让关键解释在精装交付前接受研究判断。新版本复审由 `work/result-review.mjs` 从已有冻结提交生成 `task/result-review-changes` 导航，随原 `task/result-review` 的成果列表送达，只附本版相对上一次送审版本的文件/登记文字变化（不含上一轮审查的判定和证据入口），不复制上一版全文或新增模型调用。复审独立检查变化证据及其影响，未受影响的依据原位复用，保留扩大审查与退回关键缺口的判断；哈希相同不表示本版通过。片段和 skill 随下次读取生效，新启动的 `work update` CLI 也读取新代码；后端内存中的旧模块须空闲后重启载入，不改已生成的任务输入。
 
 ## 查看
 

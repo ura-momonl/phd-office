@@ -34,7 +34,7 @@ test('review execution includes its frozen delivery once rather than repeating l
     assert.equal(prompt.split('UNIQUE_FROZEN_DELIVERY_TEXT').length-1,1);
     assert.equal(prompt.split(output).length-1,1);
     assert.ok(prompt.includes('SHA256='),'the frozen output hash remains available');
-    assert.ok(prompt.includes(parent.goal));assert.ok(prompt.includes('不读取原始数据'));
+    assert.ok(prompt.includes(parent.goal));assert.ok(prompt.includes('不读取仪器原始文件'));
     verdict(review.id);
     return {result:'Fixture review complete.'};
   });
@@ -78,10 +78,10 @@ test('review receives a demanding PI brief and deliverables, not a raw-data audi
   const parent=source({sources:['raw-data/never-read-this-file.csv']});
   deliver(parent.id,file('pi-result.csv'));
   const review=get(get(parent.id).result_review.review_id);
-  assert.ok(review.goal.includes('非常挑剔、强势推进的 PI'));
-  assert.ok(review.goal.includes('不读取原始数据'));
-  assert.ok(review.goal.includes('就退回父级继续做'));
-  assert.ok(review.goal.includes('局限、图表齐全、文件很多，都不是通过理由'));
+  assert.ok(review.goal.includes('激进的功利主义 PI'));
+  assert.ok(review.goal.includes('不读取仪器原始文件'));assert.ok(review.goal.includes('读最后一步的数据本身'));
+  assert.ok(review.goal.includes('分析者没试过的路线'));assert.ok(review.goal.includes('可以很激进'));
+  assert.ok(review.goal.includes('文件很多、理由合理，都不是通过理由'));
   assert.ok(!review.goal.includes('never-read-this-file'));
   assert.ok(!review.sources.some(source=>source.includes('raw-data')));
   assert.ok(review.goal.includes('具体缺口') || review.goal.includes('具体问题'));
@@ -149,10 +149,9 @@ test('a revision delivers frozen change navigation to the reviewer without rerea
   startReadyWork();let received=false;
   await executeWithoutTitle(executeAgent)(current.id,async(_,prompt)=>{
     received=true;
-    assert.ok(prompt.includes('work handoff '+previous.id));
-    assert.ok(prompt.includes(previous.review_target.revision));
-    assert.ok(prompt.includes(previous.outputs[0]));
-    assert.ok(prompt.includes('判定 revise'));
+    assert.ok(!prompt.includes('work handoff '+previous.id));
+    assert.ok(!prompt.includes(previous.outputs[0]));
+    assert.ok(!prompt.includes('判定 revise'));
     assert.ok(prompt.includes('新增的成果路径：\n'+added));
     assert.ok(prompt.includes('内容有变化的成果：\n'+changed));
     assert.ok(prompt.includes('未再列入的成果路径：\n'+removed));
@@ -174,9 +173,9 @@ test('later review navigation uses the latest completed review of this parent an
   // A newer completed review of another operation must not become this baseline.
   const other=source();deliver(other.id,file('delta/other.csv'));const otherReview=get(get(other.id).result_review.review_id);verdict(otherReview.id);
   deliver(parent.id,output,'Third interpretation; unchanged numeric data.');const third=get(get(parent.id).result_review.review_id);
-  assert.ok(third.goal.includes('work handoff '+second.id));
+  assert.ok(!third.goal.includes('work handoff '+second.id));assert.ok(!third.goal.includes('判定 pass'));
   assert.ok(!third.goal.includes('work handoff '+first.id));assert.ok(!third.goal.includes(otherReview.id));
-  assert.ok(third.goal.includes('判定 pass'));assert.ok(third.goal.includes('哈希未变：1 项'));
+  assert.ok(third.goal.includes('哈希未变：1 项'));
   assert.equal(get(parent.id).result_review.state,'pending');
   const count=items().filter(i=>i.review_target?.id===parent.id).length;
   deliver(parent.id,output,'Third interpretation; unchanged numeric data.');
@@ -213,6 +212,16 @@ test('a restarted or failed reviewer cannot leave an old passing verdict live',(
   update({id:retry.id,status:'failed',handoff:'Host interrupted the run.'});
   deliver(parent.id,output);assert.equal(get(parent.id).result_review.state,'pending');
   assert.equal(items().filter(i=>i.review_target).length,1,'no automatic retry');
+}));
+
+test('every review execution opens a new conversation, including a re-run of the same review operation',()=>isolated(async()=>{
+  const parent=source(),output=file('fresh-session.csv');deliver(parent.id,output);
+  const review=get(parent.id).result_review.review_id;
+  const first=startReadyWork().find(s=>s.task_id===review);assert.ok(first,'the review starts');
+  verdict(review);
+  const retry=repeatOperation({id:review,input:'Review again from the stated objective.'});
+  const second=startReadyWork().find(s=>s.task_id===retry.id);assert.ok(second,'the re-run starts');
+  assert.notEqual(second.session_id,first.session_id,'a re-run does not resume the earlier review conversation');
 }));
 
 test('new execution directions are part of the reviewed version, but review-return messages are not',()=>isolated(async()=>{

@@ -39,7 +39,7 @@ export const cases = [
   // Texts that code outside templates.mjs fills in (work/run.mjs, projects/framework.mjs); the fragments are the single owner of their wording.
   { name: 'task-progress-goal', render: () => fragment('task/progress-goal', { sources: 't-1、t-2' }) },
   { name: 'task-result-review', render: () => fragment('task/result-review',{id:'example-parent',revision:'example-version',goal:'用户要用示例数据比较两种解释',direction:'接续比较，不新增测量',origin:'work handoff example-request',handoff:'示例结果，待核实',outputs:'example/report.html  SHA256=example-hash'}) },
-  { name: 'task-result-review-changes', render: () => fragment('task/result-review-changes',{id:'example-previous-review',revision:'example-previous-version',verdict:'revise',evidence:'example/review.md',fields:'handoff',added:'example/new-result.csv',changed:'example/report.html',removed:'example/old-appendix.csv',unchanged:1}) },
+  { name: 'task-result-review-changes', render: () => fragment('task/result-review-changes',{fields:'handoff',added:'example/new-result.csv',changed:'example/report.html',removed:'example/old-appendix.csv',unchanged:1}) },
   { name: 'task-result-review-return', render: () => fragment('task/result-review-return',{id:'example-review',revision:'example-version'}) },
   { name: 'framework-digest-header', render: () => fragment('framework/digest-header', { file: 'D:/office/workspace/projects/demo/FRAMEWORK.md', project: 'demo' }) },
   // Notices appended to a turn: attachments, file-state and running-code reminders.
