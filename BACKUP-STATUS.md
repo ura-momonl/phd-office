@@ -1,9 +1,20 @@
 # Office code snapshot — 2026-10-30
 
-This is a private work-in-progress backup, not a completed or verified release. Existing unfinished changes are preserved as found. No application tests were run for this backup.
+This is a public work-in-progress snapshot of the office code, not a completed or verified release. Existing unfinished changes are preserved as found. No application tests were run for this snapshot.
 
-Included: current source code, tests, necessary configuration and documentation, UI assets, and the literature module source (which the original local repository ignored). Copied source files were verified byte-for-byte by SHA-256.
+Included: source code, tests, necessary configuration and documentation, UI assets, and the literature module source. Every file's SHA-256 is listed in `BACKUP-MANIFEST.json`.
 
-Excluded: credentials and runtime directories, mail/account state, personal calendar, project and procurement catalogs, task/conversation records, dated assistant logs, research workspace, literature records/PDFs/indexes, dependencies and vendor downloads. These remain on the original machine. This is not a full-machine or research-data backup and needs local state/configuration to run.
+Excluded: credentials and runtime directories, mail/account state, personal calendar, project and procurement catalogs, task/conversation records, dated assistant logs, research workspace, literature records/PDFs/indexes, dependencies and vendor downloads. It needs local state/configuration to run.
 
-Created as a fresh repository so excluded data in the original local Git history is not uploaded. Original working files, index, branch and history are unchanged.
+## Getting it and updating it
+
+First download: `git clone https://github.com/ura-momonl/phd-office` (or download the ZIP).
+
+Incremental update without git (works for ZIP downloads and for copies you have edited):
+
+```
+node scripts/github-update.mjs            # preview what changed on GitHub
+node scripts/github-update.mjs --apply    # apply it
+```
+
+It compares each file with `BACKUP-MANIFEST.json`, downloads only changed files and verifies their SHA-256. Files you have not touched are overwritten; files you changed locally are never overwritten — the GitHub version is put in `.runtime/github-update/incoming/` for merging. If it reports `package.json` changed, run `npm install`; restart the backend after code changes. Node 18+ only, no dependencies.

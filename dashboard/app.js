@@ -14,9 +14,8 @@ let renderMarkdown=esc,copyCode,markdownAvailable=false,powershellAvailable=fals
 document.addEventListener('click',event=>{const button=event.target.closest('.md-copy');if(button && copyCode)void copyCode(button);});
 const statuses={queued:'等待执行',active:'进行中',done:'已交付',waiting_user:'待你处理',failed:'需要处理',cancelled:'已停止',planned:'待推进'};
 const providers={codex:'Codex',claude:'Claude',deepseek:'DeepSeek',program:'程序',user:'用户'};
-// Avatars exist for the user and the two AIs; the program and error lines get none.
-const userAvatar=document.querySelector('meta[name="office-user-avatar"]').content;
-const face=m=>{const who=m.role==='user' ? 'user' : ['assistant','handoff'].includes(m.role) && ['codex','claude','deepseek'].includes(m.provider) ? m.provider : '';return who ? `<img class="who" data-who="${who}" src="${who==='user' ? userAvatar : '/avatars/'+who+(who==='deepseek'?'.png':'.webp')}" width="48" height="48" alt="">` : '';};
+// Avatars exist for the user and the AIs; the program and error lines get none.
+const face=m=>{const who=m.role==='user' ? 'user' : ['assistant','handoff'].includes(m.role) && ['codex','claude','deepseek'].includes(m.provider) ? m.provider : '';return who ? `<img class="who" data-who="${who}" src="/avatars/${who}${who==='deepseek'?'.png':'.webp'}" width="48" height="48" alt="">` : '';};
 const pages={chat:'对话',history:'历史对话',tasks:'任务会话',inbox:'收件箱',projects:'项目',weekly:'周计划与复盘',literature:'文献',board:'工作看板',usage:'额度与消耗',connections:'设置',mail:'邮件',procurement:'采购',instruments:'仪器图鉴',prompts:'提示词',skills:'技能'};
 // Miscellaneous pages share one sidebar entry; the entry returns to the last one opened.
 const more=['board','mail','procurement','instruments','skills','prompts','usage','connections'];let moreLast='mail';
@@ -1150,6 +1149,7 @@ document.addEventListener('click',async e=>{
       if(b.dataset.page==='projects')projectId='';show(b.dataset.page);
     }
     if(b.dataset.session)selectSession(b.dataset.session);
+    if(b.dataset.updateRead){const id=b.dataset.updateRead,at=Number(b.dataset.updateAt);if(at>Number(agentReadAt[id] || 0)){agentReadAt[id]=at;localStorage.setItem('lab-agent-read',JSON.stringify(agentReadAt));renderRecentSessions();renderHistory();renderProjects();void syncReadState();}}
     if(b.dataset.chatOpen)openChatRef(b.dataset.chatOpen,b.dataset.chatTask);
     if(b.dataset.sessionPin){
       const s=state.agent.sessions.find(x=>x.id===b.dataset.sessionPin);if(!s || !pinsAvailable)return;

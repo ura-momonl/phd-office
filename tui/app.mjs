@@ -797,8 +797,9 @@ export async function run(action, argument, view) {
   const app = createApp({ cols: process.stdout.columns, rows: process.stdout.rows, prefs: loadPrefs(), launchDir: launchFolder(process.cwd()) });
   const out = process.stdout;
   if (process.platform === 'win32') app.writeClipboard = text => {
-    const r = spawnSync('clip.exe', [], { input: Buffer.from(text, 'utf16le'), windowsHide: true, timeout: 5000 });
-    if (r.error || r.status !== 0) throw new Error(r.error?.message || 'clip.exe 返回 ' + r.status);
+    // clip.exe guesses UTF-16 vs ANSI and garbles short CJK text; write CF_UNICODETEXT directly.
+    const r = spawnSync('python', [path.join(root, 'tui', 'clipboard.py')], { input: Buffer.from(text, 'utf8'), windowsHide: true, timeout: 5000, encoding: 'utf8' });
+    if (r.error || r.status !== 0) throw new Error(r.error?.message || (r.stderr || '').trim() || 'clipboard.py 返回 ' + r.status);
   };
   let prev = [], dirty = true, heroShown = false, heroKey = '', heroSix = '', heroCache = new Map();
   app.dirty = () => { dirty = true; };

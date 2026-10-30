@@ -8,25 +8,27 @@ import {root,read,write,sharedReads} from '../automation/files.mjs';
 import {createServer,snapshot} from './server.mjs';
 import {launchEdge} from '../automation/browser-launch.mjs';
 import {drain} from '../agent/run.mjs';
-import {inlineUserAvatar} from '../scripts/inline-user-avatar.mjs';
 if(process.env.PHD_ISOLATED_TESTS!=='1')throw new Error('Use scripts/run-tests.mjs --companion-ui --keep');
 
-test('first new-chat avatar is visible while queued even with all separate user-avatar requests blocked', {timeout:30000},async()=>{
+test('first new-chat avatar loads from its separate image file while queued', {timeout:30000},async()=>{
   const files=['agent/config.json','.runtime/agent/sessions.json','work/queue.json'];
   const originals=Object.fromEntries(files.map(f=>[f,read(f)]));
   write('agent/config.json',{...originals['agent/config.json'],enabled:false});
   write('.runtime/agent/sessions.json',{sessions:[]});write('work/queue.json',{...originals['work/queue.json'],items:[]});
   const htmlFile=path.join(root,'dashboard/index.html'),html=fs.readFileSync(htmlFile,'utf8');
-  inlineUserAvatar();assert.equal(fs.readFileSync(htmlFile,'utf8'),html,'avatar generation must be idempotent');
+  assert.doesNotMatch(html,/office-user-avatar|data:image\/(?:webp|png|jpeg);base64,/,'HTML must not embed avatar bytes');
+  assert.match(html,/<link rel="preload" as="image" type="image\/webp" href="\/avatars\/user\.webp">/);
   const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const dir=path.join(root,'.runtime/queued-avatar');fs.mkdirSync(dir,{recursive:true});
   let browser;const observations=[];
   try{
+    const image=await fetch('http://127.0.0.1:'+server.address().port+'/avatars/user.webp');
+    assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/webp');
+    assert.deepEqual(Buffer.from(await image.arrayBuffer()),fs.readFileSync(path.join(root,'dashboard/avatars/user.webp')),'serve the unchanged portrait file');
     browser=await launchEdge();
     for(const width of [1440,390]){
       const context=await browser.newContext({viewport:{width,height:1000}}),page=await context.newPage(),errors=[],requests=[];
       page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(new URL(r.url()).pathname==='/avatars/user.webp')requests.push(r.url());});
-      await page.route('**/avatars/user.webp',r=>r.abort('failed'));
       await page.route('**/api/usage/refresh',r=>r.fulfill({json:{}}));
       await page.route('**/api/companion/notes',r=>r.fulfill({json:{enabled:false,messages:[]}}));
       await page.addInitScript(()=>{
@@ -47,15 +49,14 @@ test('first new-chat avatar is visible while queued even with all separate user-
       await page.locator('.task-running').filter({hasText:'等待执行'}).waitFor();
       await page.waitForFunction(()=>Number.isFinite(window.__queuedAvatar.imageAt),{},{timeout:1200});
       assert.match(await page.locator('.task-running').textContent(),/等待执行/);
-      const img=page.locator('.message.user img.who'),data=await img.getAttribute('src');
-      assert.ok(data.startsWith('data:image/webp;base64,'));
-      assert.deepEqual(Buffer.from(data.split(',')[1],'base64'),fs.readFileSync(path.join(root,'dashboard/avatars/user.webp')),'same user portrait, no image modification');
+      const img=page.locator('.message.user img.who');
+      assert.equal(await img.getAttribute('src'),'/avatars/user.webp');
       const timing=await page.evaluate(()=>({...window.__queuedAvatar,gapMs:window.__queuedAvatar.imageAt-window.__queuedAvatar.textAt}));
       await page.locator('.message.user').screenshot({path:path.join(dir,`${width}-queued.png`)});
       const queue=read('work/queue.json');queue.items.find(t=>t.id===receipt.task_id).status='active';write('work/queue.json',queue);
       await page.locator('.task-running').filter({hasText:'进行中'}).waitFor({timeout:7000});
       assert.ok(await img.evaluate(e=>e.complete&&e.naturalWidth>0),'avatar remains visible after the status transition');
-      assert.deepEqual(requests,[]);assert.deepEqual(errors,[]);
+      assert.equal(requests.length,1,'preload and the message reuse the same external avatar');assert.deepEqual(errors,[]);
       observations.push({width,statusWhenVisible:'queued',...timing,avatarRequests:requests.length,errors});
       await context.close();
     }

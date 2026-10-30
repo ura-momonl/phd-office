@@ -113,6 +113,7 @@ node automation/run.mjs literature record <paper.json>
 - 所有 OA 候选失效不等于闭源，不能因此走 UW。页面上优先 `citation_pdf_url`，其次明确正文 PDF 链接，排除补充材料；不猜出版社下载端点。
 - 所有路线共用 PDF 完整性、论文身份和 SHA-256 核验。首页没有 DOI 时，必须先匹配目标题名，再核对文末同题名出版信息页的精确 `DOI:` 字段，或参考文献之前的 `Published online` DOI 出版块；不因参考文献里出现 DOI 就放行。一页文还可用“首页题名＋完全一致的 PDF Title＋PDF Subject 中唯一的 DOI 标识”核验，并单独记录证据种类。托管副本没有可靠版本证据时，版本／许可证记 null。
 - PDF 题名匹配识别旧 Adobe Symbol 字体提取的希腊字母（例如 `U+F062` 对应 β），不把普通拉丁字母 b 当成 β，也不把不同希腊字母混为一类；原有完整题名＋文章号／出版 DOI 证据和 SHA-256 要求不变。此修复不改变取文来源或下载权限。
+- 短题名使用完整独立题名行（允许折行）与文章号／出版 DOI 配对，不因少于20字符一律拒绝，也不以题名前缀替代完整题名。
 
 **浏览器下载登记：** 宏的 `register.mjs` 委托 `literature/register-download.mjs`，复用已经核验的登记文件；规范目标路径已存在但账本未登记时，核验后回填，不再因“文件已存在”一律失败，也不覆盖任何已有文件。失败输出一行 JSON `validation_failed` 和实际原因，不再只留 Node 调用栈首行。PDF 元数据回退使用同一便携 Poppler 的 `pdfinfo`（可用 `PDFINFO` 覆盖路径）。
 - CORE 已于 2026-10-19 移除（下载地址对程序返回 Cloudflare 挑战，不绕过）；本机凭据文件已于 2026-10-22 按用户决定删除。
@@ -124,6 +125,8 @@ node automation/run.mjs literature record <paper.json>
 **arXiv 作者稿核验：** OpenAlex 指向 arXiv 时，按编号读 arXiv 官方 API 唯一记录，必须有与请求完全一致的期刊 DOI，并与期刊记录至少共享两位不同作者的完整姓名（规范化后精确匹配，不按姓氏模糊匹配）；缺关联 DOI 停下交人工，冲突则拒绝。不要求题名逐字相同，但 PDF 首页须匹配 arXiv 题名并含至少两位已匹配作者的完整姓名；只用 API 返回的固定版本地址，首页若印有编号／版本不得冲突。API 请求前等待 3.1 秒，不重试。成功后把 `fulltext_identity`（关联、原稿题名作者、编号版本、`matched_authors`）与 SHA-256 登记到同一篇期刊 DOI，不新增 arXiv 记录。旧 `matched_surnames` 记录仅在哈希完全相同的本地缓存上离线兼容。arXiv ID 的原有直连入口 `arxiv.mjs` 不变（记为 DOI `10.48550/arxiv.<id>`）。
 
 **视觉核验：** 扫描件、字体缺字等自动核验不过时不模糊放行。助手可看渲染首页，核对官方期刊关联、固定版本来源、完整题名作者后，用 `record` 登记 `fulltext_identity.verification="visual-first-page"` 与 `verified_sha256`（必须绑定实际文件哈希）；缓存复用要求登记哈希、文件、视觉核验哈希三者一致。新自动下载不能用该标记跳过核验。
+
+PMC 官方云端的逐篇目视结果使用 `fulltext_identity.kind="pmc-visual"`，同时保留原 DOI／PMCID／版本、官方 PDF MD5、观测题名和作者记录；只有哈希未变且官方配对仍一致的已登记缓存能复用这项判读。新下载仍走原自动核验，不能自行生成目视判读来放行。
 
 **OpenAlex 托管与预算：** 用作品的 `has_content.pdf` / `content_urls.pdf`，不拿 `locations[].pdf_url` 猜地址。下载前读 `/rate-limit`；默认只有剩余免费预算覆盖 content 成本、`daily_budget_usd` 不超过 $1、预付费余额为 0 时才调用，预算未知或 key 缺失则跳过。动用预付费余额须用户明确同意（`--spend-prepaid`，用户 2026-10-20 当天授权过一次）；`--hosted-only` 只走托管；`--no-campus` 只走开放来源。免费预算与搜索共用，$1 约合每日 100 份 $0.01 的 PDF；UTC 0 点（芝加哥 19:00）重置。平台拒绝／限流不重试；托管下载到 HTML、错 DOI 或缺页不保存、不切来源。见 [官方全文接口](https://help.openalex.org/access/fulltext/)、[计费](https://help.openalex.org/access/example-costs/)、[额度接口](https://help.openalex.org/api/authentication/)。
 

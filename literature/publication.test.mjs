@@ -97,4 +97,32 @@ test('a changed registered file fails hash verification and is not overwritten',
   save([doi]);registerDownload(doi,input);fs.appendFileSync(out,'changed');
   assert.throws(()=>registerDownload(doi,input),/hash differs/);assert.match(fs.readFileSync(out,'utf8'),/changed$/);
 });
+
+test('short titles require a complete title line and article locator, not a prose prefix',()=>{
+  for(const short of ['Buckyball sandwiches','Chirality logic gates','When crystals flow','Spin vacuum switching','Two-dimensional silk']){
+    save([short+'\nResearch Journal efixture']);
+    const r=validatePDF(input,doi,undefined,undefined,short);assert.equal(r.identity.kind,'hosted-title-locator');
+    assert.equal(validatePDF(input,doi,r.sha256,r.identity).sha256,r.sha256);
+    save(['A longer discussion of '+short+' in another paper\nResearch Journal efixture']);
+    assert.throws(()=>validatePDF(input,doi,undefined,undefined,short),/Requested DOI/);
+    save([short+'\nResearch Journal eother']);
+    assert.throws(()=>validatePDF(input,doi,undefined,undefined,short),/Requested DOI/);
+  }
+});
+
+test('a PMC visual decision is confined to its exact cached hash and official DOI/MD5 pairing',()=>{
+  save(['Symbols and title extraction require visual inspection']);
+  const sha256=hash(input),md5=createHash('md5').update(fs.readFileSync(input)).digest('hex');
+  const identity={kind:'pmc-visual',verification:'visual-first-page',journal_doi:doi,metadata_doi:doi,
+    title,observed_title:title,authors:['Alice Kepler','Bruno Maxwell'],matched_authors:['Alice Kepler','Bruno Maxwell'],
+    pmcid:'PMC123',pmc_version:1,pdf_url:'https://pmc-oa-opendata.s3.amazonaws.com/PMC123.1/PMC123.1.pdf',
+    metadata_pdf_md5:md5,verified_sha256:sha256};
+  assert.equal(validatePDF(input,doi,sha256,identity).sha256,sha256);
+  assert.throws(()=>validatePDF(input,doi,undefined,identity),/Requested DOI/);
+  for(const change of [{journal_doi:'10.5555/wrong'},{metadata_doi:'10.5555/wrong'},{metadata_pdf_md5:'0'.repeat(32)},
+    {pdf_url:'https://other.example.org/PMC123.1.pdf'},{pmc_version:2},{verified_sha256:'0'.repeat(64)},
+    {matched_authors:['Alice Kepler']},{verification:'automatic'},{observed_title:''}])
+    assert.throws(()=>validatePDF(input,doi,sha256,{...identity,...change}),/Requested DOI/);
+  fs.appendFileSync(input,'changed');assert.throws(()=>validatePDF(input,doi,sha256,identity),/hash differs/);
+});
 });

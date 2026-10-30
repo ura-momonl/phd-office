@@ -140,12 +140,15 @@ export function workDigest(snapshot=workSnapshot(), pick=null) {
 }
 // Default `work list` view: a record-selected overview that is complete by construction, so a truncated read
 // (head, tail, a tool's output limit) cannot pass for the whole queue. Detail comes from `work list <project|status|all>`.
-const OVERVIEW_ATTENTION=12,OVERVIEW_CHAINS=6;
+const OVERVIEW_ATTENTION=12,OVERVIEW_CHAINS=6,TURN_FAILURE_WINDOW_MS=48*3600*1000;
 const short=id=>String(id).slice(0,8),oneLine=t=>String(t||'').replace(/\s+/g,' ');
 export function workOverview(snapshot=workSnapshot()) {
   const byId=new Map(snapshot.items.map(i=>[i.id,i])),counts={};
   const finished=i=>['done','cancelled'].includes(i.status) && !(i.status==='done' && (i.review?.state==='pending' || resultReviewPending(i)));
-  const unfinishedAll=snapshot.items.filter(i=>!finished(i)),isTurn=isChatTurn,open=unfinishedAll.filter(i=>!isTurn(i)),turns=unfinishedAll.filter(isTurn),turnCounts={};
+  // A failed chat turn is a finished record, not pending work: it only counts as unfinished while it is recent enough to still be worth a look.
+  const unfinishedAll=snapshot.items.filter(i=>!finished(i)),isTurn=isChatTurn,open=unfinishedAll.filter(i=>!isTurn(i)),turnCounts={};
+  const recentSince=Date.now()-TURN_FAILURE_WINDOW_MS,stamp=i=>Date.parse(i.updated_at||i.created_at)||0;
+  const turnsAll=unfinishedAll.filter(isTurn),turns=turnsAll.filter(i=>i.status!=='failed'||stamp(i)>=recentSince),pastFailed=turnsAll.length-turns.length;
   for(const i of turns) turnCounts[i.status]=(turnCounts[i.status]||0)+1;
   const dead=id=>{const seen=new Set(),walk=x=>{if(seen.has(x))return false;seen.add(x);const t=byId.get(x);if(!t)return false;if(t.status==='failed'||t.status==='cancelled')return true;return (t.dependencies||[]).some(walk);};return walk(id);};
   const category=i=>i.status==='done' ? resultReviewLabel(i) || '待验收' : i.status==='active' ? '进行中' : i.status==='waiting_user' ? '等你' : i.status==='failed' ? '失败'
@@ -167,7 +170,7 @@ export function workOverview(snapshot=workSnapshot()) {
   }
   const categories={};for(const g of Object.values(groups)) for(const [k,v] of Object.entries(g)) categories[k]=(categories[k]||0)+v;
   return {
-    coverage:'任务步骤未结束 '+open.length+' 条（队列共 '+snapshot.items.length+' 条）：'+Object.entries(categories).map(([k,v])=>k+' '+v).join('、')+'。另有对话轮 '+turns.length+' 条未结束（'+Object.entries(turnCounts).map(([k,v])=>k+' '+v).join('、')+'），是聊天消息留下的记录，不是待办，不在下面列出，需要时 work list turns。本总览按条目选择、自身完整，以末尾 end 字段为读完标志；没读到 end 就是被截断，不要据此下结论。明细：work list <项目id|状态|all>，单条：work handoff <完整id>。',
+    coverage:'任务步骤未结束 '+open.length+' 条（队列共 '+snapshot.items.length+' 条）：'+Object.entries(categories).map(([k,v])=>k+' '+v).join('、')+'。另有对话轮 '+turns.length+' 条未结束（'+(Object.entries(turnCounts).map(([k,v])=>k+' '+v).join('、')||'无')+'；失败的只计最近 48 小时内的），是聊天消息留下的记录，不是待办，不在下面列出，需要时 work list turns。更早失败的对话轮 '+pastFailed+' 条是历史记录，已不计入未结束，正文与原因仍在 turns.json。本总览按条目选择、自身完整，以末尾 end 字段为读完标志；没读到 end 就是被截断，不要据此下结论。明细：work list <项目id|状态|all>，单条：work handoff <完整id>。',
     total_items:snapshot.items.length,counts,turns:turnCounts,by_project:groups,
     needs_attention:lines.slice(0,OVERVIEW_ATTENTION).concat(lines.length>OVERVIEW_ATTENTION?['另有 '+(lines.length-OVERVIEW_ATTENTION)+' 条，用 work list <项目id|状态> 看']:[]),
     blocked_by_failed:chains.slice(0,OVERVIEW_CHAINS).concat(chains.length>OVERVIEW_CHAINS?['另有 '+(chains.length-OVERVIEW_CHAINS)+' 组']:[]),

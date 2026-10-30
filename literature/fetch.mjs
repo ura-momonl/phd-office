@@ -27,6 +27,15 @@ const symbolGreekUpper = 'ΑΒΧΔΕΦΓΗΙϑΚΛΜΝΟΠΘΡΣΤΥςΩΞΨΖ';
 const symbolGreekLower = 'αβχδεφγηιϕκλμνοπθρστυϖωξψζ';
 const pdfTitleNorm = value => norm(String(value || '').replace(/[\uf041-\uf05a\uf061-\uf07a]/g,
   c => c.charCodeAt(0) < 0xf061 ? symbolGreekUpper[c.charCodeAt(0)-0xf041] : symbolGreekLower[c.charCodeAt(0)-0xf061]));
+function pdfHasTitle(text,title) {
+  const wanted=norm(title);if(!wanted)return false;
+  if(wanted.length>=20)return pdfTitleNorm(text).includes(wanted);
+  // Short titles need a complete title line (possibly wrapped), not a prefix
+  // or a substring inside prose; the DOI locator/publication evidence still applies.
+  if(String(title).trim().split(/\s+/).length<2)return false;
+  const lines=text.split(/\r?\n/);
+  return lines.some((line,i)=>pdfTitleNorm(line)===wanted||pdfTitleNorm(line+' '+(lines[i+1]||''))===wanted);
+}
 const surnames = names => [...new Set(names.map(name => norm(String(name).trim().split(/\s+/).at(-1))).filter(n => n.length >= 3))];
 const sharedAuthors = (left, right) => {
   const expected = new Set(right.map(norm));
@@ -179,7 +188,7 @@ export function selectPDF(snapshot) {
 // A later DOI must belong to a publication-information block, not merely to
 // a cited reference. Every fallback also requires the expected title on page 1.
 function publicationIdentity(file, doi, title, firstPage, sha256) {
-  if (!title || norm(title).length < 20 || !pdfTitleNorm(firstPage).includes(norm(title))) return null;
+  if (!title || !pdfHasTitle(firstPage,title)) return null;
   const escaped = doi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const full = spawnSync(pdfTextExecutable(), [file, '-'], {
     encoding:'utf8', timeout:20000, maxBuffer:8*1024*1024, windowsHide:true
@@ -223,6 +232,17 @@ export function validatePDF(file, doi, expectedHash, identity, hostedTitle) {
   const legacy = expectedHash && identity?.kind === 'arxiv-manuscript' && !Object.hasOwn(identity, 'matched_authors');
   const common = sharedAuthors(identity?.authors || [], identity?.matched_authors || []);
   const oldSurnames = legacy ? surnames(identity.authors || []).filter(name => (identity.matched_surnames || []).includes(name)) : [];
+  // A prior human/assistant visual decision for a PMC PDF is reusable only on
+  // the unchanged file, with its official DOI/PMCID/version/MD5 provenance.
+  // Fresh automated downloads have no expectedHash and cannot take this path.
+  if(expectedHash&&identity?.kind==='pmc-visual'&&identity.verification==='visual-first-page'
+      &&identity.journal_doi===doi&&identity.metadata_doi===doi&&identity.verified_sha256===sha256
+      &&identity.title&&identity.observed_title&&common.length>=2
+      &&/^PMC\d+$/.test(identity.pmcid||'')&&Number.isInteger(identity.pmc_version)&&identity.pmc_version>0
+      &&identity.pdf_url===`https://pmc-oa-opendata.s3.amazonaws.com/${identity.pmcid}.${identity.pmc_version}/${identity.pmcid}.${identity.pmc_version}.pdf`
+      &&/^[a-f0-9]{32}$/.test(identity.metadata_pdf_md5||'')
+      &&createHash('md5').update(bytes).digest('hex')===identity.metadata_pdf_md5)
+    return {sha256,bytes:bytes.length,identity};
   // A recorded visual identity decision applies only to that exact, unchanged
   // cached file. It never bypasses validation of a fresh automatic download.
   if (expectedHash && identity?.kind === 'arxiv-manuscript' && identity.journal_doi === doi
@@ -267,7 +287,7 @@ export function validatePDF(file, doi, expectedHash, identity, hostedTitle) {
   const title = ['hosted-title-locator','publisher-title-doi-block','pdf-title-doi-metadata'].includes(identity?.kind)
     && identity.journal_doi === doi ? identity.title : hostedTitle;
   const locator = norm(doi.split('/').pop().split(/[^A-Za-z0-9]+/).filter(Boolean).pop() || '');
-  if (title && norm(title).length >= 20 && locator.length >= 5 && pdfTitleNorm(parsed.stdout).includes(norm(title))
+  if (title && locator.length >= 5 && pdfHasTitle(parsed.stdout,title)
       && (parsed.stdout.match(/[\p{L}\p{N}]+/gu) || []).some(token => norm(token).endsWith(locator)))
     return { sha256, bytes: bytes.length, identity: { kind: 'hosted-title-locator', journal_doi: doi, title, locator,
       rule: 'first-page title and DOI article locator; full DOI not printed', verified_sha256: sha256 } };

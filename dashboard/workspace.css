@@ -312,15 +312,15 @@ button.primary:hover{filter:brightness(1.08)}
 .work-dcg .fw-step-main>strong{order:-2;flex:1 1 100%;font-size:13px;line-height:1.6}
 .work-dcg .fw-step-main>small{font-size:11px;color:#8a9a91}.work-dcg .fw-step-main>small:not(.step-parent){order:-1}
 .work-dcg .fw-step-main>details,.work-dcg .fw-step-main>p,.work-dcg .fw-step-main>div{flex:1 1 100%;min-width:0}
-.work-dcg .fw-step-main>.message-text{margin:3px 0 0;color:#46584e;line-height:1.75;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
-.work-dcg .fw-step-main>.message-text.is-clamped{cursor:pointer;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
-.work-dcg .fw-step-main>.message-text.is-open{-webkit-line-clamp:unset;display:block;-webkit-mask-image:none;mask-image:none;cursor:pointer}
-.work-dcg .fw-step-main>.message-text.is-clamped:not(.is-open):hover{color:#2f6a4f}
+.work-map-node .fw-step-main>.message-text{margin:3px 0 0;color:#46584e;line-height:1.75;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.work-map-node .fw-step-main>.message-text.is-clamped{cursor:pointer;-webkit-mask-image:linear-gradient(#000 70%,transparent);mask-image:linear-gradient(#000 70%,transparent)}
+.work-map-node .fw-step-main>.message-text.is-open{-webkit-line-clamp:unset;display:block;-webkit-mask-image:none;mask-image:none;cursor:pointer}
+.work-map-node .fw-step-main>.message-text.is-clamped:not(.is-open):hover{color:#2f6a4f}
 .work-dcg .step-goal{margin-top:2px}.work-dcg .step-goal summary{color:#7d8f84;font-size:11px}
 .work-dcg .work-map-prerequisites{margin-top:7px;padding-top:6px;border-top:1px dashed #e4ebe6}
 .work-dcg .work-map-return{border-radius:8px;padding:9px 12px}.work-map-return>div{flex:1 1 0;min-width:0}
 /* DCG as small blocks: one column per execution step, with wide, heavy connectors between the columns. */
-.work-dcg .work-map-edges{stroke-width:2.25;stroke:#7fa592}.work-dcg .work-map-edges .work-edge-arrow{stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.work-dcg .work-map-edges{stroke-width:2.25;stroke:#6f9b86;z-index:2}.work-dcg .work-map-edges .work-edge-arrow{stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .work-dcg .work-map-node{--accent:#c9d3cd;border-left-width:1px;border-top:3px solid var(--accent);padding:12px 13px 11px;border-radius:10px;box-shadow:0 2px 6px #1c372d0f}
 .work-dcg .fw-step{flex-direction:column;align-items:flex-start}
 .work-dcg .fw-step .fw-chip{margin:0 0 -6px}
@@ -335,8 +335,8 @@ button.primary:hover{filter:brightness(1.08)}
 .work-dcg .fw-step-main>.message-text.is-open{-webkit-line-clamp:unset}
 .work-dcg .step-goal summary{font-size:10px}.work-dcg .file-name{font-size:10px}
 .work-dcg .work-map-prerequisites{margin-top:5px;padding-top:4px}.work-dcg .work-map-link{font-size:10px;line-height:1.5}
-.work-step-no{position:absolute;top:8px;right:9px;z-index:1;font:600 11px/1 Consolas,monospace;color:#4f7089;background:#eaf1f7;border:1px solid #d3e0ec;border-radius:5px;padding:3px 6px;letter-spacing:.02em}
-.work-dcg .work-map-node .fw-step-main>strong{padding-right:38px}
+.step-title-link{padding:0;font:inherit;color:inherit;text-align:inherit;cursor:pointer;background:none;border:0;overflow-wrap:anywhere}.step-title-link:hover{color:#2f7d66;text-decoration:underline;text-decoration-color:#9cc9b9;text-underline-offset:3px}.step-title-link:after{content:' ↗';font-size:.8em;font-weight:400;color:#9cc9b9}
+.work-dcg .work-map-node .fw-step-main>strong{padding-right:0}
 .work-dcg .work-map-levels{display:flex;flex-wrap:wrap;align-items:flex-start;gap:26px 28px}
 .work-round{padding:8px 10px 10px;border:1px solid #d6e2ed;border-radius:10px;background:#ffffff99;min-width:0;max-width:100%}
 .work-round-head{display:flex;align-items:baseline;gap:8px;margin:0 0 8px 2px;font-size:11px;color:#6f8a9f}.work-round-head b{font-weight:600;color:#5d7b93}.work-round-head small{font-size:10px;color:#93a6b5}
@@ -431,7 +431,7 @@ button.primary:hover{filter:brightness(1.08)}
 /* Detail reminders share the overview's unread boundary; project content stays intact. */
 .project-new-updates{margin-bottom:20px}
 .project-update-list{max-height:260px;overflow-y:auto;margin-top:10px}
-.project-update-entry{display:block;width:100%;padding:12px 4px;text-align:left;line-height:1.7;border-top:1px solid var(--border);border-radius:4px;overflow-wrap:anywhere}
+.project-update-row{display:flex;align-items:flex-start;gap:8px;border-top:1px solid var(--border)}.project-update-row .project-update-entry{flex:1;min-width:0;width:auto;border-top:0}.project-update-read{flex-shrink:0;margin-top:12px;font-size:10px;line-height:1;padding:4px 8px;border-radius:6px;color:#367d68;background:#e8f2ef;border:1px solid #cfe4dc;white-space:nowrap}.project-update-read:hover{background:#d9ece6}.project-update-entry{display:block;width:100%;padding:12px 4px;text-align:left;line-height:1.7;border-top:1px solid var(--border);border-radius:4px;overflow-wrap:anywhere}
 .project-update-entry:hover{background:var(--teal-bg)}
 .project-update-entry:focus-visible{outline:2px solid var(--teal);outline-offset:-2px}
 .project-update-title{display:flex;align-items:baseline;gap:8px;font-size:12px}

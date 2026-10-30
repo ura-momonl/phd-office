@@ -6,7 +6,6 @@ import { mascotPixels } from './mascot.mjs';
 export const THEMES = {
   clay:  { name: '陶土', accent: [217, 119, 87], claude: [217, 119, 87], codex: [112, 176, 164], deepseek: [128, 148, 238], user: [232, 222, 202], dim: [128, 124, 118], ok: [140, 180, 120], bad: [214, 96, 88], warn: [222, 176, 90], band: [58, 50, 46], tagFg: [30, 28, 26] },
   night: { name: '夜',   accent: [140, 170, 255], claude: [235, 140, 110], codex: [110, 200, 190], deepseek: [150, 150, 255], user: [210, 214, 228], dim: [112, 116, 134], ok: [130, 200, 140], bad: [240, 112, 112], warn: [230, 190, 100], band: [36, 42, 62], tagFg: [18, 20, 30] },
-  paper: { name: '纸',   accent: [160, 90, 60], claude: [190, 95, 60], codex: [40, 120, 110], deepseek: [70, 80, 180], user: [50, 46, 40], dim: [140, 134, 124], ok: [60, 130, 70], bad: [190, 52, 52], warn: [170, 120, 30], band: [238, 228, 208], tagFg: [255, 252, 244] },
 };
 export const PROVIDERS = { claude: 'Claude', codex: 'Codex', deepseek: 'DeepSeek' };
 export const SPINNER = ['✻', '✺', '✹', '✸'];

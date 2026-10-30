@@ -193,11 +193,12 @@ function executionHistory(t) {
   return `<details class="step-goal step-executions" data-execution-history="${esc(t.id)}" data-expand="step-executions:${esc(t.id)}"><summary>执行历史 · ${history.length} 次</summary>${history.map((run,index)=>`<div data-execution-row="${esc(run.id)}"><small>第 ${index+1} 次 · ${esc(labels[run.status])}${run.outcome_status ? ' · '+esc(outcomes[run.outcome_status]) : ''} · ${esc(time(run.completed_at || run.created_at))}</small>${run.handoff ? `<p class="message-text">${esc(run.handoff)}</p>` : ''}${stepFiles(run.outputs,run.id)}<button type="button" class="text-button" data-task-session="${esc(run.source_task_id || run.id)}">打开本次对话 ↗</button></div>`).join('')}</details>`;
 }
 const grip=(p,kind,id)=>`<span class="fw-grip" data-edit-only draggable="true" data-drag-${kind}="${esc(id)}" data-drag-project="${esc(p.id)}" title="拖动重排或改归属" aria-label="拖动">⠿</span>`;
-function stepRow(p,t,all) {
+function stepRow(p,t,all,meta='') {
+    const lastRun=(t.execution_history || []).at(-1),session=lastRun ? lastRun.source_task_id || lastRun.id : '';
     const {status:displayStatus,note,words}=stepDisplay(t,all);
     const attr=`data-step-chip="${esc(t.id)}" data-step-status="${esc(t.status)}" data-step-actor="${esc(t.actor)}" data-step-blocked="${t.blocked_by?.length ? 1 : ''}" data-step-outputs="${t.require_outputs ? 1 : ''}"`;
     const result=(t.handoff ? `<p class="message-text">${esc(t.handoff)}</p>` : '')+stepFiles(t.outputs,t.id);
-    return `<div class="fw-step" data-step-row="${esc(t.id)}">${grip(p,'step',t.id)}<button class="fw-chip st-${lampOf[displayStatus] || 'open'}${stepLocked(t) ? ' is-locked' : ''}" ${attr} ${stepLocked(t) ? 'disabled title="助手执行或等待接续中，不能手动改状态"' : 'title="点击修改这一步的状态"'}><i class="fw-dot"></i>${esc(words)}</button><div class="fw-step-main"><strong>${esc(t.title)}</strong>${parentNote(t,all)}<small>${actor[t.actor]}${note ? ' · '+esc(note) : ''}</small>${t.goal ? `<details class="step-goal" data-expand="step-goal:${esc(t.id)}"><summary>步骤说明</summary><p class="message-text">${esc(t.goal)}</p></details>` : ''}${result}${executionHistory(t)}<div class="fw-actions" data-edit-only><button type="button" class="text-button" data-step-edit="${esc(t.id)}">编辑步骤</button><button type="button" class="text-button danger-text" data-step-edit="${esc(t.id)}" data-step-action="delete">删除</button></div></div></div>`;
+    return `<div class="fw-step" data-step-row="${esc(t.id)}">${grip(p,'step',t.id)}<button class="fw-chip st-${lampOf[displayStatus] || 'open'}${stepLocked(t) ? ' is-locked' : ''}" ${attr} ${stepLocked(t) ? 'disabled title="助手执行或等待接续中，不能手动改状态"' : 'title="点击修改这一步的状态"'}><i class="fw-dot"></i>${esc(words)}</button><div class="fw-step-main"><strong>${session ? `<button type="button" class="step-title-link" data-task-session="${esc(session)}" title="打开和这位 agent 的对话">${esc(t.title)}</button>` : esc(t.title)}</strong>${parentNote(t,all)}<small>${actor[t.actor]}${meta ? ' · '+esc(meta) : ''}${note ? ' · '+esc(note) : ''}</small>${t.goal ? `<details class="step-goal" data-expand="step-goal:${esc(t.id)}"><summary>步骤说明</summary><p class="message-text">${esc(t.goal)}</p></details>` : ''}${result}${executionHistory(t)}<div class="fw-actions" data-edit-only><button type="button" class="text-button" data-step-edit="${esc(t.id)}">编辑步骤</button><button type="button" class="text-button danger-text" data-step-edit="${esc(t.id)}" data-step-action="delete">删除</button></div></div></div>`;
 }
 function stepList(p,steps,all) {
   if(!steps.length)return '';
@@ -337,7 +338,7 @@ export function projectsView(s,selected,query='',render=esc,readAt={},editing=fa
   const projectFiles=`<details class="panel project-section" data-expand="files:${p.id}"><summary>项目文件 <span>${files.length}</span></summary>${projectFileView(p,p)}</details>`;
   const done=i.tasks.filter(t=>t.status==='done'),recent=done.filter(t=>t.outputs?.length).reverse(),chatCount=done.length-recent.length;
   const unread=unreadFor(p);
-  const newUpdates=unread.length ? `<details class="panel project-section project-new-updates" data-expand="updates:${esc(p.id)}" open><summary>新更新 <span>${unread.length}</span></summary><div class="project-update-list">${unread.map(u=>`<button type="button" class="project-update-entry" data-session="${esc(u.sessionId)}" title="打开原对话；查看后标为已读"><span class="project-update-title"><span class="pill tone-teal">新</span><strong>${esc(u.title)}</strong></span><small>${esc(actor[u.provider])} · ${esc(time(u.at))}</small><span class="project-update-preview">${esc(u.text || '查看回复 ↗')}</span></button>`).join('')}</div></details>` : '';
+  const newUpdates=unread.length ? `<details class="panel project-section project-new-updates" data-expand="updates:${esc(p.id)}" open><summary>新更新 <span>${unread.length}</span></summary><div class="project-update-list">${unread.map(u=>`<div class="project-update-row"><button type="button" class="project-update-entry" data-session="${esc(u.sessionId)}" title="打开原对话；查看后标为已读"><span class="project-update-title"><span class="pill tone-teal">新</span><strong>${esc(u.title)}</strong></span><small>${esc(actor[u.provider])} · ${esc(time(u.at))}</small><span class="project-update-preview">${esc(u.text || '查看回复 ↗')}</span></button><button type="button" class="project-update-read" data-update-read="${esc(u.sessionId)}" data-update-at="${Date.parse(u.at)}" title="标为已读，不打开对话">已阅读</button></div>`).join('')}</div></details>` : '';
   const progress=i.framework ? (()=>{const f=frameworkStats(p);return `${f.entries} 条时间记录 · ${f.sections} 个板块条目 · ${f.tracked} 项带状态 · 非实验进度`;})() : i.leaves.length ? `${i.completed} / ${i.leaves.length} 个环节已完成` : i.tasks.length ? `${i.tasks.filter(taskComplete).length} / ${i.tasks.length} 项已交付` : '进度待记录';
   // Each band of the detail page is built on its own, then laid out in the order the page shows them.
   const heading=`<button class="project-back text-button" data-project-back>← 所有项目</button><div class="page-heading project-detail-heading"><div><p class="eyebrow">${i.framework ? 'PROJECT FRAMEWORK' : 'PROJECT PLAN'}${p.plan_is_example ? ' · 示意内容' : ''}${p.archived_at ? ' · 已归档' : ''}</p><h1>${esc(p.name)}</h1></div></div>`;
@@ -377,10 +378,16 @@ export function workGraph(projectId,items,scope=items) {
         if(i && Date.parse(t.created_at)-Date.parse(sorted[i-1].created_at)<=120000)join(t.id,sorted[i-1].id);
       });
       const order=[];for(const t of sorted)if(!order.includes(find(t.id)))order.push(find(t.id));
-      const byStep=new Map();
+      const byStep=new Map(),roundStart=order.map(root=>Math.min(...nodes.filter(t=>find(t.id)===root).map(t=>Date.parse(t.created_at))));
       for(const t of nodes) {
         const round=order.indexOf(find(t.id))+1,depth=rank(t);
-        stepNo.set(t.id,[round,depth<26 ? String.fromCharCode(97+depth) : String(depth+1)]);
+        // A step re-run after later rounds were dispatched belongs to those rounds too (round 2's agent picked up work again in round 4).
+        const rounds=new Set([round]);
+        for(const run of (t.execution_history || []).slice(1)) {
+          const at=Date.parse(run.created_at);let r=0;roundStart.forEach((start,i)=>{if(start<=at)r=i+1;});
+          if(r>round)rounds.add(r);
+        }
+        stepNo.set(t.id,[round,depth<26 ? String.fromCharCode(97+depth) : String(depth+1),[...rounds].sort((x,y)=>x-y)]);
         const key=round*100+depth;(byStep.get(key) || byStep.set(key,[]).get(key)).push(t);
       }
       const keys=[...byStep.keys()].sort((x,y)=>x-y);
@@ -402,8 +409,8 @@ export function workGraph(projectId,items,scope=items) {
       const live=['queued','active'].includes(latest?.status);
       const refs=(t.dependencies || []).filter(id=>!owner || !ids.has(id)).map(id=>goto(id,'← '+(byId.get(id)?.title || id))).join('');
       const sub=children.length ? `<details class="work-dcg" data-work-dcg="${esc(t.id)}" data-expand="work-dcg:${esc(t.id)}" ${children.some(c=>!['done','cancelled'].includes(c.status) || ['queued','active'].includes(c.last_execution?.status)) || live ? 'open' : ''}><summary><span class="tree-chevron">›</span><span class="work-layer-tag">DCG</span><strong>动态子操作</strong><span class="work-dcg-dots" aria-hidden="true">${children.map(c=>`<i class="st-${lampOf[stepDisplay(c,items).status] || 'open'}"></i>`).join('')}</span><small>${children.length} 项${children.filter(c=>c.status==='done').length ? ' · '+children.filter(c=>c.status==='done').length+' 完成' : ''}</small></summary><div class="work-dcg-body">${renderMap(children,t)}</div></details>` : '';
-      const no=stepNo.get(t.id),badge=no ? `<span class="work-step-no" title="第 ${no[0]} 轮 · 步骤 ${no[1]}（同一轮内互不依赖的并行块标号相同）">${no[0]}.${no[1]}</span>` : '';
-      return `<div class="work-map-node" data-work-map-node="${esc(t.id)}">${badge}${stepRow({id:projectId},t,items)}${refs ? `<div class="work-map-prerequisites" aria-label="实际前置关系">${refs}</div>` : ''}${sub}</div>`;
+      const no=stepNo.get(t.id),meta=no ? `步骤 ${no[1]}${no[2].length>1 ? ' · 第 '+no[2].join('、')+' 轮均有执行' : ''}` : '';
+      return `<div class="work-map-node" data-work-map-node="${esc(t.id)}">${stepRow({id:projectId},t,items,meta)}${refs ? `<div class="work-map-prerequisites" aria-label="实际前置关系">${refs}</div>` : ''}${sub}</div>`;
     }).join('')}</div>`;
     // In a DCG every round is a lane: steps run left to right inside it, blocks sent in parallel stack in one step column, and lanes pack side by side.
     const cards=owner ? [...new Set(rowRounds)].map(round=>{
@@ -420,7 +427,7 @@ const openHandoffs=new Set();
 export function bindWorkGraph(root) {
   workGraphObserver?.disconnect();
   // Long handoffs in the DCG are clamped to a few lines; the expanded choice survives the 5s re-render.
-  root.querySelectorAll('.work-dcg .fw-step-main > .message-text').forEach(text=>{
+  root.querySelectorAll('.work-map-node .fw-step-main > .message-text').forEach(text=>{
     const id=text.closest('[data-step-row]')?.dataset.stepRow;
     text.classList.toggle('is-open',openHandoffs.has(id));
     text.classList.toggle('is-clamped',text.classList.contains('is-open') || text.scrollHeight>text.clientHeight+1);
@@ -443,8 +450,11 @@ export function bindWorkGraph(root) {
         // Solid dependencies leave a block's bottom centre; dashed returns leave its right side, staggered, so the two never share a line.
         if(b.left>=a.right-1) {
           // Next step of the same round sits to the right: a heavy horizontal link from the block's header line to the next one's.
-          const sx=a.right-box.left,sy=a.top-box.top+Math.min(26,a.height/2),ex=b.left-box.left,ey=b.top-box.top+Math.min(26,b.height/2),bend=Math.max(20,(ex-sx)/2);
-          return `<path data-work-edge-from="${esc(edge.from)}" data-work-edge-to="${esc(edge.to)}" d="M ${sx} ${sy} C ${sx+bend} ${sy} ${ex-bend} ${ey} ${ex-9} ${ey}"/><path class="work-edge-arrow" d="M ${ex-12} ${ey-6} L ${ex-3} ${ey} L ${ex-12} ${ey+6}"/>`;
+          const sx=a.right-box.left,sy=a.top-box.top+Math.min(26,a.height/2),ex=b.left-box.left,ey=b.top-box.top+Math.min(26,b.height/2);
+          // Several sources feeding one step run right, merge on a shared vertical bus just before it, then enter together with one arrowhead.
+          const bx=ex-Math.min(18,(ex-sx)/2),r=Math.min(8,Math.abs(ey-sy)/2,Math.max(0,bx-sx)),dy=ey>sy ? 1 : -1;
+          const path=r<1 ? `M ${sx} ${sy} H ${bx} V ${ey} H ${ex-2}` : `M ${sx} ${sy} H ${bx-r} Q ${bx} ${sy} ${bx} ${sy+dy*r} V ${ey-dy*r} Q ${bx} ${ey} ${bx+r} ${ey} H ${ex-2}`;
+          return `<path data-work-edge-from="${esc(edge.from)}" data-work-edge-to="${esc(edge.to)}" d="${path}"/><path class="work-edge-arrow" d="M ${ex-11} ${ey-6} L ${ex-1} ${ey} L ${ex-11} ${ey+6}"/>`;
         }
         const x=a.left+a.width/2-box.left,y=a.bottom-box.top,tx=b.left+b.width/2-box.left,ty=b.top-box.top,middle=(y+ty)/2;
         const crossesNode=[...nodes.values()].some(n=>{
@@ -453,8 +463,10 @@ export function bindWorkGraph(root) {
           return r.top<b.top && r.bottom>a.bottom && r.left<Math.max(x,tx)+box.left && r.right>Math.min(x,tx)+box.left;
         });
         const rail=dcg ? 7 : -4;
-        const path=crossesNode ? `M ${x} ${y} V ${y+8} H ${rail} V ${ty-12} H ${tx} V ${ty-5}` : `M ${x} ${y} C ${x} ${middle} ${tx} ${middle} ${tx} ${ty-5}`;
-        return `<path data-work-edge-from="${esc(edge.from)}" data-work-edge-to="${esc(edge.to)}" d="${path}"/><path class="work-edge-arrow" d="M ${tx-3} ${ty-8} L ${tx} ${ty-3} L ${tx+3} ${ty-8}"/>`;
+        // Fan-out edges share one trunk and bus (org-chart style) instead of separate curves; corners are rounded.
+        const bus=y+Math.min(24,Math.max(8,(ty-y)/2)),r=Math.min(8,Math.abs(tx-x)/2),dir=tx>x ? 1 : -1;
+        const path=crossesNode ? `M ${x} ${y} V ${y+8} H ${rail} V ${ty-12} H ${tx} V ${ty-2}` : r<1 ? `M ${x} ${y} V ${ty-2}` : `M ${x} ${y} V ${bus-r} Q ${x} ${bus} ${x+dir*r} ${bus} H ${tx-dir*r} Q ${tx} ${bus} ${tx} ${bus+r} V ${ty-2}`;
+        return `<path data-work-edge-from="${esc(edge.from)}" data-work-edge-to="${esc(edge.to)}" d="${path}"/><path class="work-edge-arrow" d="M ${tx-6} ${ty-11} L ${tx} ${ty-1} L ${tx+6} ${ty-11}"/>`;
       }).join('');
     }
   };

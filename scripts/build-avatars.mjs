@@ -1,5 +1,4 @@
 import { launchEdge } from '../automation/browser-launch.mjs';
-import { inlineUserAvatar } from './inline-user-avatar.mjs';
 // Rebuilds dashboard/avatars/*.webp from D:/Main/icons: a face-centred square crop, 160px. Needs the installed Edge. Usage: node scripts/build-avatars.mjs
 // The crop boxes ([file, x, y, size] in source pixels) were tuned by eye; change them if the pictures change.
 import fs from 'node:fs';
@@ -20,5 +19,4 @@ for (const [name, [file, cx, cy, cs]] of Object.entries(sources)) {
   fs.writeFileSync(`D:/Main/assistant/dashboard/avatars/${name}.webp`, buffer);
   console.log(name.padEnd(7), `${out.w}x${out.h} -> 160x160 (face crop)`, buffer.length, 'bytes', out.url.startsWith('data:image/webp') ? 'webp' : 'FALLBACK ' + out.url.slice(0, 20));
 }
-inlineUserAvatar();
 await b.close(); process.exit(0);

@@ -4,7 +4,7 @@
 // other screens bypass it in app.mjs. Cells resolve to explicit colours independent of the terminal background.
 import { cw } from './text.mjs';
 
-export const CRT_BG = { clay: [27, 25, 23], night: [15, 18, 29], paper: [242, 234, 218] };
+export const CRT_BG = { clay: [27, 25, 23], night: [15, 18, 29] };
 const SGR = /\x1b\[([0-9;:]*)m/g;
 const clamp = v => Math.max(0, Math.min(255, Math.round(v)));
 const mul = (c, k) => c.map(v => clamp(v * k));

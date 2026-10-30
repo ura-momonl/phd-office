@@ -148,11 +148,11 @@ test('work overview stays size-capped and complete however long the queue is, an
 });
 test('work overview keeps chat-turn records out of the step list but never hides a turn awaiting review',()=>{
   const base={project_ids:[],dependencies:[],ready:false,blocked_by:[],created_at:'2026-10-01'};
-  const items=[{...base,id:'step',status:'open'},{...base,id:'turn-failed',status:'failed',executor:'codex'},{...base,id:'turn-wait',status:'waiting_user',executor:'claude'},{...base,id:'turn-review',status:'done',executor:'claude',review:{state:'pending'}}];
+  const items=[{...base,id:'step',status:'open'},{...base,id:'turn-failed',status:'failed',executor:'codex',updated_at:new Date().toISOString()},{...base,id:'turn-old-failed',status:'failed',executor:'codex'},{...base,id:'turn-wait',status:'waiting_user',executor:'claude'},{...base,id:'turn-review',status:'done',executor:'claude',review:{state:'pending'}}];
   const o=workOverview({items});
-  assert.ok(o.coverage.includes('任务步骤未结束 2 条')&&o.coverage.includes('对话轮 2 条'));assert.deepEqual(o.turns,{failed:1,waiting_user:1});
+  assert.ok(o.coverage.includes('任务步骤未结束 2 条')&&o.coverage.includes('对话轮 2 条')&&o.coverage.includes('更早失败的对话轮 1 条'));assert.deepEqual(o.turns,{failed:1,waiting_user:1});
   assert.ok(o.needs_attention.some(l=>l.startsWith('turn-rev')&&l.includes('待验收')));
-  assert.deepEqual(workDetail('turns',{items}).unfinished.map(x=>x.id),['turn-failed','turn-wait']);assert.deepEqual(workDetail('failed',{items}).unfinished.map(x=>x.id),[]);
+  assert.deepEqual(workDetail('turns',{items}).unfinished.map(x=>x.id),['turn-failed','turn-old-failed','turn-wait']);assert.deepEqual(workDetail('failed',{items}).unfinished.map(x=>x.id),[]);
 });
 test('work list <filter> accepts a status or a known project and rejects anything else',()=>{
   const items=[{id:'a',status:'open',project_ids:['graphene-thz'],ready:false,blocked_by:[]},{id:'b',status:'failed',project_ids:[],ready:false,blocked_by:[]}];
